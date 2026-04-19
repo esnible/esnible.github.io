@@ -1,12 +1,14 @@
 version: "0.2"
 ignorePaths: []
 dictionaryDefinitions:
-  - name: IS_001
-    path: jons/IS_001-words.txt
+  - name: indian-numismatics
+    path: dictionaries/indian-numismatics.txt
 dictionaries:
   - en_US
   - en_GB
-  - IS_001
+  # You may need `npm install --global @cspell/dict-ar` for the Arabic dictionary
+  - ar
+  - indian-numismatics
 words: []
 ignoreWords: []
 import: []

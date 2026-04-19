@@ -1,0 +1,12 @@
+version: "0.2"
+ignorePaths: []
+dictionaryDefinitions:
+  - name: IS_001
+    path: jons/IS_001-words.txt
+dictionaries:
+  - en_US
+  - en_GB
+  - IS_001
+words: []
+ignoreWords: []
+import: []

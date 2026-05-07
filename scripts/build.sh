@@ -1,6 +1,9 @@
+#!/usr/bin/env bash
+
+set -o xtrace
 
 PDFDIR=~/personal/src/ons-website/static/archive
-OUTPUTDIR=~/personal/src/ons.github.io/jons/
+OUTPUTDIR=~/personal/src/esnible.github.io/jons/
 
 for file in ${PDFDIR}/*; do 
     if [ -f "$file" ]; then 
@@ -10,7 +13,9 @@ for file in ${PDFDIR}/*; do
         # echo ${namepart} -- "$file" 
         outputfile=${OUTPUTDIR}/${namepart}.md
         if [ ! -f ${outputfile} ]; then
-            pdfmd ${file} --ocr ocrmypdf --lang eng+ara --page-breaks --output ${outputfile}
+            # Make sure pdfmd is installed from https://github.com/M1ck4/pdfmd
+            # not pypi!
+            pdfmd --ocr auto --lang eng+ara --page-breaks --output ${outputfile}
         fi
     fi 
 done

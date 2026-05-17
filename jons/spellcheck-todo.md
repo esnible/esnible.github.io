@@ -17,20 +17,20 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 |                      |                    |          |
 | **1972** | **1997** | **2022** |
 | [x] [Information Sheet 02](IS_002.md) | [ ] [Newsletter No. 151](ONS_151.md) | [ ] [Journal Vol. 247](ONS_247.md) |
-| [ ] [Information Sheet 03](IS_003.md) | [ ] [Newsletter No. 152](ONS_152.md) |  |
+| [x] [Information Sheet 03](IS_003.md) | [ ] [Newsletter No. 152](ONS_152.md) |  |
 |                      | [ ] [Newsletter No. 153](ONS_153.md) |  |
 |                      | [ ] [Newsletter No. 154](ONS_154.md) |  |
 |                      | [ ] [Newsletter No. 155](ONS_155.md) |          |
 |                      | [ ] [Newsletter No. 156](ONS_156.md) |          |
 | **1973** | **1998** | **2023** |
-| [ ] [Information Sheet 04](IS_004.md) | [ ] [Newsletter No. 157](ONS_157.md) |  |
-| [ ] [Information Sheet 05](IS_005.md) | [ ] [Newsletter No. 158](ONS_158.md) |  |
-| [ ] [Information Sheet 06](IS_006.md) | [ ] [Newsletter No. 159](ONS_159.md) |  |
-| [ ] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) |  |
+| [x] [Information Sheet 04](IS_004.md) | [ ] [Newsletter No. 157](ONS_157.md) |  |
+| [x] [Information Sheet 05](IS_005.md) | [ ] [Newsletter No. 158](ONS_158.md) |  |
+| [x] [Information Sheet 06](IS_006.md) | [ ] [Newsletter No. 159](ONS_159.md) |  |
+| [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) |  |
 | **1974** | **1999** | **2024** |
-| [ ] [Occasional Paper 01](OP_001.md) | [ ] [Newsletter No. 160](ONS_160.md) |  |
-| [ ] [Occasional Paper 02](OP_002.md) | [ ] [Newsletter No. 161](ONS_161.md) |  |
-| [ ] [Occasional Paper 03](OP_003.md) | [ ] [Newsletter No. 162](ONS_162.md) |  |
+| [x] [Occasional Paper 01](OP_001.md) | [ ] [Newsletter No. 160](ONS_160.md) |  |
+| [x] [Occasional Paper 02](OP_002.md) | [ ] [Newsletter No. 161](ONS_161.md) |  |
+| [x] [Occasional Paper 03](OP_003.md) | [ ] [Newsletter No. 162](ONS_162.md) |  |
 | [ ] [Occasional Paper 04](OP_004.md) |                    |  |
 | [ ] [Occasional Paper 05](OP_005.md) |                    |          |
 | [ ] [Occasional Paper 06](OP_006.md) |                    |          |

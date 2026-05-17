@@ -21,6 +21,26 @@ Mohallabid
 Seljuqs
 Umayyads
 Zaydi
+Atabegs
+Ayyubids
+Fatimids
+Hamdanids
+Hashemite
+Jelairs
+Mamluk
+Mamluks
+Mangits
+Muzaffarids
+Rasulids
+Saffarid
+Saffarids
+Seljuks
+Timurids
+Tulunids
+Umaiyad
+Urtukids
+Zengids
+Quyunlu
 
 # Sasanian dynasty rulers (Persian empire 224–651 CE)
 Ardashir
@@ -147,6 +167,10 @@ Sbeitla
 Sirte
 Sufetula
 Zeugitana
+Jeddah
+Khokand
+Oxiana
+Sistan
 
 # Islamic numismatic and religious terms
 Sigillography
@@ -161,6 +185,13 @@ Kharijite
 mu'minin
 nummia
 portraitless
+girsh
+Muluk
+Tawa'if
+Akce
+Kangilar
+Ogullarina
+Yildirim
 
 # French and Latin terms in scholarly publication titles
 analysing
@@ -230,6 +261,91 @@ SOCIUS
 TUUS
 UNUS
 
+# Samanid and Ghaznavid period: provinces, mints, and towns of NE Afghanistan
+Anderabah
+Andijaragh
+Badakhshan
+Beled
+Fadlan
+Farwan
+Gharj
+Gharjistan
+Jirm
+Juzjan
+Khawak
+Khuttal
+Khwarezm
+Khwarezmian
+Kishm
+Maktoum
+Merv
+Meshad
+Murghab
+Panchir
+Panj
+Panjhir
+Panshir
+Qunduz
+Shar
+Shash
+Tayakan
+Tokharestan
+Wakhan
+Walwaliz
+Zebak
+
+# Samanid and Ghaznavid period: rulers, governors, and officials
+Alptekin
+Balkatekin
+Bektuzun
+Faiq
+Farighun
+Farighunid
+Harb
+Harith
+Ilak
+Isma'il
+Maktum
+Muktadir
+Qarakhanids
+Qaratekin
+Qatakin
+Qatekin
+Radi
+Sahlan
+Sahlen
+Sayf
+Sehlan
+Simjuri
+Simjurid
+Ta'i
+Tash
+Yemin
+
+# Scholars of Samanid and Volga Bulghar coinage
+Hennequin
+Markoff
+Mitchiner
+Tornberg
+
+# Volga Bulghar and Viking trade terms
+Bulghar
+Bulghars
+Varangians
+
+# Islamic numismatic coin terms
+dirhem
+undebased
+
+# British English spellings used in ONS publications
+centralisation
+entrepôt
+neighbour
+neighbouring
+organised
+recognised
+stylised
+
 # Scholars of Islamic and Iranian numismatics
 Bhatt
 Bivar
@@ -258,3 +374,19 @@ Tarizzo
 Whitting
 Wiel
 Zambaur
+Balog
+Bosworth
+Gaube
+Göbl
+Grabar
+Olcer
+Schaendlinger
+Torrey
+Whitler
+
+# German numismatic terms (book titles)
+Arabosassanidische
+Münzprägungen
+Numismatik
+Osmanischer
+Bayezid'in

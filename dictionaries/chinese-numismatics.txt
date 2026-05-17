@@ -56,6 +56,7 @@ Cridland
 Fairbank
 Frederik
 Fredrik
+Grottanelli
 Hayter
 Herrman
 Herrmann
@@ -65,4 +66,22 @@ Monneret
 Patalas
 Playfair
 Reischauer
+Schjøth
+Schjøth's
+Villard
 Vissering
+
+# Place names cited in Sung-trade bibliography
+Mogadishu
+
+# Foreign-language fragments from cited works
+Asiatiche
+Chinesische
+Cremonese
+Indiano
+Influenze
+Münzen
+Orientale
+Pescatori
+dell'Oceano
+sulle

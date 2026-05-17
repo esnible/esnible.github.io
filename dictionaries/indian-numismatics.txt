@@ -191,6 +191,7 @@ Humayun
 Hussain
 Ibrahim
 Iltutmish
+Inglistan
 jagirdars
 Jagaddipendra
 Jadu
@@ -283,6 +284,7 @@ Magadha
 Magadhan
 Maharaj
 Maharana
+Maharao
 Maharawal
 Mahendra
 Mahi
@@ -367,6 +369,7 @@ Paila
 Pancham
 Panheiba
 Panipat
+Panish
 Panjab
 Panjhra
 Pannikkar
@@ -466,6 +469,7 @@ Sebuktegin
 Sedhis
 Seistan
 Sendhwa
+Setholao
 Sevaka
 Sevakasya
 Shabdung

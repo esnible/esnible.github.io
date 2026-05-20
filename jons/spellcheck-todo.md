@@ -35,9 +35,9 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Occasional Paper 05](OP_005.md) |                    |          |
 | [x] [Occasional Paper 06](OP_006.md) |                    |          |
 | [x] [Occasional Paper 07](OP_007.md) |                    |          |
-| [ ] [Information Sheet 08](IS_008.md) |                    |          |
-| [ ] [Information Sheet 09](IS_009.md) |                    |          |
-| [ ] [Information Sheet 10](IS_010.md) |                    |          |
+| [x] [Information Sheet 08](IS_008.md) |                    |          |
+| [x] [Information Sheet 09](IS_009.md) |                    |          |
+| [x] [Information Sheet 10](IS_010.md) |                    |          |
 | **1975** | **2000** | **2025** |
 | [x] [Occasional Paper 08](OP_008.md) | [ ] [Newsletter No. 163](ONS_163.md) |  |
 | [x] [Occasional Paper 09](OP_009.md) | [ ] [Newsletter No. 164](ONS_164.md) |  |

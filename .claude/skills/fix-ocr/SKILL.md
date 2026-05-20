@@ -7,6 +7,16 @@ description: Find and correct OCR errors in a Markdown file from the `jons/` cor
 
 You are correcting OCR errors in a Markdown file produced by `pdfmd --ocr auto --lang eng+ara` (see `scripts/build.sh`). The text is English numismatic content. Errors are mechanical OCR mistakes, not authorial typos — treat them as such.
 
+## Hard constraints
+
+These override every other instruction in this skill. If a fix would violate one of them, leave the text as-is.
+
+- **Never remove or merge line breaks.** Preserve every line break exactly as OCR'd, including hard breaks that fall mid-sentence. Never join two lines, even when a sentence is split across them.
+- **Never change capitalization.** Leave every letter's case exactly as OCR'd. Do not capitalize sentence starts or proper nouns, and do not lowercase anything.
+- **Never add punctuation.** Do not insert a period, comma, dash, apostrophe, or any other mark — not even to close a sentence or restore a mark the OCR appears to have dropped. You may delete stray punctuation glyphs that are clearly OCR noise; you may not add any.
+
+Within these limits, still fix letter-level OCR garble: wrong letters, doubled or dropped letters, digit/letter swaps, and stray non-Latin glyphs.
+
 ## Inputs
 
 The user names a Markdown file, usually under `jons/`. If no path is given, ask once.
@@ -62,13 +72,11 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 - `5)` / `5l` → `54` or similar (digits and lowercase letters confuse)
 - `lth` → `4th`; `l` and `4` swap
 - `40O` → `400`; `O` ↔ `0`
-- `(ce ` → `(c. `; `e` ↔ `.`
 
 ### Punctuation and stray glyphs
-- `Indias` (no period) → `India.` — sentence-final period dropped after a capital
 - Random Arabic / Hebrew glyphs in English paragraphs (e.g., `ف`, `(٠`) — delete. These come from `--lang eng+ara`. **Only delete a non-Latin glyph when it is clearly noise inside English prose.** If the file is discussing Arabic legends or transliterations and the glyph belongs there, leave it.
 - Stray pipe characters (`|`, `\|`) inside running prose — usually delete.
-- `—`, `~`, `--` runs left over from page breaks — collapse to a single em dash or remove.
+- `—`, `~`, `--` runs left over from page breaks — delete the stray run. Do not replace it with an em dash or any other mark; adding punctuation is forbidden.
 - Sentence-initial garbage tokens like a lone `nem` at the top of a file — delete.
 
 ### Numbers that look like words
@@ -78,12 +86,10 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 
 After cspell-driven fixes, re-scan the file for these patterns, which cspell cannot detect because the tokens are valid English words or punctuation:
 
-- **Sentence-final `e` for `.`** — `coinagee`, `B.Ce`, `(ce`. The final `e` is a misread period.
+- **Doubled trailing letter** — `coinagee` → `coinage`, `dependenciese` → `dependencies`. Remove the spurious letter; never replace it with a period, even if the sentence then looks unfinished.
 - **Doubled lowercase `e` after a name** — `Ashoka'se`, `Mauryans'e` → `Ashoka's`, `Mauryans'`.
-- **Run-on caused by a dropped period** — look for a lowercase word immediately followed by a capitalized one with no period, e.g., `coinage The trend`. Insert the period if context warrants.
+- **Trailing `e` that is really a dropped period** — tokens like `B.Ce` or `(ce` where the `e` is a misread `.`. Leave these untouched: removing the `e` leaves an incomplete token, and adding the period is forbidden.
 - **`am` vs. `an`** when followed by a vowel — `am other` → `an other` or `another` per context.
-- **`(c.` vs. `(ce`** in regnal date parens.
-- **Hard line breaks inside sentences.** The OCR output uses `\n\n` to separate physical lines on the page. If a paragraph has been split mid-sentence (line ends with a lowercase word and no punctuation, next line starts with a lowercase word), join them. **Do not** merge across actual paragraph boundaries.
 
 ## Dictionary updates
 
@@ -111,6 +117,9 @@ After verification passes, check the box for this file in `jons/spellcheck-todo.
 
 ## What NOT to do
 
+- Don't remove or merge line breaks — preserve every line break, including mid-sentence ones.
+- Don't change the capitalization of any letter.
+- Don't add punctuation of any kind, even to finish a sentence or restore a mark the OCR dropped.
 - Don't rewrite prose for style — only fix OCR errors.
 - Don't change British spellings to American or vice versa.
 - Don't "correct" historical or transliteration variants (e.g., `Maurya` vs. `Mauryan`, `Karshapana` vs. `Kārṣāpaṇa`).

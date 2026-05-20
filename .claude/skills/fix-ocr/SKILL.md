@@ -14,6 +14,7 @@ These override every other instruction in this skill. If a fix would violate one
 - **Never remove or merge line breaks.** Preserve every line break exactly as OCR'd, including hard breaks that fall mid-sentence. Never join two lines, even when a sentence is split across them.
 - **Never change capitalization.** Leave every letter's case exactly as OCR'd. Do not capitalize sentence starts or proper nouns, and do not lowercase anything.
 - **Never add punctuation.** Do not insert a period, comma, dash, apostrophe, or any other mark — not even to close a sentence or restore a mark the OCR appears to have dropped. You may delete stray punctuation glyphs that are clearly OCR noise; you may not add any.
+- **Never delete a run of more than 12 consecutive characters.** A pure deletion — replacing text with nothing — may span at most 12 characters. To remove a longer run (OCR'd image digits, page-break garbage, a corrupted passage), you must substitute something in its place: a corrected reading, or an HTML comment such as `<!-- OCR: ... -->`. If you cannot supply a replacement, leave the run as-is and list it for the user.
 
 Within these limits, still fix letter-level OCR garble: wrong letters, doubled or dropped letters, digit/letter swaps, and stray non-Latin glyphs.
 
@@ -120,6 +121,7 @@ After verification passes, check the box for this file in `jons/spellcheck-todo.
 - Don't remove or merge line breaks — preserve every line break, including mid-sentence ones.
 - Don't change the capitalization of any letter.
 - Don't add punctuation of any kind, even to finish a sentence or restore a mark the OCR dropped.
+- Don't delete a run of more than 12 consecutive characters without supplying a replacement — leave it and report it instead.
 - Don't rewrite prose for style — only fix OCR errors.
 - Don't change British spellings to American or vice versa.
 - Don't "correct" historical or transliteration variants (e.g., `Maurya` vs. `Mauryan`, `Karshapana` vs. `Kārṣāpaṇa`).

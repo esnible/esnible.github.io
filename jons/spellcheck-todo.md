@@ -41,7 +41,7 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | **1975** | **2000** | **2025** |
 | [x] [Occasional Paper 08](OP_008.md) | [ ] [Newsletter No. 163](ONS_163.md) |  |
 | [x] [Occasional Paper 09](OP_009.md) | [ ] [Newsletter No. 164](ONS_164.md) |  |
-| [ ] [Information Sheet 11](IS_011.md) | [ ] [Newsletter No. 165](ONS_165.md) |  |
+| [x] [Information Sheet 11](IS_011.md) | [ ] [Newsletter No. 165](ONS_165.md) |  |
 | [ ] [Information Sheet 12](IS_012.md) | [ ] [Newsletter No. 166](ONS_166.md) |  |
 |                      | [ ] [Newsletter No. 167](ONS_167.md) |          |
 | **1976** | **2001** | **2026** |

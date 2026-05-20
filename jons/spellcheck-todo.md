@@ -31,16 +31,16 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Occasional Paper 01](OP_001.md) | [ ] [Newsletter No. 160](ONS_160.md) |  |
 | [x] [Occasional Paper 02](OP_002.md) | [ ] [Newsletter No. 161](ONS_161.md) |  |
 | [x] [Occasional Paper 03](OP_003.md) | [ ] [Newsletter No. 162](ONS_162.md) |  |
-| [ ] [Occasional Paper 04](OP_004.md) |                    |  |
-| [ ] [Occasional Paper 05](OP_005.md) |                    |          |
-| [ ] [Occasional Paper 06](OP_006.md) |                    |          |
-| [ ] [Occasional Paper 07](OP_007.md) |                    |          |
+| [x] [Occasional Paper 04](OP_004.md) |                    |  |
+| [x] [Occasional Paper 05](OP_005.md) |                    |          |
+| [x] [Occasional Paper 06](OP_006.md) |                    |          |
+| [x] [Occasional Paper 07](OP_007.md) |                    |          |
 | [ ] [Information Sheet 08](IS_008.md) |                    |          |
 | [ ] [Information Sheet 09](IS_009.md) |                    |          |
 | [ ] [Information Sheet 10](IS_010.md) |                    |          |
 | **1975** | **2000** | **2025** |
-| [ ] [Occasional Paper 08](OP_008.md) | [ ] [Newsletter No. 163](ONS_163.md) |  |
-| [ ] [Occasional Paper 09](OP_009.md) | [ ] [Newsletter No. 164](ONS_164.md) |  |
+| [x] [Occasional Paper 08](OP_008.md) | [ ] [Newsletter No. 163](ONS_163.md) |  |
+| [x] [Occasional Paper 09](OP_009.md) | [ ] [Newsletter No. 164](ONS_164.md) |  |
 | [ ] [Information Sheet 11](IS_011.md) | [ ] [Newsletter No. 165](ONS_165.md) |  |
 | [ ] [Information Sheet 12](IS_012.md) | [ ] [Newsletter No. 166](ONS_166.md) |  |
 |                      | [ ] [Newsletter No. 167](ONS_167.md) |          |

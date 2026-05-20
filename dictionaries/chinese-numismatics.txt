@@ -1,10 +1,26 @@
 # Chinese place names (Wade-Giles romanization)
+Fengtien
+Foochow
+Fookien
+Fuhkien
+Fukienese
 Hanchow
 Hangchow
 Hangkow
 Keantung
 Kuanghsi
+Kwangsi
+Makiang
+Mamoi
+Minche
+Moukden
+Newchang
+Peiyang
+PEIYANG
 Szechuan
+Taipeh
+Tamsui
+Wuchang
 Yenching
 Yenchou
 
@@ -42,34 +58,66 @@ Tung
 Yung
 
 # Chinese numismatic and administrative terms
+BCCR
+Candareens
+IMCDR
+IMCTR
 Liang
+materialise
 nien
+recoinages
+restriking
 shui
+Sino
+summarising
 
 # Chinese dynasties and ethnic groups
 Hsia
 Tangut
 
 # Scholars of Chinese numismatics
+Beresford
+Comencini
+Coole
 Cresswell
+Cribb
 Cridland
 Fairbank
+Foltz
+Forrer
 Frederik
 Fredrik
 Grottanelli
 Hayter
+Heaton's
 Herrman
 Herrmann
+Kann
+Kempf
 Latourette
 Lockhart
+Mandel
+Matravers
+Medallists
 Monneret
+Novak
 Patalas
 Playfair
+Pridmore
 Reischauer
+Remmelts
 Schjøth
 Schjøth's
+Schjoth
+Schjoth's
+Scholten
+Shafer
+Tsiang
+Vermeule
 Villard
 Vissering
+Wayte
+Wyon
 
 # Place names cited in Sung-trade bibliography
 Mogadishu
@@ -78,10 +126,14 @@ Mogadishu
 Asiatiche
 Chinesische
 Cremonese
+ihren
 Indiano
 Influenze
+Kaschmunzen
 Münzen
 Orientale
 Pescatori
+Shuo
+Ursprung
 dell'Oceano
 sulle

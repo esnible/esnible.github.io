@@ -42,12 +42,12 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Occasional Paper 08](OP_008.md) | [ ] [Newsletter No. 163](ONS_163.md) |  |
 | [x] [Occasional Paper 09](OP_009.md) | [ ] [Newsletter No. 164](ONS_164.md) |  |
 | [x] [Information Sheet 11](IS_011.md) | [ ] [Newsletter No. 165](ONS_165.md) |  |
-| [ ] [Information Sheet 12](IS_012.md) | [ ] [Newsletter No. 166](ONS_166.md) |  |
+| [x] [Information Sheet 12](IS_012.md) | [ ] [Newsletter No. 166](ONS_166.md) |  |
 |                      | [ ] [Newsletter No. 167](ONS_167.md) |          |
 | **1976** | **2001** | **2026** |
 | [ ] [Occasional Paper 10](OP_010.md) | [ ] [Newsletter No. 168](ONS_168.md) |  |
-| [ ] [Information Sheet 13](IS_013.md) | [ ] [Newsletter No. 169](ONS_169.md) |          |
-| [ ] [Information Sheet 14](IS_014.md) | [ ] [Newsletter No. 170](ONS_170.md) |          |
+| [x] [Information Sheet 13](IS_013.md) | [ ] [Newsletter No. 169](ONS_169.md) |          |
+| [x] [Information Sheet 14](IS_014.md) | [ ] [Newsletter No. 170](ONS_170.md) |          |
 | [ ] [Information Sheet 15](IS_015.md) |                    |          |
 | [ ] [Newsletter No. 42](ONS_042.md) |                    |          |
 | [ ] [Newsletter No. 43](ONS_043.md) |                    |          |

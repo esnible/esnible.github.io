@@ -351,10 +351,12 @@ undebased
 
 # British English spellings used in ONS publications
 centralisation
+demonetised
 entrepôt
 neighbour
 neighbouring
 organised
+recognisable
 recognised
 stylised
 

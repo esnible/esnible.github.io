@@ -142,3 +142,14 @@ Shuo
 Ursprung
 dell'Oceano
 sulle
+
+# ONS 42 — additional Wade-Giles place names from Mandelslo's 17th-c. account
+Cheu
+Hien
+Huquang
+Kiangnan
+Quicheu
+Leao
+
+# ONS 48 — Wang Mang Inter-regnum
+Mang

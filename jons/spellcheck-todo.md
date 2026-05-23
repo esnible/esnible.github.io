@@ -49,33 +49,33 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Information Sheet 13](IS_013.md) | [ ] [Newsletter No. 169](ONS_169.md) |          |
 | [x] [Information Sheet 14](IS_014.md) | [ ] [Newsletter No. 170](ONS_170.md) |          |
 | [x] [Information Sheet 15](IS_015.md) |                    |          |
-| [ ] [Newsletter No. 42](ONS_042.md) |                    |          |
-| [ ] [Newsletter No. 43](ONS_043.md) |                    |          |
-| [ ] [Newsletter No. 44](ONS_044.md) |                    |          |
-| [ ] [Newsletter No. 45](ONS_045.md) |                    |          |
-| [ ] [Newsletter No. 46](ONS_046.md) |                    |          |
+| [x] [Newsletter No. 42](ONS_042.md) |                    |          |
+| [x] [Newsletter No. 43](ONS_043.md) |                    |          |
+| [x] [Newsletter No. 44](ONS_044.md) |                    |          |
+| [x] [Newsletter No. 45](ONS_045.md) |                    |          |
+| [x] [Newsletter No. 46](ONS_046.md) |                    |          |
 | **1977** | **2002** |          |
 | [x] [Occasional Paper 11](OP_011.md) | [ ] [Newsletter No. 171](ONS_171.md) |          |
 | [x] [Information Sheet 16](IS_016.md) | [ ] [Newsletter No. 172](ONS_172.md) |          |
 | [x] [Information Sheet 17](IS_017.md) | [ ] [Newsletter No. 173](ONS_173.md) |          |
 | [x] [Information Sheet 18](IS_018.md) |                    |          |
-| [ ] [Newsletter No. 47](ONS_047.md) |                    |          |
-| [ ] [Newsletter No. 48](ONS_048.md) |                    |          |
-| [ ] [Newsletter No. 49](ONS_049.md) |                    |          |
-| [ ] [Newsletter No. 50](ONS_050.md) |                    |          |
-| [ ] [Newsletter No. 51](ONS_051.md) |                    |          |
-| [ ] [Newsletter No. 52](ONS_052.md) |                    |          |
+| [x] [Newsletter No. 47](ONS_047.md) |                    |          |
+| [x] [Newsletter No. 48](ONS_048.md) |                    |          |
+| [x] [Newsletter No. 49](ONS_049.md) |                    |          |
+| [x] [Newsletter No. 50](ONS_050.md) |                    |          |
+| [x] [Newsletter No. 51](ONS_051.md) |                    |          |
+| [x] [Newsletter No. 52](ONS_052.md) |                    |          |
 | **1978** | **2003** |          |
 | [x] [Information Sheet 19](IS_019.md) | [ ] [Newsletter No. 174](ONS_174.md) |          |
-| [ ] [Information Sheet 20](IS_020.md) | [ ] [Newsletter No. 175](ONS_175.md) |          |
+| [x] [Information Sheet 20](IS_020.md) | [ ] [Newsletter No. 175](ONS_175.md) |          |
 | [ ] [Newsletter No. 53](ONS_053.md) | [ ] [Newsletter No. 176](ONS_176.md) |          |
-| [ ] [Newsletter No. 54](ONS_054.md) | [ ] [Newsletter No. 177](ONS_177.md) |          |
-| [ ] [Newsletter No. 55](ONS_055.md) |                    |          |
-| [ ] [Newsletter No. 56](ONS_056.md) |                    |          |
-| [ ] [Newsletter No. 57](ONS_057.md) |                    |          |
+| [x] [Newsletter No. 54](ONS_054.md) | [ ] [Newsletter No. 177](ONS_177.md) |          |
+| [x] [Newsletter No. 55](ONS_055.md) |                    |          |
+| [x] [Newsletter No. 56](ONS_056.md) |                    |          |
+| [x] [Newsletter No. 57](ONS_057.md) |                    |          |
 | **1979** | **2004** |          |
-| [ ] [Occasional Paper 12](OP_012.md) | [ ] [Newsletter No. 178](ONS_178.md) |          |
-| [ ] [Occasional Paper 13](OP_013.md) | [ ] [Newsletter No. 179](ONS_179.md) |          |
+| [x] [Occasional Paper 12](OP_012.md) | [ ] [Newsletter No. 178](ONS_178.md) |          |
+| [x] [Occasional Paper 13](OP_013.md) | [ ] [Newsletter No. 179](ONS_179.md) |          |
 | [ ] [Information Sheet 21](IS_021.md) | [ ] [Newsletter No. 180](ONS_180.md) |          |
 | [ ] [Newsletter No. 58](ONS_058.md) | [ ] [Newsletter No. 181](ONS_181.md) |          |
 | [ ] [Newsletter No. 59](ONS_059.md) |                    |          |

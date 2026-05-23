@@ -7,6 +7,7 @@ Fukienese
 Hanchow
 Hangchow
 Hangkow
+Hungshanchiao
 Keantung
 Kuanghsi
 Kwangsi
@@ -17,7 +18,9 @@ Moukden
 Newchang
 Peiyang
 PEIYANG
+Shansi
 Szechuan
+Szechuen
 Taipeh
 Tamsui
 Wuchang
@@ -40,6 +43,7 @@ hsien
 Hsin
 Hsing
 hsing
+Hsuan
 Huai
 Kuang
 Luan
@@ -70,6 +74,7 @@ restriking
 shui
 Sino
 summarising
+USMR
 
 # Chinese dynasties and ethnic groups
 Hsia

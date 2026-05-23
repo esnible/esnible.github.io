@@ -19,6 +19,7 @@ words:
   - Aluminium
   - analyse
   - analysed
+  - authorised
   - Bacchante
   - civilisation
   - Fitzwilliam
@@ -31,5 +32,6 @@ words:
   - unauthorised
   - undeciphered
   - unfavourable
+  - utilising
 ignoreWords: []
 import: []

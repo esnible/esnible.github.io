@@ -5,11 +5,15 @@ Abbassiyah
 Aghlab
 Aghlabid
 Aghlabids
+Almohade
+Almohades
 Almohads
+Almoravid
 Almoravids
 Artuqids
 Beyliks
 Buwayhid
+Isfendiyar
 Daylamite
 Ghurid
 Hafsid
@@ -52,6 +56,7 @@ Khusrau
 Peroz
 Sasanian
 Shapur
+Varahran
 Varhran
 Yazdgerd
 
@@ -62,6 +67,8 @@ Eransahr
 folles
 Gobl
 Gurgan
+Heraios
+Kushanshah
 Nasr
 Nishapur
 Nywshpwhly
@@ -198,11 +205,18 @@ Zeugitana
 Jeddah
 Khokand
 Oxiana
+Pahang
+Patani
 Sistan
+Trengganu
 
 # Islamic numismatic and religious terms
 Sigillography
 ajal
+belanja
+bélanja
+belanjaan
+belanjah
 bismillah
 bimillah
 Boundoukli
@@ -216,6 +230,7 @@ jewellery
 kalimah
 Kharijism
 Kharijite
+Kufic
 Masriah
 misr
 mu'minin
@@ -423,7 +438,9 @@ Lorente
 Lowick
 Lukonin
 Marquart
+Mihrban
 Mochiri
+Naima
 Paruck
 Rodrigues
 Roskam
@@ -432,6 +449,7 @@ Sellwood
 Sotheby
 Spink
 Tafiq
+Tarascio
 Tarizzo
 Whitting
 Wiel
@@ -1801,3 +1819,48 @@ ZANDJANI
 Bereich
 taweelah
 Zagros
+
+# ONS 71 — Delhi Sultanate and Deccan history: rulers, dynasties, places, terms
+Bahmanid
+Bahmanids
+Balikesir
+Fakhr
+Gulbarga
+Khalji
+Khaljis
+Khammar
+Maulana
+Mubarak
+Mukh
+Qutlugh
+Saljuqides
+Thakkura
+Pheru
+Tughluq
+Tughlugid
+Tughlugids
+Tughluqid
+Tughluqids
+Speight
+Isfandiyar
+Brennig
+Harsel
+Jucknath
+
+# ONS 67 — bibliography: Islamic/Mughal journal references
+Fisekcioglu
+Islamologiques
+Mameloukes
+Ruknabad
+
+# ONS 72 — Indonesian Islamic fantasies: rulers, titles, terms
+Faruq
+Khalifs
+Omayyad
+
+# ONS 69 — newsletter terms: Malay coin inscriptions, East African mint towns, numismatic terms
+Harar
+Lamu
+Mafia
+Mombasa
+valuta

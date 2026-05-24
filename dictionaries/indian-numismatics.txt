@@ -147,6 +147,7 @@ Gambir
 Gangakher
 Gangapur
 Gangdarji
+Gangetic
 Ganapati
 Gandhara
 Gandharan
@@ -178,6 +179,7 @@ Gurmukhi
 Gumansinghji
 Hari
 Harendra
+Hartel
 HARDAKER
 Hazara
 Hermaios
@@ -314,7 +316,9 @@ mashas
 Mashas
 Mashaka
 Matanga
+Mathura
 Maues
+Mauryan
 Mauryans
 Mewar
 Mirashi
@@ -413,6 +417,7 @@ Prinsep
 punchmarked
 Pushkala
 Pushkalavati
+Pyu
 Qaiser
 Qandahar
 Qiran
@@ -530,6 +535,7 @@ Suman
 Sumras
 Sunga
 Sungas
+Sonkh
 Soonth
 Sunth
 Suren
@@ -560,6 +566,7 @@ Transoxus
 trisul
 Tuker
 Tukharistan
+Tye
 Udai
 Udaipur
 Udgir
@@ -571,6 +578,7 @@ Vasant
 Vasudeva
 Vikram
 Vikrama
+Vimsatika
 Vira
 Virbhadrasinghji
 Visvasimha
@@ -1538,6 +1546,7 @@ Worli
 # ONS 54 — Bijapur larin hoard from North Konkan; Sindhia coinage; ONS members
 Amalya
 Annajee
+Annamese
 Azami
 Beejapour
 Bijapur
@@ -1575,6 +1584,7 @@ Sattara
 Sindhias
 Sungumneshwar
 Takeed
+Wiggins
 Willoughby
 Wishwanath
 
@@ -1879,3 +1889,65 @@ Salomon
 Thome
 Traikutakas
 Uttar
+
+# ONS 71 — Andhra and Deccan coinage references; Satavahana rulers; scholars
+Gobhadra
+Golconda
+Ismailpur
+Mallampalli
+Raghavacharya
+Sarvasri
+Simuka
+Somesekhara
+Thanaghazi
+Vishamasiddhi
+
+# ONS 72 — Indonesian iron coins/fantasies: places, characters, scholars, terms
+Ardjuna
+Brunei
+Celebes
+Confucianist
+Daoist
+Djakarta
+duits
+Jogjakarta
+Mahabharata
+Maitreya
+peci
+Recherches
+Semar
+Srivijaya
+Sulawesi
+Surakarta
+
+# ONS 67 — Mughal Kashmir coinage; South Indian dynasties; Indian publications
+Babar
+Devaputra
+Ilahi
+Kanpur
+Kataphasa
+Kuyula
+Mandala
+Moghul
+Mohur
+Prayaga
+Sadaskano
+Samkarsana
+Sarvamangala
+Senavarman
+# ONS 70 — Burma coinage review; cast copper India article; Almohade/Almoravid; Annamese silver
+Burmese
+Burma
+Mitchiner
+Peking
+Sethupati
+
+# ONS 69 — Indian numismatic terms, members, publications
+Chandragupta
+cfr
+Egmore
+Jaria
+Kochhiputra
+MacDowall
+Sankara
+Vijayanagara

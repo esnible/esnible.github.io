@@ -89,15 +89,15 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 64](ONS_064.md) | [ ] [Newsletter No. 185](ONS_185.md) |          |
 | [x] [Newsletter No. 65](ONS_065.md) |                    |          |
 | [x] [Newsletter No. 66](ONS_066.md) |                    |          |
-| [ ] [Newsletter No. 67](ONS_067.md) |                    |          |
-| [ ] [Newsletter No. 68](ONS_068.md) |                    |          |
-| [ ] [Newsletter No. 69](ONS_069.md) |                    |          |
+| [x] [Newsletter No. 67](ONS_067.md) |                    |          |
+| [x] [Newsletter No. 68](ONS_068.md) |                    |          |
+| [x] [Newsletter No. 69](ONS_069.md) |                    |          |
 | **1981** | **2006** |          |
 | [ ] [Occasional Paper 16](OP_016.md) | [ ] [Journal Vol. 186](ONS_186.md) |          |
 | [ ] [Information Sheet 23](IS_023.md) | [ ] [Journal Vol. 187](ONS_187.md) |          |
-| [ ] [Newsletter No. 70](ONS_070.md) | [ ] [Journal Vol. 188](ONS_188.md) |          |
-| [ ] [Newsletter No. 71](ONS_071.md) | [ ] [Journal Vol. 189](ONS_189.md) |          |
-| [ ] [Newsletter No. 72](ONS_072.md) |                    |          |
+| [x] [Newsletter No. 70](ONS_070.md) | [ ] [Journal Vol. 188](ONS_188.md) |          |
+| [x] [Newsletter No. 71](ONS_071.md) | [ ] [Journal Vol. 189](ONS_189.md) |          |
+| [x] [Newsletter No. 72](ONS_072.md) |                    |          |
 | [ ] [Newsletter No. 73](ONS_073.md) |                    |          |
 | [ ] [Newsletter No. 74](ONS_074.md) |                    |          |
 | [ ] [Newsletter No. 75](ONS_075.md) |                    |          |

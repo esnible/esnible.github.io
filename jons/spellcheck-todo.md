@@ -98,14 +98,14 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 70](ONS_070.md) | [ ] [Journal Vol. 188](ONS_188.md) |          |
 | [x] [Newsletter No. 71](ONS_071.md) | [ ] [Journal Vol. 189](ONS_189.md) |          |
 | [x] [Newsletter No. 72](ONS_072.md) |                    |          |
-| [ ] [Newsletter No. 73](ONS_073.md) |                    |          |
-| [ ] [Newsletter No. 74](ONS_074.md) |                    |          |
-| [ ] [Newsletter No. 75](ONS_075.md) |                    |          |
+| [x] [Newsletter No. 73](ONS_073.md) |                    |          |
+| [x] [Newsletter No. 74](ONS_074.md) |                    |          |
+| [x] [Newsletter No. 75](ONS_075.md) |                    |          |
 | **1982** | **2007** |          |
 | [ ] [Information Sheet 24](IS_024.md) | [ ] [Journal Vol. 190](ONS_190.md) |          |
-| [ ] [Newsletter No. 76](ONS_076.md) | [ ] [Journal Vol. 191](ONS_191.md) |          |
-| [ ] [Newsletter No. 77](ONS_077.md) | [ ] [Journal Vol. 192](ONS_192.md) |          |
-| [ ] [Newsletter No. 78](ONS_078.md) | [ ] [Journal Vol. 193](ONS_193.md) |          |
+| [x] [Newsletter No. 76](ONS_076.md) | [ ] [Journal Vol. 191](ONS_191.md) |          |
+| [x] [Newsletter No. 77](ONS_077.md) | [ ] [Journal Vol. 192](ONS_192.md) |          |
+| [x] [Newsletter No. 78](ONS_078.md) | [ ] [Journal Vol. 193](ONS_193.md) |          |
 | [ ] [Newsletter No. 79](ONS_079.md) | [ ] [193 Supl.](ONS_Supplement_193.md) |          |
 | [ ] [Newsletter No. 80](ONS_080.md) |                    |          |
 | [ ] [Newsletter No. 81](ONS_081.md) |                    |          |

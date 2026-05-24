@@ -1953,3 +1953,23 @@ Masjid
 Nechandeh
 Saljukide
 Susiane
+
+# ONS 080 – Gakkhar coinage
+Gakkhar
+Gakkhars
+Kaigoharnama
+Kaigoharnameh
+Parhalah
+Pharhalah
+Pharwala
+Pharwalah
+Pothohar
+# ONS 081 – Arakan Persian-legend coins
+Ilias
+Khailad
+Khallad
+Mulkahu
+mubariz
+rasul
+Saheb
+saheb

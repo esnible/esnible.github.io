@@ -2039,3 +2039,36 @@ Gaikwar
 Kalyani
 pice
 Trisula
+
+# ONS 081 – Arakan Mrohaung dynasty (part 1)
+Arakanese
+Basawnyo
+Basawpyu
+Bayinnaung
+Bundelkhand
+Chittagong
+Dawlya
+Gazapati
+Gurjuras
+Hantha
+Hanthawaddy
+Karnaphuli
+Kaukdawla
+Khaung
+Launggyet
+Mahamauk
+Manikyala
+Mawku
+Milgora
+Mrauk
+Narameikla
+Naranu
+Palaung
+Ranaung
+Salingathu
+Thazata
+Thingathu
+Thirithu
+Vesali
+# ONS 082-083 – Lead coins of Pegu
+Bavanni

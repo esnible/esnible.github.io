@@ -1726,6 +1726,8 @@ Thugee
 Venkaji
 
 # ONS 60 — Ladakh, Arakan, Mughal Sholapur: rulers, places, scholars, transliterations
+Agawponyazaw
+Akyab
 Arakanese
 Aurungzeb
 Bosco
@@ -1739,14 +1741,20 @@ Kuthala
 Ladakah
 Ladakha
 Manrique
+Mrohaung
 Mrouk
 Narabadigyi
+Naradibbati
 rava
 Razagyi
 Sanda
+Sawleim
+Thamada
 Thado
 Thirithudhamma
 Thudhamma
+Waradhamma
+Wimala
 
 # ONS 61 — Bengal Sultanate fractional Tankahs; Indonesian plantation tokens; ONS newsletter
 Assaywise
@@ -1951,3 +1959,83 @@ Kochhiputra
 MacDowall
 Sankara
 Vijayanagara
+
+# ONS 76 — Mughal Deccan/Kashmir coinage: rulers, places, scholars, calendar terms
+Bahman
+Chamundi
+Ghilzais
+Jamada
+Kukuranov
+Lahori
+Mayili
+Nagari
+Nander
+Nasiri
+Saksena
+Shawwal
+Telingana
+Trubner
+
+# ONS 77 — Arakanese coins, Indian and Islamic bibliography
+Bhanugupta
+Jayantia
+Jayavarman
+Kalabhra
+Kootran
+Madalapanji
+Nolamba
+Parenda
+Patnaik
+Prakasaditya
+Prabhu
+Ramayya
+Ruparel
+Sahoo
+Saivism
+Samanta
+Siu
+
+# ONS 78 — Pyu coins; Sardis review; miscellaneous bibliography
+Abels
+Arsacid
+Bhargava
+Bates
+Buttrey
+Cribb
+Damaru
+Denys
+Johnston
+Kaim
+Kamphorst
+Lingam
+Nasik
+Oddy
+Panchmahals
+Rajaputa
+Ryukyu
+scyphate
+Sonawane
+Urtuqid
+Yuzbak
+
+# ONS 74 — bibliography: Indian scholars, mints, rulers
+Biswas
+Chauley
+Kelkar
+Lokaprakasha
+Mazulipatam
+Sankaranarayana
+Seringapatan
+Subramanian
+Tipu
+
+# ONS 73 — Ahmadabad pice; Kushan colloquium; Indian coin symbols
+Ahmadabadi
+Avanti
+Bhaunagar
+Bhownuggar
+Bhownuggari
+Gaikwar
+Kalyani
+pice
+Trisula

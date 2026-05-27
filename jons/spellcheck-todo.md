@@ -93,8 +93,8 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 68](ONS_068.md) |                    |          |
 | [x] [Newsletter No. 69](ONS_069.md) |                    |          |
 | **1981** | **2006** |          |
-| [ ] [Occasional Paper 16](OP_016.md) | [ ] [Journal Vol. 186](ONS_186.md) |          |
-| [ ] [Information Sheet 23](IS_023.md) | [ ] [Journal Vol. 187](ONS_187.md) |          |
+| [x] [Occasional Paper 16](OP_016.md) | [ ] [Journal Vol. 186](ONS_186.md) |          |
+| [x] [Information Sheet 23](IS_023.md) | [ ] [Journal Vol. 187](ONS_187.md) |          |
 | [x] [Newsletter No. 70](ONS_070.md) | [ ] [Journal Vol. 188](ONS_188.md) |          |
 | [x] [Newsletter No. 71](ONS_071.md) | [ ] [Journal Vol. 189](ONS_189.md) |          |
 | [x] [Newsletter No. 72](ONS_072.md) |                    |          |
@@ -102,7 +102,7 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 74](ONS_074.md) |                    |          |
 | [x] [Newsletter No. 75](ONS_075.md) |                    |          |
 | **1982** | **2007** |          |
-| [ ] [Information Sheet 24](IS_024.md) | [ ] [Journal Vol. 190](ONS_190.md) |          |
+| [x] [Information Sheet 24](IS_024.md) | [ ] [Journal Vol. 190](ONS_190.md) |          |
 | [x] [Newsletter No. 76](ONS_076.md) | [ ] [Journal Vol. 191](ONS_191.md) |          |
 | [x] [Newsletter No. 77](ONS_077.md) | [ ] [Journal Vol. 192](ONS_192.md) |          |
 | [x] [Newsletter No. 78](ONS_078.md) | [ ] [Journal Vol. 193](ONS_193.md) |          |
@@ -110,22 +110,22 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 80](ONS_080.md) |                    |          |
 | [x] [Newsletter No. 81](ONS_081.md) |                    |          |
 | **1983** | **2008** |          |
-| [ ] [Occasional Paper 17](OP_017.md) | [ ] [Journal Vol. 194](ONS_194.md) |          |
-| [ ] [Information Sheet 25](IS_025.md) | [ ] [Journal Vol. 195](ONS_195.md) |          |
+| [x] [Occasional Paper 17](OP_017.md) | [ ] [Journal Vol. 194](ONS_194.md) |          |
+| [x] [Information Sheet 25](IS_025.md) | [ ] [Journal Vol. 195](ONS_195.md) |          |
 | [x] [Newsletter No. 82-3](ONS_082-083.md) | [ ] [Journal Vol. 196](ONS_196.md) |          |
 | [x] [Newsletter No. 84](ONS_084.md) | [ ] [Journal Vol. 197](ONS_197.md) |          |
 | [ ] [Newsletter No. 85-6](ONS_085-086.md) | [ ] [197 Supl.](ONS_Supplement_197.md) |          |
 | [ ] [Newsletter No. 87](ONS_087.md) |                    |          |
 | **1984** | **2009** |          |
 | [ ] [Occasional Paper 18](OP_018.md) | [ ] [Journal Vol. 198](ONS_198.md) |          |
-| [ ] [Information Sheet 26](IS_026.md) | [ ] [Journal Vol. 199](ONS_199.md) |          |
+| [x] [Information Sheet 26](IS_026.md) | [ ] [Journal Vol. 199](ONS_199.md) |          |
 | [ ] [Newsletter No. 88](ONS_088.md) | [ ] [Journal Vol. 200](ONS_200.md) |          |
 | [ ] [Newsletter No. 89](ONS_089.md) | [ ] [Journal Vol. 201](ONS_201.md) |          |
 | [ ] [Newsletter No. 90-91](ONS_090-091.md) |                    |          |
 | [ ] [Newsletter No. 92-93](ONS_092-093.md) |                    |          |
 | **1985** | **2010** |          |
-| [ ] [Occasional Paper 19](OP_019.md) | [ ] [Journal Vol. 202](ONS_202.md) |          |
-| [ ] [Occasional Paper 20](OP_020.md) |  |          |
+| [x] [Occasional Paper 19](OP_019.md) | [ ] [Journal Vol. 202](ONS_202.md) |          |
+| [x] [Occasional Paper 20](OP_020.md) |  |          |
 | [ ] [Newsletter No. 94-95](ONS_094-095.md) | [ ] [Journal Vol. 204](ONS_204.md) |          |
 | [ ] [Newsletter No. 96](ONS_096.md) | [ ] [Journal Vol. 205](ONS_205.md) |          |
 | [ ] [Newsletter No. 97](ONS_097.md) | [ ] [205 Supl.](ONS_Supplement_205.md) |

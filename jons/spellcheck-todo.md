@@ -9,11 +9,11 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 |                      |                    |          |
 | :------------------: | :----------------: | :------: |
 | **1971** | **1996** | **2021** |
-| [x] [Information Sheet 01](IS_001.md) | [ ] [Newsletter No. 146](ONS_146.md) |  |
-|                      | [ ] [Newsletter No. 147](ONS_147.md) | [ ] [Journal Vol. 244](ONS_244.md) |
-|                      | [ ] [Newsletter No. 148](ONS_148.md) | [ ] [Journal Vol. 245](ONS_245.md) |
+| [x] [Information Sheet 01](IS_001.md) | [x] [Newsletter No. 146](ONS_146.md) |  |
+|                      | [x] [Newsletter No. 147](ONS_147.md) | [ ] [Journal Vol. 244](ONS_244.md) |
+|                      | [x] [Newsletter No. 148](ONS_148.md) | [ ] [Journal Vol. 245](ONS_245.md) |
 |                      | [ ] [Newsletter No. 149](ONS_149.md) | [ ] [Journal Vol. 246](ONS_246.md) |
-|                      | [ ] [Newsletter No. 150](ONS_150.md) |          |
+|                      | [x] [Newsletter No. 150](ONS_150.md) |          |
 |                      |                    |          |
 | **1972** | **1997** | **2022** |
 | [x] [Information Sheet 02](IS_002.md) | [ ] [Newsletter No. 151](ONS_151.md) | [ ] [Journal Vol. 247](ONS_247.md) |

@@ -136,18 +136,18 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 100](ONS_100.md) | [ ] [Journal Vol. 207](ONS_207.md) |          |
 | [x] [Newsletter No. 101](ONS_101.md) | [ ] [Journal Vol. 208](ONS_208.md) |          |
 | [x] [Newsletter No. 102](ONS_102.md) | [ ] [Journal Vol. 209](ONS_209.md) |          |
-| [ ] [Newsletter No. 103](ONS_103.md) |                    |          |
-| [ ] [Newsletter No. 104](ONS_104.md) |                    |          |
-| [ ] [Newsletter No. 105](ONS_105.md) |                    |          |
-| [ ] [Newsletter No. 106](ONS_106.md) |                    |          |
+| [x] [Newsletter No. 103](ONS_103.md) |                    |          |
+| [x] [Newsletter No. 104](ONS_104.md) |                    |          |
+| [x] [Newsletter No. 105](ONS_105.md) |                    |          |
+| [x] [Newsletter No. 106](ONS_106.md) |                    |          |
 | **1987** | **2012** |          |
 | [ ] [Occasional Paper 22](OP_022.md) | [ ] [Journal Vol. 210](ONS_210.md) |          |
-| [ ] [Newsletter No. 107](ONS_107.md) | [ ] [Journal Vol. 211](ONS_211.md) |          |
-| [ ] [Newsletter No. 108](ONS_108.md) | [ ] [Journal Vol. 212](ONS_212.md) |          |
-| [ ] [Newsletter No. 109](ONS_109.md) | [ ] [Journal Vol. 213](ONS_213.md) |          |
+| [x] [Newsletter No. 107](ONS_107.md) | [ ] [Journal Vol. 211](ONS_211.md) |          |
+| [x] [Newsletter No. 108](ONS_108.md) | [ ] [Journal Vol. 212](ONS_212.md) |          |
+| [x] [Newsletter No. 109](ONS_109.md) | [ ] [Journal Vol. 213](ONS_213.md) |          |
 | **1988** | **2013** |          |
-| [ ] [Newsletter No. 110](ONS_110.md) | [ ] [Journal Vol. 214](ONS_214.md) |          |
-| [ ] [Newsletter No. 111](ONS_111.md) | [ ] [Journal Vol. 215](ONS_215.md) |          |
+| [x] [Newsletter No. 110](ONS_110.md) | [ ] [Journal Vol. 214](ONS_214.md) |          |
+| [x] [Newsletter No. 111](ONS_111.md) | [ ] [Journal Vol. 215](ONS_215.md) |          |
 | [ ] [Newsletter No. 112](ONS_112.md) | [ ] [Journal Vol. 216](ONS_216.md) |          |
 | [ ] [Newsletter No. 113](ONS_113.md) | [ ] [Journal Vol. 217](ONS_217.md) |          |
 | [ ] [Newsletter No. 114](ONS_114.md) |                    |          |

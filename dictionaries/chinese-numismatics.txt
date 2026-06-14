@@ -232,3 +232,70 @@ Polycarpus
 Vachette
 Vicentians
 Vincentians
+
+# ONS_103 — Chinese coin index article; Yuan dynasty coin; Ch'u State coin
+Huhehaote
+Tsai
+
+# ONS_105 — Tibetan pattern coins dated in Chinese Kala Chakra system
+Huobi
+Lidai
+Zhongguo
+
+# ONS_106 — Kwangtung 20 cent; Kuang Hsu coinage varieties
+Kwangtung
+Szu
+
+# ONS_107 — French Indo-China coins; Chinese numismatic theses; Southern Sung cash
+Benxing
+Chouzhong
+Cüneyt
+Cunhao
+Dasheng
+Fuwei
+Hanoi
+Hsiao
+Osaka
+Pieratt
+Piastre
+piastre
+Qiao
+sapeque
+Schjéth
+Shirong
+Sweeny
+Xiaojin
+Xiangxian
+Yangang
+Yih
+Yiumei
+Yunzhang
+Zhenai
+Zhenfeng
+Zunxiang
+
+# ONS_109 — Japanese coins in southern Vietnam; Dutch East India Company coin trade
+Aelst
+Blusse
+Buch
+Eiraku
+Hirado
+Jacobs
+Kanei
+Munro
+Quangnam
+Roessingh
+Schroeder
+Takizawa
+Toda
+tsuho
+tungpao
+
+# ONS_110 — Siamese porcelain pee tokens: scholars, terms, publishers
+Chalerm
+Donnelly
+Hofrichter
+Hollink
+Ramsden
+Schlegel
+Yongboonkird

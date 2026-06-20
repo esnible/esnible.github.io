@@ -291,6 +291,14 @@ Toda
 tsuho
 tungpao
 
+# ONS_113 — T'ung Chih cash coin 1866; Pin Ch'un Mission; Netherlands Indies pattern
+Barre
+Chekiang
+Kuschan
+Marseilles
+medalllic
+Nitidihardjo
+
 # ONS_110 — Siamese porcelain pee tokens: scholars, terms, publishers
 Chalerm
 Donnelly

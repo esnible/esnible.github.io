@@ -1,4 +1,5 @@
 # Islamic dynasties and ruling families
+Abaka
 Abbasids
 Abbasiyah
 Abbassiyah
@@ -213,12 +214,18 @@ Zeugitana
 Jeddah
 Khokand
 Oxiana
+Ja'farabad
+Ja'fari
 Pahang
 Patani
+Proche
 Sistan
+Taisei
 Trengganu
+Zafarabad
 
 # Islamic numismatic and religious terms
+aqche
 Sigillography
 ajal
 belanja
@@ -662,6 +669,8 @@ Bhatt
 Bivar
 Borve
 Broome
+Castellain
+Celil
 Curiel
 Doria
 Hazard
@@ -672,7 +681,9 @@ Goron
 Gregorius
 Gyselen
 Henneguin
+Holcombe
 Lachman
+Lachmann
 Lorente
 Lowick
 Lukonin

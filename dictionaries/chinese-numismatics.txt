@@ -155,6 +155,8 @@ Playfair
 Pridmore
 Reischauer
 Remmelts
+Schjöth
+Schjöth's
 Schjøth
 Schjøth's
 Schjoth
@@ -291,6 +293,14 @@ Toda
 tsuho
 tungpao
 
+# ONS_113 — T'ung Chih cash coin 1866; Pin Ch'un Mission; Netherlands Indies pattern
+Barre
+Chekiang
+Kuschan
+Marseilles
+medalllic
+Nitidihardjo
+
 # ONS_110 — Siamese porcelain pee tokens: scholars, terms, publishers
 Chalerm
 Donnelly
@@ -299,3 +309,111 @@ Hollink
 Ramsden
 Schlegel
 Yongboonkird
+
+# ONS_112 — Vietnamese coins catalogue review; Japanese multiple cash; misc terms
+Begawan
+Nusantara
+Pusat
+Qian
+Qing
+Sejarah
+Vietnamiennes
+Zushi
+# ONS_115 — Kiangnan Arsenal Mint at Shanghai article
+Chingkiang
+Kiangsoo
+Soochow
+Tsingkiang
+Tsingkians
+# ONS_116 — ONS Newsletter 116: Khmer lead coins; Liao dynasty fish tally; SE Asia numismatics
+Ayudhya
+Ayutthaya
+Ch'itan
+Domingus
+duang
+fuang
+Khmer
+MacKenzie
+Phra
+Ruang
+Sao
+Sukhotai
+Tsun
+# ONS_117 — ONS Newsletter 117: Chinese-Siamese porcelain pee tokens
+Chevillard
+Chulalongchorn
+Cyprea
+Fuang
+Hamel
+Hong
+Hongs
+incused
+lotusflowers
+moneta
+qilins
+salung
+Salung
+sexagonary
+shopsign
+Siamois
+Similien
+Ssii
+Tehua
+populaires
+# ONS_118 — Japanese multiple cash; Chinese pisciform tally; Wu-Chu coinage
+Asplen
+Braddan
+chuan
+Feng
+ginza
+Juntaku
+kinza
+Khitan
+Kurakichi
+Shengyu
+Shihei
+Shou
+Sowerby
+Taisei
+Yabe
+# ONS_119 — ONS Newsletter 119: Birmingham Mint and Imperial China; specimen coins; Guang Xu era
+Castellain
+Charman
+CHIHCHEN
+Graeco
+Guang
+Holcombe
+Kwun
+Taisei
+# ONS_120 — Chinese-Siamese pee coin terms and Wade-Giles romanizations
+fuang
+Hsieh
+salung
+Tien
+Yiian
+# ONS_121 — Siamese porcelain pee tokens (Part II): scholars, terms
+fuang
+Juray
+Kainz
+salung
+# ONS_122 — Chinese cash coin article: terms, scholars, publishers
+CHUEH
+Cypraea
+Dorling
+Heathrow
+Kindersley
+moneta
+# ONS_123 — ONS Newsletter 123: T'ONG character etymology article by Tom Zell; newsletter general
+CXXXV
+glyphics
+Keiichi
+meagre
+medallist
+moreso
+petroglyphs
+signific
+Sonoma
+Varick
+Westmeath
+Wieger
+Zell

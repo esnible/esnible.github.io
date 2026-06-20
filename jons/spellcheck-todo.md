@@ -148,23 +148,36 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | **1988** | **2013** |          |
 | [x] [Newsletter No. 110](ONS_110.md) | [ ] [Journal Vol. 214](ONS_214.md) |          |
 | [x] [Newsletter No. 111](ONS_111.md) | [ ] [Journal Vol. 215](ONS_215.md) |          |
+| [x] [Newsletter No. 112](ONS_112.md) | [ ] [Journal Vol. 216](ONS_216.md) |          |
+| [x] [Newsletter No. 113](ONS_113.md) | [ ] [Journal Vol. 217](ONS_217.md) |          |
+| [ ] [Newsletter No. 114](ONS_114.md) |                    |          |
 | [ ] [Newsletter No. 112](ONS_112.md) | [ ] [Journal Vol. 216](ONS_216.md) |          |
 | [ ] [Newsletter No. 113](ONS_113.md) | [ ] [Journal Vol. 217](ONS_217.md) |          |
-| [ ] [Newsletter No. 114](ONS_114.md) |                    |          |
+| [x] [Newsletter No. 114](ONS_114.md) |                    |          |
 | [ ] [Newsletter No. 115](ONS_115.md) |                    |          |
+| [ ] [Newsletter No. 114](ONS_114.md) |                    |          |
+| [x] [Newsletter No. 115](ONS_115.md) |                    |          |
 | **1989** | **2014** |          |
 | [ ] [Occasional Paper 23](OP_023.md) | [ ] [Journal Vol. 218](ONS_218.md) |          |
-| [ ] [Newsletter No. 116](ONS_116.md) | [ ] [Journal Vol. 219](ONS_219.md) |          |
+| [x] [Newsletter No. 116](ONS_116.md) | [ ] [Journal Vol. 219](ONS_219.md) |          |
 | [ ] [Newsletter No. 117](ONS_117.md) | [ ] [Journal Vol. 220](ONS_220.md) |          |
+| [ ] [Newsletter No. 116](ONS_116.md) | [ ] [Journal Vol. 219](ONS_219.md) |          |
+| [x] [Newsletter No. 117](ONS_117.md) | [ ] [Journal Vol. 220](ONS_220.md) |          |
 | [ ] [Newsletter No. 118](ONS_118.md) | [ ] [Journal Vol. 221](ONS_221.md) |          |
+| [x] [Newsletter No. 118](ONS_118.md) | [ ] [Journal Vol. 221](ONS_221.md) |          |
 | [ ] [Newsletter No. 119](ONS_119.md) |                    |          |
+| [x] [Newsletter No. 119](ONS_119.md) |                    |          |
 | [ ] [Newsletter No. 120](ONS_120.md) |                    |          |
+| [x] [Newsletter No. 120](ONS_120.md) |                    |          |
 | [ ] [Newsletter No. 121](ONS_121.md) |                    |          |
+| [x] [Newsletter No. 121](ONS_121.md) |                    |          |
 | **1990** | **2015** |          |
 | [ ] [Information Sheet 27](IS_027.md) | [ ] [Journal Vol. 222](ONS_222.md) |          |
 | [ ] [Information Sheet 28](IS_028.md) | [ ] [Journal Vol. 223](ONS_223.md) |          |
-| [ ] [Newsletter No. 122](ONS_122.md) | [ ] [Journal Vol. 224](ONS_224.md) |          |
+| [x] [Newsletter No. 122](ONS_122.md) | [ ] [Journal Vol. 224](ONS_224.md) |          |
 | [ ] [Newsletter No. 123](ONS_123.md) | [ ] [Journal Vol. 225](ONS_225.md) |          |
+| [ ] [Newsletter No. 122](ONS_122.md) | [ ] [Journal Vol. 224](ONS_224.md) |          |
+| [x] [Newsletter No. 123](ONS_123.md) | [ ] [Journal Vol. 225](ONS_225.md) |          |
 | [ ] [Newsletter No. 124](ONS_124.md) |                    |          |
 | [ ] [Newsletter No. 125](ONS_125.md) |                    |          |
 | [ ] [Newsletter No. 126](ONS_126.md) |                    |          |

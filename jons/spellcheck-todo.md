@@ -178,20 +178,20 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [ ] [Newsletter No. 123](ONS_123.md) | [ ] [Journal Vol. 225](ONS_225.md) |          |
 | [ ] [Newsletter No. 122](ONS_122.md) | [ ] [Journal Vol. 224](ONS_224.md) |          |
 | [x] [Newsletter No. 123](ONS_123.md) | [ ] [Journal Vol. 225](ONS_225.md) |          |
-| [ ] [Newsletter No. 124](ONS_124.md) |                    |          |
-| [ ] [Newsletter No. 125](ONS_125.md) |                    |          |
-| [ ] [Newsletter No. 126](ONS_126.md) |                    |          |
-| [ ] [Newsletter No. 127](ONS_127.md) |                    |          |
+| [x] [Newsletter No. 124](ONS_124.md) |                    |          |
+| [x] [Newsletter No. 125](ONS_125.md) |                    |          |
+| [x] [Newsletter No. 126](ONS_126.md) |                    |          |
+| [x] [Newsletter No. 127](ONS_127.md) |                    |          |
 | **1991** | **2016** |          |
 | [ ] [Occasional Paper 25](OP_025.md) | [ ] [Journal Vol. 226](ONS_226.md) |          |
 | [ ] [Occasional Paper 26](OP_026.md) | [ ] [Journal Vol. 227](ONS_227.md) |          |
-| [ ] [Newsletter No. 128](ONS_128.md) | [ ] [Journal Vol. 228](ONS_228.md) |          |
-| [ ] [Newsletter No. 129](ONS_129.md) | [ ] [Journal Vol. 229](ONS_229.md) |          |
-| [ ] [Newsletter No. 130](ONS_130.md) | [ ] [Journal Vol. 230](ONS_230.md) |          |
-| [ ] [Newsletter No. 131](ONS_131.md) |                    |          |
+| [x] [Newsletter No. 128](ONS_128.md) | [ ] [Journal Vol. 228](ONS_228.md) |          |
+| [x] [Newsletter No. 129](ONS_129.md) | [ ] [Journal Vol. 229](ONS_229.md) |          |
+| [x] [Newsletter No. 130](ONS_130.md) | [ ] [Journal Vol. 230](ONS_230.md) |          |
+| [x] [Newsletter No. 131](ONS_131.md) |                    |          |
 | **1992** | **2017** |          |
 | [ ] [Occasional Paper 27](OP_027.md) |                    |          |
-| [ ] [Newsletter No. 132](ONS_132.md) |                    |          |
+| [x] [Newsletter No. 132](ONS_132.md) |                    |          |
 | [ ] [Newsletter No. 133](ONS_133.md) |                    |          |
 | [ ] [Newsletter No. 134](ONS_134.md) |                    |          |
 | **1993** | **2018** |          |

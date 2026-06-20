@@ -2689,3 +2689,7 @@ Tughlug
 Vibhaji
 Yana
 Yajnasri
+# ONS_119 — ONS Newsletter 119: Coinage of Nepal (Lichhavi); Azes II Pallas coins (Bunir/Quetta hoards)
+Bunir
+Lichhavi
+Quetta

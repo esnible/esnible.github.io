@@ -2879,4 +2879,27 @@ Owbeh
 qasaba
 sarmuzd
 Shahfilan
+# ONS_121 — Tabaristan Afzut coinage; Khwarazmshah Tirmidh dirham; newsletter items
+AFZUT
+Afzut
+ANSMN
+Chagataid
+Chagataids
+Chaghaniyan
+Davidovitch
+Ebana
+Hattori
+Juvayni
+Khusru
+Mubaraki
+Qaridi
+Sacaraucae
+Sanjari
+Sikandari
+Sultani
+Takash
+Tirmidh
+Tirmidhi
+Yazdgard
+Zafiri
 Srecković

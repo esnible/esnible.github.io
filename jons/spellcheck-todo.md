@@ -164,7 +164,7 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [ ] [Information Sheet 27](IS_027.md) | [ ] [Journal Vol. 222](ONS_222.md) |          |
 | [ ] [Information Sheet 28](IS_028.md) | [ ] [Journal Vol. 223](ONS_223.md) |          |
 | [ ] [Newsletter No. 122](ONS_122.md) | [ ] [Journal Vol. 224](ONS_224.md) |          |
-| [ ] [Newsletter No. 123](ONS_123.md) | [ ] [Journal Vol. 225](ONS_225.md) |          |
+| [x] [Newsletter No. 123](ONS_123.md) | [ ] [Journal Vol. 225](ONS_225.md) |          |
 | [ ] [Newsletter No. 124](ONS_124.md) |                    |          |
 | [ ] [Newsletter No. 125](ONS_125.md) |                    |          |
 | [ ] [Newsletter No. 126](ONS_126.md) |                    |          |

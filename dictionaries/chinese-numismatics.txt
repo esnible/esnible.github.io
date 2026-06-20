@@ -299,3 +299,10 @@ Hollink
 Ramsden
 Schlegel
 Yongboonkird
+
+# ONS_120 — Chinese-Siamese pee coin terms and Wade-Giles romanizations
+fuang
+Hsieh
+salung
+Tien
+Yiian

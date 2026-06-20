@@ -2880,3 +2880,77 @@ qasaba
 sarmuzd
 Shahfilan
 Srecković
+
+# ONS_120 — Viking-age Islamic symposium scholars and places
+Fomin
+Jonsson
+Malmer
+Noonan
+Rispling
+Sigtuna
+
+# ONS_120 — Islamic coin terms and transliterations
+ahmar
+abyad
+Angrez
+Istakhr
+ISTAKHR
+Kampani
+Khumarawayh
+Raza
+Sebili
+Tawfiq
+
+# ONS_120 — Ilkhanid and Anatolian Beylik terms
+Beylik
+Eretnas
+
+# ONS_120 — Scholars cited in Mughal India review
+Braudel
+Carradice
+Irfan
+Kable
+Macafee
+Perlin
+Porteous
+Sharples
+
+# ONS_120 — UK place names (Royal Mint location)
+Glamorgan
+Llantrisant
+Pontyclun
+
+# ONS_120 — Ilkhanid Anatolian place names
+Beyshehir
+Erzerum
+Falakabad
+Qaisarije
+Sulaimanshehir
+Toqat
+
+# ONS_120 — Additional scholars and terms
+Lieber
+Oleg
+Schnadelbach
+Umayad
+
+# ONS_120 — Islamic dynasty variants
+Tulun
+Tulunid
+
+# ONS_120 — Moroccan mint name
+TAZA
+
+# ONS_120 — Viking-age symposium venue and publication terms
+Arlanda
+ANSMN
+Suecia
+
+# ONS_120 — Spanish coin denomination
+Reales
+
+# ONS_120 — German/French journal terms
+Geltgeschichtliche
+Mérinide
+Tibingen
+Tiibingen

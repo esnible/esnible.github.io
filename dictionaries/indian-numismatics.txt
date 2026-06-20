@@ -2598,3 +2598,23 @@ Tamilnadu
 # ONS_114 — Baroda pattern coins and North East India numismatics
 Choudhury
 Sayaji
+# ONS_115 — Indo-Scythian/Indo-Parthian hoards; Jital article; Iranian coinage
+Arsakes
+Aspavama
+Aspavarma
+Chakadara
+Damra
+Damri
+Dikaios
+Gondopharids
+Indravarma
+Jital
+Mardan
+nandipada
+Panjah
+Rupaya
+Sases
+scarcish
+surkhs
+Trimbakeshwar
+Tughlug

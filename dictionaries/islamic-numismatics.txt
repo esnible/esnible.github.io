@@ -262,6 +262,7 @@ Yildirim
 Zequin
 
 # German terms in scholarly publication titles
+Bibliothèque
 Bibliothek
 Archivum
 Archiv
@@ -634,6 +635,7 @@ yaft
 
 # British English spellings used in ONS publications
 annexe
+artefacts
 barbarised
 centralisation
 computerise
@@ -652,7 +654,9 @@ realised
 recognisable
 recognised
 recognising
+stylisation
 stylised
+unrecognised
 utilisation
 utilised
 visualised
@@ -2880,3 +2884,44 @@ qasaba
 sarmuzd
 Shahfilan
 Srecković
+
+# ONS_112 — Mrohaung dynasty Arakan coins; Sasanian-style drahms of Sijistan; misc ONS newsletter
+Addis
+afafd
+afzut
+Asif
+Basawpyu
+Baur
+Beylik
+Bishopsgate
+bism
+Bunyad
+Chatganu
+Chatsanah
+drahms
+Drahms
+Elichpur
+Hinrichs
+Älteren
+Ilkhanidischen
+Ilya
+Jahis
+Karpa
+Kamu
+Khari
+Léwenstrasse
+Litterae
+Machhlipatan
+Muina
+Narameikhla
+Nebehay
+Numismaticae
+Pergamon
+Raza
+sebili
+Schnadelbach
+Silberprägung
+sosk
+Vindobonenses
+Yazdgard
+yzdkrt

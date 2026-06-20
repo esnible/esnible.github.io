@@ -385,3 +385,9 @@ Guang
 Holcombe
 Kwun
 Taisei
+# ONS_120 — Chinese-Siamese pee coin terms and Wade-Giles romanizations
+fuang
+Hsieh
+salung
+Tien
+Yiian

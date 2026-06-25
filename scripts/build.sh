@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# This script runs pdfmd and OCRs ONS PDF files to generate Markdown without images.
+
 set -o xtrace
 
 PDFDIR=~/personal/src/ons-website/static/archive

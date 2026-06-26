@@ -546,3 +546,66 @@ Heidelberger
 Münzhandlung
 Tongzhi
 zhou
+
+# ONS_133 — Joe Cribb Sycee catalogue (British Museum)
+Eduard
+
+# ONS_134 — Kuche Bao Xin mint (Xinjiang); Hirayama Silk Road collection colloquium
+Aksu
+Dihua
+Dunhuang
+Hirayama
+Hongqian
+Ikuo
+Jiage
+Kuche
+KUCHE
+Mulu
+Shepens
+Tanabe
+Tuzhi
+Urumchi
+URUMCHI
+Zhoushan
+
+# ONS_135 — Chinese-Siamese porcelain pee coins (Hollink); Junk trade with Siam
+Chii
+Cushman
+Gowpi
+Hollink
+Kanton
+Karieng
+muang
+Pangkoy
+Pégouan
+risa
+Songpei
+Xang
+
+# ONS_136 — Shanghai Money Museum; Monnaies de Chine; Batavia lead picis (Dutch East Indies)
+banliang
+Banten
+huobiguan
+Japara
+Jiang
+jili
+Lingyuan
+paktong
+picis
+picol
+Qingzheng
+Qixiang
+Shifu
+Turfan
+wuzhu
+Xianzhong
+Yuewang
+
+# ONS_137 — Spade-money chronology (Kempgen); Malaysia kijang; China paper-money study
+Ivochkina
+Jishui
+Kiyang
+Viet
+
+# ONS_138 — Chinese currency in cultural context (Ivotchkina)
+Ivotchkina

@@ -193,11 +193,11 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 139](ONS_139.md) | [ ] [Journal Vol. 235](ONS_235.md) |          |
 | [x] [Newsletter No. 140](ONS_140.md) | [ ] [Journal Vol. 236](ONS_236.md) |          |
 | [x] [Newsletter No. 141](ONS_141.md) | [ ] [Journal Vol. 237](ONS_237.md) |          |
-| [ ] [Newsletter No. 142](ONS_142.md) | [ ] [Journal Vol. 238](ONS_238.md) |          |
+| [x] [Newsletter No. 142](ONS_142.md) | [ ] [Journal Vol. 238](ONS_238.md) |          |
 | **1995** | **2020** |          |
-| [ ] [Newsletter No. 143](ONS_143.md) | [ ] [Journal Vol. 239](ONS_239.md) |          |
-| [ ] [Newsletter No. 144](ONS_144.md) | [ ] [Journal Vol. 240](ONS_240.md) |          |
-| [ ] [Newsletter No. 145](ONS_145.md) | [ ] [Journal Vol. 241](ONS_241.md) |          |
+| [x] [Newsletter No. 143](ONS_143.md) | [ ] [Journal Vol. 239](ONS_239.md) |          |
+| [x] [Newsletter No. 144](ONS_144.md) | [ ] [Journal Vol. 240](ONS_240.md) |          |
+| [x] [Newsletter No. 145](ONS_145.md) | [ ] [Journal Vol. 241](ONS_241.md) |          |
 |                                              | [ ] [Journal Vol. 242](ONS_242.md) |          |
 
 

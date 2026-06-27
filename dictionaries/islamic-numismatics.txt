@@ -4771,3 +4771,29 @@ Suyurghatmish
 UWAIS
 Uzkand
 YADKAR
+
+# OP_028 — Imitations of the Folles of Constans II (Goodwin): Byzantine-Arab terms, scholars, places
+Byzantini
+cruciger
+exergual
+globus
+imitatives
+Karcha
+Kirkbride
+Ludd
+Metcalf
+Milstien
+officina
+Officina
+Palaestina
+unprovenanced
+Waage
+
+# OP_029 — Index of Interesting Items in the ONS Newsletter 1976–1992 (Wiggins): dynasties, rulers, places
+Arminiyya
+Ifriqiyya
+Khwarism
+Muhallab
+Sharmazan
+Wattasid
+Zubair

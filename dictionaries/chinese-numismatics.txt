@@ -609,3 +609,43 @@ Viet
 
 # ONS_138 — Chinese currency in cultural context (Ivotchkina)
 Ivotchkina
+
+# ONS_139 — Sinkiang 5 fen (miscal) silver pieces; Tibetan countermark on Mexican coin
+besh
+fung
+Gangsui
+gumush
+Kucha
+miscal
+obdan
+Qien
+# ONS_140 — Siamese porcelain tokens; Chinese publications; Russian bibliography on Xinjiang
+Aussergewohnliche
+Cerebryanie
+Geldformen
+Gongsi
+Gwoming
+Jiaju
+Jiangfong
+Kijang
+Liuliang
+lotteryhouse
+Mody
+Osbahr
+Qingdong
+Stadthistorisches
+sycees
+Tingxiang
+turkestana
+Vormiinzliche
+vostochnovo
+Wenchao
+Zahlungsmittel
+Zhencai
+Qiptchaq
+rrgya
+yata
+
+# ONS_141 — Fake Vietnamese stag-head taels article (François Thierry)
+Luong
+patinate

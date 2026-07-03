@@ -1,6 +1,6 @@
 ---
 name: fix-ocr
-description: Find and correct OCR errors in a Markdown file from the `jons/` corpus (Oriental Numismatic Society Information Sheets). The text is OCR'd from English-language PDFs that often contain rare Chinese, Islamic, or Indian numismatic terms and occasional stray Arabic glyphs. Use when the user asks to clean up, proofread, or fix OCR in a `.md` file.
+description: Find and correct OCR errors in a Markdown file from the `jons/` corpus (Oriental Numismatic Society publications — `IS_###` Information Sheets, `ONS_###` newsletters and journals, `OP_###` occasional papers, and a few bare-numbered files). The text is OCR'd from English-language PDFs that often contain rare Chinese, Islamic, or Indian numismatic terms and occasional stray Arabic glyphs. Use when the user asks to clean up, proofread, or fix OCR in a `.md` file.
 ---
 
 # fix-ocr
@@ -26,13 +26,19 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
 1. **Read the target file** in full so you have the surrounding context for every change.
 
-2. **Run cspell** against the file using the project config:
+2. **Run cspell** against the file using the project config. Use the positional output as your working list — it gives `line:col` for every occurrence, so you can jump straight to each one and you won't miss repeats:
+
+   ```
+   cspell --config cspell.config.yaml --no-progress "<path>"
+   ```
+
+   For the summary at the end, the deduplicated form is handy:
 
    ```
    cspell --config cspell.config.yaml --no-progress --no-summary --unique --words-only "<path>" | sort -u
    ```
 
-   This yields the unique unknown words. The project dictionaries (`dictionaries/{chinese,islamic,indian}-numismatics.txt`) already cover most legitimate terms, so anything that surfaces is either an OCR error or a numismatic term that should be dictionary-added.
+   The project dictionaries (`dictionaries/{chinese,islamic,indian}-numismatics.txt`) already cover most legitimate terms, so anything that surfaces is either an OCR error or a numismatic term that should be dictionary-added. Occurrence count is a useful signal: a token that appears several times spelled identically is probably a legitimate term; a one-off is more likely garble.
 
 3. **Classify each unknown word** by re-reading the line it appears on:
    - **OCR garble** — fix it via `Edit`. See "Common OCR error patterns" below.
@@ -40,12 +46,13 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    - **Proper noun the dictionaries don't cover** (modern scholar, place name, etc.) — also append to the closest-matching dictionary.
    - **Genuinely ambiguous** — leave it, and list it at the end for the user.
 
-   Use the file's overall subject (Chinese vs. Islamic vs. Indian) to bias judgment. The first paragraphs of the file usually make this obvious; the `IS_###.md` numbering is not a reliable signal.
+   Classify by the **article or paragraph the word appears in**, not the file as a whole. Single-topic files (most `IS_###` information sheets) have one subject throughout, but `ONS_###` newsletters mix Chinese, Islamic, and Indian articles in a single issue — a word from the Chinese-cash article and a word from the Mughal-mints article in the same file belong to different dictionaries. The surrounding article's subject is the signal; the file's numbering is not.
 
 4. **Also scan for OCR errors cspell will NOT catch.** Spellcheck only flags non-words. Many OCR errors are real words used wrongly, or punctuation/whitespace glitches. Do a targeted re-read for the patterns in "Beyond spellcheck" below.
 
-5. **Apply edits with the `Edit` tool**, one change at a time. For each edit:
+5. **Apply edits with the `Edit` tool**, one logical fix at a time. For each edit:
    - Quote enough surrounding context that `old_string` is unique.
+   - When the **same misreading recurs identically** (e.g., a name misread the same way ten times), fix all occurrences in one call with `replace_all` — the audit trail is identical either way. Unrelated fixes still go one per call.
    - Never change quoted historical spellings or transliterations you cannot verify — when unsure, leave it.
    - Do not edit inside fenced code blocks, inline code (`` ` ``), URLs, or image references. The corpus rarely contains these, but check before editing.
 
@@ -85,7 +92,15 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 
 ## Beyond spellcheck
 
-After cspell-driven fixes, re-scan the file for these patterns, which cspell cannot detect because the tokens are valid English words or punctuation:
+After cspell-driven fixes, re-scan the file for patterns cspell cannot detect because the tokens are valid English words or punctuation. Start with a mechanical grep pass — these are known corpus confusions, and grep is more reliable than re-reading:
+
+```
+grep -nE ' amd | tbe | tne | arid | Mc\. [A-Z]| am [aeiou]| 1n | 0f ' "<path>"
+```
+
+(`arid` for `and`, `Mc.` for `Mr.` before a surname, `1n`/`0f` for `in`/`of`.) Every hit needs judgment — `arid` is also a real word — so check each in context before editing. Extend this list when a new real-word confusion surfaces in the corpus.
+
+Then re-read for the patterns grep can't pin down:
 
 - **Doubled trailing letter** — `coinagee` → `coinage`, `dependenciese` → `dependencies`. Remove the spurious letter; never replace it with a period, even if the sentence then looks unfinished.
 - **Doubled lowercase `e` after a name** — `Ashoka'se`, `Mauryans'e` → `Ashoka's`, `Mauryans'`.
@@ -102,19 +117,37 @@ Three dictionaries live under `dictionaries/`:
 
 When a surfaced word is a legitimate term:
 
-1. Pick the dictionary that matches the file's subject. If the file is about Indian punchmarked coinage, terms go to `indian-numismatics.txt`. A scholar named in passing in a Chinese-numismatics article still goes into `chinese-numismatics.txt`.
-2. Find the right section comment in the file (`# Chinese place names`, `# Scholars of...`, etc.) and append the new word **in alphabetical order within its section**. If no section fits, append it under a new comment heading at the end.
-3. Preserve case as it appears in the text (e.g., `Karshapana` not `karshapana`), and add a lowercase variant too if the text uses it both ways.
-4. Do not add transliterated glyphs that contain only non-Latin characters — cspell's `ar` dictionary handles Arabic.
-5. After appending, re-run cspell to confirm the term no longer surfaces.
+1. **Only add a word you are confident is correct**, not merely plausible. A dictionary entry permanently masks that spelling corpus-wide — if a garbled token gets added, every future occurrence of the same garble sails through spellcheck. Borderline cases go in the "left alone" report instead.
+2. **Check it isn't already there.** The dictionaries are large enough that duplicates — including a copy in the *wrong* dictionary — won't be caught by eye:
+
+   ```
+   grep -inx "<word>" dictionaries/*.txt
+   ```
+
+   If it's already in another dictionary, don't add a second copy; mention it in the report if it looks misfiled.
+3. Pick the dictionary that matches the subject of the article the word appears in. If the article is about Indian punchmarked coinage, terms go to `indian-numismatics.txt`. A scholar named in passing in a Chinese-numismatics article still goes into `chinese-numismatics.txt`.
+4. Find the right section comment in the file (`# Chinese place names`, `# Scholars of...`, etc.) and append the new word **in alphabetical order within its section**. If no section fits, append it under a new comment heading at the end.
+5. Preserve case as it appears in the text (e.g., `Karshapana` not `karshapana`), and add a lowercase variant too if the text uses it both ways.
+6. Do not add transliterated glyphs that contain only non-Latin characters — cspell's `ar` dictionary handles Arabic.
+7. After appending, re-run cspell to confirm the term no longer surfaces.
 
 ## Verification
 
-After all edits and dictionary updates, run cspell once more and confirm that the remaining unknown words are intentional (foreign-language glosses, proper nouns the user does not want dictionary-added, etc.). Report those in the final summary.
+After all edits and dictionary updates:
+
+1. **Check the line-break invariant mechanically.** Every fix is an in-line substitution, so the diff must not change the file's line structure:
+
+   ```
+   git diff --numstat "<path>"
+   ```
+
+   Added lines must equal deleted lines. If they differ, a line break was merged or a line was deleted — find and undo that change before anything else.
+
+2. **Run cspell once more** and confirm that the remaining unknown words are intentional (foreign-language glosses, proper nouns the user does not want dictionary-added, etc.). Report those in the final summary.
 
 ## Update the TODO tracker
 
-After verification passes, check the box for this file in `jons/spellcheck-todo.md`. The entry looks like `[ ] [Information Sheet 01](IS_001.md)` — change `[ ]` to `[x]`. If the file is not listed there (rare — only for newly-added files), add it under "Files not in the published archive" at the bottom of that page.
+After verification passes, check the box for this file in `jons/spellcheck-todo.md`. Entries live inside Markdown tables organized by year — a cell looks like `| [ ] [Newsletter No. 152](ONS_152.md) |` — so quote the checkbox together with the link text to make the edit unique, and change `[ ]` to `[x]`. If the file is not listed there (rare — only for newly-added files), add it under the "Files not in the published archive" section at the bottom of that page.
 
 ## What NOT to do
 
@@ -126,5 +159,5 @@ After verification passes, check the box for this file in `jons/spellcheck-todo.
 - Don't change British spellings to American or vice versa.
 - Don't "correct" historical or transliteration variants (e.g., `Maurya` vs. `Mauryan`, `Karshapana` vs. `Kārṣāpaṇa`).
 - Don't touch headings, image alt text, or front matter unless they contain obvious OCR garble.
-- Don't batch many unrelated edits into a single `Edit` call — one logical fix per call so the user can audit the diff.
+- Don't batch many unrelated edits into a single `Edit` call — one logical fix per call so the user can audit the diff. (`replace_all` on one recurring identical misreading is fine.)
 - Don't add words to multiple dictionaries to be safe — pick the right one.

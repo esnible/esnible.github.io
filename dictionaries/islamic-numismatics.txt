@@ -486,15 +486,12 @@ Sehm
 Mutahhar
 Fethname
 Tarikh
-Ozdemiir
 Rustem
 Pascha
 Selman
 Khadim
 Nauta
-Kiirkman
 Ozbaran
-Ciineyt
 Yaman
 Hadrami
 Vthmani
@@ -584,7 +581,6 @@ Meiracker
 Tian
 Fanalysis
 Goot
-auriifound
 
 # ONS_146 — Mints, rulers, scholars, coin terms
 Sulaymam
@@ -1860,7 +1856,6 @@ Kupferpragung
 Mandell
 Mogadisciu
 Nayeb
-Ortokiieden
 Roever
 Sulejman
 Trompenburg
@@ -2422,7 +2417,6 @@ Iltutmish
 vijaye
 Bakhtiyar
 Dayal
-Telechiik
 Minhaj
 Nasawi
 Raverty
@@ -2831,7 +2825,6 @@ Togat
 Turcoman
 Zilhijja
 Dawalu
-Goriilmiyen
 Guhurga
 Isiltan
 Malazgird
@@ -3582,8 +3575,6 @@ Reales
 # ONS_120 — German/French journal terms
 Geltgeschichtliche
 Mérinide
-Tibingen
-Tiibingen
 # ONS_123 — ONS Newsletter 123: Yarmouk Numismatics; Lowick volumes; Umayyad mystery mint
 Aferidegar
 Alem
@@ -3743,7 +3734,6 @@ Aydin
 Babol
 Bagdad
 Barforushdeh
-Biilten
 Bilten
 Budje
 Budju
@@ -3754,10 +3744,8 @@ Exonumia
 Farahabad
 follaro
 Fraehn
-giimiis
 Ispahbuds
 Jarique
-Jiirgen
 Kanuni
 Karaman
 kharub
@@ -3765,15 +3753,12 @@ Kharub
 Lérida
 Mazandaran
 Medallistica
-Miinzzentrum
 Mikeska
 Molk
 Moneda
 Muhyi
 Nasri
 Nazan
-Niimismatik
-Niitzel
 Nimruz
 qarib
 Rouzat
@@ -3787,7 +3772,6 @@ Tabarestan
 Tafel
 Tapurs
 Taqdemt
-Tiirk
 Tlemsen
 Torkeman
 Turkiye
@@ -3994,7 +3978,6 @@ devrinde
 Eurocheques
 Fachbereich
 Fatamid
-fiir
 Ganske
 Gilles
 Gustave
@@ -4018,10 +4001,6 @@ Maghrib
 Majdayn
 Manghir
 Mecmuasi
-Miinzblatter
-Miinzen
-Miinzsammler
-Miinzsammlung
 Mogollar
 Mondial
 Negara
@@ -4404,7 +4383,6 @@ menghirs
 Mesopotamians
 mesures
 metrologist
-Miinzprdgungen
 Milla
 Misri
 monétaire
@@ -4432,9 +4410,6 @@ Sahillioglu
 Saif
 salaires
 Schoenawa
-Sebiibtigin
-Sebiiktigin
-Sebiktigin
 Sidre
 slamic
 Soms
@@ -4484,7 +4459,6 @@ Universitario
 Warburg
 Xusro
 Yezdgird
-Ziirich
 
 # ONS_136 — Ghaznavid metrology (Tye); Turkoman figural bronzes; Greek Nom. Khron. journal; Dutch/Belgian numismatics
 Agiasos
@@ -4526,7 +4500,6 @@ Posta
 Provincie
 Kutusu
 Regoudy
-Riidinger
 Roudometof
 Saminid
 Sasanid
@@ -4599,17 +4572,9 @@ Farrukhan
 Fato
 Francklin
 Frangais
-Friihe
-Gdbl
-Gébl
-Goébl
 Goussous
-Giileg
-Giinay
 Gewerbe
 Gewichte
-Gliicksknote
-Ghiiri
 Hackens
 Hegelplatz
 Hibri
@@ -4635,8 +4600,6 @@ manqir
 marbuta
 Maydin
 médiéval
-Miinstersche
-Miinzgeschichte
 mintname
 misstrikes
 MMAJ
@@ -4664,14 +4627,12 @@ Qawain
 Rhomdhane
 ricco
 royaume
-Saarbriicken
 saadet
 Selcguklu
 Séleucides
 Séminaire
 sepoys
 siécles
-Spatenmiinzen
 splendour
 Splendour
 Stakhr
@@ -4685,7 +4646,6 @@ Taiz
 Tarawneh
 Tariakh
 Tayeb
-Teilstiicke
 Thionésios
 trésors
 Tuma
@@ -4705,7 +4665,6 @@ Asstt
 Boran
 Clain
 computerisation
-diigiimii
 EPIE
 IAEWC
 inédites
@@ -4893,7 +4852,6 @@ Mehmood
 Mermar
 Mesrutiyet
 Mihaly
-Miinzpraegungen
 Mubeen
 Naskali
 Ninib
@@ -4925,7 +4883,6 @@ Tritton
 Unvanlar
 Urdunn
 Urtuki
-Uskiidar
 Uveys
 Verilen
 Westport
@@ -5299,7 +5256,6 @@ Ulaan
 ulus
 Vickers
 Wasmuth
-Ziircher
 Zunbal
 Ashgate
 Biblios
@@ -5309,7 +5265,6 @@ Dmitry
 Eldert
 Erdenet
 Horsham
-Miinzkabinett
 Montrado
 
 # ONS_144 — Maldives bibliography; Afghan Barakzai coinage; Croatia numismatic congress; Arab-Byzantine forum
@@ -5346,7 +5301,6 @@ Kohandil
 Kuda
 laan
 Lakkadiven
-Lann
 Larrees
 Lovran
 Maldiverne
@@ -5474,7 +5428,6 @@ Maisons
 Musées
 Papiergeld
 Schanzengasse
-Schiittenhelm
 Schweikert
 Sehan
 Sternberg
@@ -5646,7 +5599,6 @@ Discipliny
 Djaparidze
 Elymais
 Farkhandah
-fuliis
 Ghitrif
 Ghitrifi
 Goncharev
@@ -6107,8 +6059,6 @@ Azilizes
 Badaulat
 Bellaire
 Barka
-bntish
-bntishmuseumcompany
 Bulten
 Chirvani
 Cordry
@@ -6259,150 +6209,22 @@ russisch
 russischen
 Schweizerstr
 Schrötter's
-Silbermiinzen
 Sprachen
 turkisch
 Valeur
 Vorderen
 
 # ONS_157 — Greek bibliography OCR fragments
-Aaamaxou
-Aaoypa
-AEOPOU
-AEOPOV
-AHMOFEPONTIA
-aicova
-Aioiic
-aipjtayi
-Aivap
-AJDAIABHNOU
-Ajto
-Arino
-ATOPOI
-Auxo
-avay
-Avixoicpaxopia
-Avxo
-axov
-axriv
-axuv
-Ayopai
-Collec
-Collectio
-Copyiono'u
-DISAROU
-EKKX
-EKKXTJCIICOV
-Epivi
-EPONTIA
-Epov
-FIAPAAEZ
-fiya
-flpo
-Gconavi
-Geschenkmunzen
-Goldmiinzen
-ianaxa
-icai
 Idan
-IIAPAA
-iiop
-JIEOO
-Jtoi
-Kaaxopiava
 kabrr
 kathrr
 Kaun
-Kaxa
-Kmvaxavxivo
-Koapoq
-Koiufï
-Kpaxiai
-Kpaxopia
-KXIKO
-lapic
-MAIUIME
-Mapic
-MONON
-MOUOEIO
-Mpou
 mtrd
 mtrdt
 ndur
-Noniafioxi
-Nopianaxa
-Oana
-Oavapi
-Oconavi
-Oetoiiavi
-ojioio
-Oriaaupiana
-orizontal
-orked
-PAFIZ
-PIOY
-poai
-Srii
-SSGODC
 Taman
-Tcevaicri
-texf
-Tiaiaaxi
-Tifia
-Tiviano
-Tixiic
-Tixoxcopia
-Tjoiaaxi
-Toup
-tspi
-Ttaöo
-Ttou
-Ttucrii
-Ulene
 umdas
-Uodotos
-UTCOSOVIXOU
-vojiionaxoiv
-vomana
-voniap
-vopiapaxa
 wafiya
-Xajiov
-Xaöi
-Xapx
-Xapxovonianaxa
-xcapiou
-xcav
-xcüpo
-XDPIOY
-xmpiou
-Xocpopiac
-Xocpopiai
-xofiiicr
-Xoiirtiai
-Xopxiv
-Xoyot
-xpia
-Xriaiac
-Xrioiaaxiic
-Xrivi
-Xriviicwv
-Xrjaiaaxi
-Xrjviajiou
-Xunrtoaiou
-Yavuxr
-YE'up
-Zipoc
-Zipoi
-Zipoq
-ZIPOZ
-ZKAABOYX
-ZVXXEICXIICO
-cruax
-EHchpur
-Hchpur
-Ojtttm
-Schi
 
 # ONS_157 — Additional legitimate terms
 altun

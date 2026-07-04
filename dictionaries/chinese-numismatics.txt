@@ -357,7 +357,6 @@ sexagonary
 shopsign
 Siamois
 Similien
-Ssii
 Tehua
 populaires
 # ONS_118 — Japanese multiple cash; Chinese pisciform tally; Wu-Chu coinage
@@ -390,7 +389,6 @@ fuang
 Hsieh
 salung
 Tien
-Yiian
 # ONS_121 — Siamese porcelain pee tokens (Part II): scholars, terms
 fuang
 Juray
@@ -469,7 +467,6 @@ Difang
 Geshe
 Harrers
 Himal
-Hsiian
 Huaiyuan
 Huobishi
 Impressionen
@@ -530,15 +527,12 @@ Chévillard
 chinesisch
 Ethnographie
 Hsiang
-Hsii
 Mongkut
 Ostasiatische
 Pallegoix
 Porzellan
-Porzellanmiinzen
 Shihkai
 Simillien
-Tzii
 # ONS_132 — Guang Xu 'Thousand Character' Coins article; Late News German auction
 Grün
 Hartill
@@ -569,7 +563,6 @@ URUMCHI
 Zhoushan
 
 # ONS_135 — Chinese-Siamese porcelain pee coins (Hollink); Junk trade with Siam
-Chii
 Cushman
 Gowpi
 Hollink
@@ -637,7 +630,6 @@ Stadthistorisches
 sycees
 Tingxiang
 turkestana
-Vormiinzliche
 vostochnovo
 Wenchao
 Zahlungsmittel

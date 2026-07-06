@@ -1215,3 +1215,8 @@ Yangwu
 Gabsch
 Kanding
 skarkang
+
+# ONS_160 — Chinese cash (Ping An tong bao) and Xinjiang Qarakhanid references
+Heiganchao
+Urumuqi
+Yuanjie

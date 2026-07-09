@@ -25,12 +25,12 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | **1973** | **1998** | **2023** |
 | [x] [Information Sheet 04](IS_004.md) | [x] [Newsletter No. 157](ONS_157.md) |  |
 | [x] [Information Sheet 05](IS_005.md) | [x] [Newsletter No. 158](ONS_158.md) |  |
-| [x] [Information Sheet 06](IS_006.md) | [ ] [Newsletter No. 159](ONS_159.md) |  |
+| [x] [Information Sheet 06](IS_006.md) | [x] [Newsletter No. 159](ONS_159.md) |  |
 | [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) |  |
 | **1974** | **1999** | **2024** |
 | [x] [Occasional Paper 01](OP_001.md) | [x] [Newsletter No. 160](ONS_160.md) |  |
-| [x] [Occasional Paper 02](OP_002.md) | [ ] [Newsletter No. 161](ONS_161.md) |  |
-| [x] [Occasional Paper 03](OP_003.md) | [ ] [Newsletter No. 162](ONS_162.md) |  |
+| [x] [Occasional Paper 02](OP_002.md) | [x] [Newsletter No. 161](ONS_161.md) |  |
+| [x] [Occasional Paper 03](OP_003.md) | [x] [Newsletter No. 162](ONS_162.md) |  |
 | [x] [Occasional Paper 04](OP_004.md) |                    |  |
 | [x] [Occasional Paper 05](OP_005.md) |                    |          |
 | [x] [Occasional Paper 06](OP_006.md) |                    |          |
@@ -39,8 +39,8 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Information Sheet 09](IS_009.md) |                    |          |
 | [x] [Information Sheet 10](IS_010.md) |                    |          |
 | **1975** | **2000** | **2025** |
-| [x] [Occasional Paper 08](OP_008.md) | [ ] [Newsletter No. 163](ONS_163.md) |  |
-| [x] [Occasional Paper 09](OP_009.md) | [ ] [Newsletter No. 164](ONS_164.md) |  |
+| [x] [Occasional Paper 08](OP_008.md) | [x] [Newsletter No. 163](ONS_163.md) |  |
+| [x] [Occasional Paper 09](OP_009.md) | [x] [Newsletter No. 164](ONS_164.md) |  |
 | [x] [Information Sheet 11](IS_011.md) | [ ] [Newsletter No. 165](ONS_165.md) |  |
 | [x] [Information Sheet 12](IS_012.md) | [ ] [Newsletter No. 166](ONS_166.md) |  |
 |                      | [ ] [Newsletter No. 167](ONS_167.md) |          |

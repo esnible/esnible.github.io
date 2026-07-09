@@ -6303,6 +6303,7 @@ Kastamonu
 Kemankesh
 Ketmen
 khaqanate
+khaqanates
 Khaqans
 Khidr
 Khogend
@@ -6454,3 +6455,34 @@ Walwalij
 Xusrö
 Yaghan
 Zubayrite
+
+# ONS 166 — ONS newsletter: Mughal copper coinage of Burhanpur/Narnol
+falüs
+
+# ONS_165 — Umayyad dirham auction mints; Qarakhanid review (Fedorov); Ottoman/Crimean/Mamluk articles
+Bahurasir
+Bardasir
+Bihqubah
+Dasht
+Fasa
+Karachanide
+Karakhanid
+Madina
+Sothebys
+
+# ONS_165 — Qarakhanid coins of Usrushana/Khojende/Farghana; Fedorov article; scholars and Russian bibliography terms
+Buniyatov
+Fergany
+Ferganskii
+Karakhanidskikh
+Khodzhendskii
+Kushani
+Musul'manskii
+Peterburg
+Sabi
+Soghdiana
+Tadzhikistana
+Tekesh
+Ustrushany
+Zaamin
+Zaamina

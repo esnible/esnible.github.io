@@ -76,36 +76,36 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | **1979** | **2004** |          |
 | [x] [Occasional Paper 12](OP_012.md) | [x] [Newsletter No. 178](ONS_178.md) |          |
 | [x] [Occasional Paper 13](OP_013.md) | [x] [Newsletter No. 179](ONS_179.md) |          |
-| [x] [Information Sheet 21](IS_021.md) | [ ] [Newsletter No. 180](ONS_180.md) |          |
-| [x] [Newsletter No. 58](ONS_058.md) | [ ] [Newsletter No. 181](ONS_181.md) |          |
+| [x] [Information Sheet 21](IS_021.md) | [x] [Newsletter No. 180](ONS_180.md) |          |
+| [x] [Newsletter No. 58](ONS_058.md) | [x] [Newsletter No. 181](ONS_181.md) |          |
 | [x] [Newsletter No. 59](ONS_059.md) |                    |          |
 | [x] [Newsletter No. 60](ONS_060.md) |                    |          |
 | [x] [Newsletter No. 61](ONS_061.md) |                    |          |
 | [x] [Newsletter No. 62-3](ONS_062-063.md) |                    |          |
 | **1980** | **2005** |          |
-| [x] [Occasional Paper 14](OP_014.md) | [ ] [Newsletter No. 182](ONS_182.md) |          |
-| [x] [Occasional Paper 15](OP_015.md) | [ ] [Newsletter No. 183](ONS_183.md) |          |
-| [x] [Information Sheet 22](IS_022.md) | [ ] [Newsletter No. 184](ONS_184.md) |          |
-| [x] [Newsletter No. 64](ONS_064.md) | [ ] [Newsletter No. 185](ONS_185.md) |          |
+| [x] [Occasional Paper 14](OP_014.md) | [x] [Newsletter No. 182](ONS_182.md) |          |
+| [x] [Occasional Paper 15](OP_015.md) | [x] [Newsletter No. 183](ONS_183.md) |          |
+| [x] [Information Sheet 22](IS_022.md) | [x] [Newsletter No. 184](ONS_184.md) |          |
+| [x] [Newsletter No. 64](ONS_064.md) | [x] [Newsletter No. 185](ONS_185.md) |          |
 | [x] [Newsletter No. 65](ONS_065.md) |                    |          |
 | [x] [Newsletter No. 66](ONS_066.md) |                    |          |
 | [x] [Newsletter No. 67](ONS_067.md) |                    |          |
 | [x] [Newsletter No. 68](ONS_068.md) |                    |          |
 | [x] [Newsletter No. 69](ONS_069.md) |                    |          |
 | **1981** | **2006** |          |
-| [x] [Occasional Paper 16](OP_016.md) | [ ] [Journal Vol. 186](ONS_186.md) |          |
-| [x] [Information Sheet 23](IS_023.md) | [ ] [Journal Vol. 187](ONS_187.md) |          |
-| [x] [Newsletter No. 70](ONS_070.md) | [ ] [Journal Vol. 188](ONS_188.md) |          |
-| [x] [Newsletter No. 71](ONS_071.md) | [ ] [Journal Vol. 189](ONS_189.md) |          |
+| [x] [Occasional Paper 16](OP_016.md) | [x] [Journal Vol. 186](ONS_186.md) |          |
+| [x] [Information Sheet 23](IS_023.md) | [x] [Journal Vol. 187](ONS_187.md) |          |
+| [x] [Newsletter No. 70](ONS_070.md) | [x] [Journal Vol. 188](ONS_188.md) |          |
+| [x] [Newsletter No. 71](ONS_071.md) | [x] [Journal Vol. 189](ONS_189.md) |          |
 | [x] [Newsletter No. 72](ONS_072.md) |                    |          |
 | [x] [Newsletter No. 73](ONS_073.md) |                    |          |
 | [x] [Newsletter No. 74](ONS_074.md) |                    |          |
 | [x] [Newsletter No. 75](ONS_075.md) |                    |          |
 | **1982** | **2007** |          |
-| [x] [Information Sheet 24](IS_024.md) | [ ] [Journal Vol. 190](ONS_190.md) |          |
-| [x] [Newsletter No. 76](ONS_076.md) | [ ] [Journal Vol. 191](ONS_191.md) |          |
-| [x] [Newsletter No. 77](ONS_077.md) | [ ] [Journal Vol. 192](ONS_192.md) |          |
-| [x] [Newsletter No. 78](ONS_078.md) | [ ] [Journal Vol. 193](ONS_193.md) |          |
+| [x] [Information Sheet 24](IS_024.md) | [x] [Journal Vol. 190](ONS_190.md) |          |
+| [x] [Newsletter No. 76](ONS_076.md) | [x] [Journal Vol. 191](ONS_191.md) |          |
+| [x] [Newsletter No. 77](ONS_077.md) | [x] [Journal Vol. 192](ONS_192.md) |          |
+| [x] [Newsletter No. 78](ONS_078.md) | [x] [Journal Vol. 193](ONS_193.md) |          |
 | [x] [Newsletter No. 79](ONS_079.md) | [ ] [193 Supl.](ONS_Supplement_193.md) |          |
 | [x] [Newsletter No. 80](ONS_080.md) |                    |          |
 | [x] [Newsletter No. 81](ONS_081.md) |                    |          |

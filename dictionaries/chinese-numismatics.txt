@@ -1230,3 +1230,19 @@ Jishuitan
 Huaiyin
 Urumqi
 Xinjiang
+
+# ONS_181 — Origin of the Kushans (Fedorov)
+Hsiung
+Hyrkod
+Khalchaian
+Tocharians
+Tukharas
+Yueji
+Yuehchih
+
+# ONS_188 — Zhi-zheng tong-bao cash coins of the Yuan dynasty (Belyaev and Sidorovich)
+Boqi
+Xingwei
+
+# ONS_188 — Memento pot duang gold coin of King Phetracha (Mihailovs and Krisadaolarn)
+Ayuthaya

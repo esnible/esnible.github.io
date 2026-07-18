@@ -5311,3 +5311,182 @@ Peucolaos
 Telephos
 Theophilos
 Trihemiobol
+
+# ONS_180 — Angrey/Maratha naval dynasty and Konkan coinage (Bhandare)
+Alibag
+Alibagi
+Alibaug
+Angarwadi
+ankusa
+Ankush
+Ankusi
+Angrey
+Angreys
+Angria
+Awalaskar
+Baburao
+Bajirao
+Balajirao
+Belgaum
+Bettikerra
+Bharata
+Biwalkar
+Chandrojirao
+Colaba
+Damodar
+Dhabu
+Dharmaweer
+Dhondji
+Ghena
+Gheria
+Kadams
+Kanhoji
+Khandoba
+Kittoor
+Kolaba
+Manaji
+Padshapoor
+Raghoji
+Sambhaji
+Sambhajirao
+Samshodhaka
+Sankhpal
+Sarkhel
+Scindia
+Scindias
+Sekhoji
+Shakawali
+Shankhaparya
+Tulaji
+Vijayadurg
+Wazarat
+Yashodabai
+Yessji
+
+# ONS_180 — Malayaman coinage (Pieper)
+Brahmi
+Kolkata
+
+# ONS_181 — Transitional mints of the Deccan / Bombay Presidency (Stevens)
+Ahmednuggur
+Ankoosee
+Candeish
+Chandore
+Deshasth
+Hali
+Hallee
+Jeereeputka
+Kumavisdar
+Nassick
+Pridmore
+Tanksale
+Vaphgaon
+
+# ONS_182 — Saurashtra/Surasena punchmarked coinage (van't Haaff review); Anjengo coinage (Bhandare)
+Anandghar
+Anjuthengu
+Chirakkal
+Kannur
+Mahajanapadas
+Pradyota
+
+# ONS_183 — Malwa Sultans (Kulkarni); Coinage of Panna (Tabor)
+Chhatarsal
+Yazdani
+
+# ONS_184 — Maratha issues of Ahmedabad (Bhandare)
+Damaji
+Dengley
+Gaikwads
+Kamavati
+Pilaji
+Shahu
+Trimbakji
+
+# ONS_184 — Achyu coins of Ahichhatra (Pieper)
+Achyu
+Ganapatinaga
+Nagasena
+Panchalas
+
+# ONS_184 — Sikh coinage: Dar Jhang legend / Nanakshahi coin (Dora, Gujral)
+Sialan
+Vikrami
+
+# ONS_185 — Andhra janapada coins from Singavaram (Puljal and Reddy)
+Aravamuthan
+Battiprolu
+Jaggayyapeta
+Singavaram
+
+# ONS_185 — Tibetan Tangka with Ranjana script (Bertsch)
+Cybikov
+Kaslove
+Ranjana
+
+# ONS_186 — 18th Century Coinage of the Cuddapah Region (Bhandare)
+Aprānji
+Cuddapah
+Dabhol
+Ganjikota
+Gurramkonda
+Kharpā
+Miyān
+Miyānā
+Rajapuri
+Sangameshwar
+Siddhaut
+Tarpatri
+
+# ONS_187 — Hunnic bronzes of Kashmir Smast; Gakhars of Potohar (Ziad, Tareen)
+Gakhars
+Ijaz
+Khingila
+Kidara
+Mihirakula
+Muqarrab
+Nazek
+Senmurv
+Smast
+Toramana
+Waleed
+Ziad
+
+# ONS_189 — Chiuli fanams of Ramnad; Vijaya Raghunatha legend on coins of Tanjore/Pudukkottai (Mears)
+Chiuli
+Kilakkarai
+Pudukkottai
+Ramnad
+Sethupatis
+Thambis
+
+# ONS_190 — Marathas in Malwa; Maratha seals from Konkan and Deccan (Bhandare)
+Pawar
+Watan
+Watandar
+
+# ONS_190 — A unique punch-marked gold Gadyana of Kirtti(deva) (Bhandare)
+Kirttideva
+
+# ONS_190 — The Budkee, an enigmatic Sikh coin (Herrli)
+budkee
+
+# ONS_190 — Sriksetra silver coins produced on the Chandra weight standard (Mihailovs and Krisadaolarn)
+Sriksetra
+
+# ONS_191 — Vishwasimha, son of Rudradaman: a new Western Kshatrapa ruler (Bhandare)
+Vishwasimha
+
+# ONS_192 — The Nawabs of Savanur: history and coinage (Bhandare)
+Bankapur
+Gokak
+Sampgaon
+Savanur
+Torgal
+
+# ONS_193 — Kaman and Kosi mints (Bhandare); Pierre Sonnerat's South Indian coins (Herrli)
+Hoysala
+Kaman
+Kosi
+Sonnerat
+Udaiyarpalayam

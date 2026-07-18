@@ -5299,3 +5299,15 @@ Kumbher
 Mahindrapur
 mriga
 Phulkian
+
+# ONS_179 — Indo-Greek and Bactrian kings: rulers, scholars, terms
+Agathocles
+Antiochos
+Epiphanes
+Megalos
+Nikator
+Pantaleon
+Peucolaos
+Telephos
+Theophilos
+Trihemiobol

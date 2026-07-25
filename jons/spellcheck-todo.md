@@ -106,18 +106,18 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 76](ONS_076.md) | [x] [Journal Vol. 191](ONS_191.md) |          |
 | [x] [Newsletter No. 77](ONS_077.md) | [x] [Journal Vol. 192](ONS_192.md) |          |
 | [x] [Newsletter No. 78](ONS_078.md) | [x] [Journal Vol. 193](ONS_193.md) |          |
-| [x] [Newsletter No. 79](ONS_079.md) | [ ] [193 Supl.](ONS_Supplement_193.md) |          |
+| [x] [Newsletter No. 79](ONS_079.md) | [x] [193 Supl.](ONS_Supplement_193.md) |          |
 | [x] [Newsletter No. 80](ONS_080.md) |                    |          |
 | [x] [Newsletter No. 81](ONS_081.md) |                    |          |
 | **1983** | **2008** |          |
-| [x] [Occasional Paper 17](OP_017.md) | [ ] [Journal Vol. 194](ONS_194.md) |          |
-| [x] [Information Sheet 25](IS_025.md) | [ ] [Journal Vol. 195](ONS_195.md) |          |
-| [x] [Newsletter No. 82-3](ONS_082-083.md) | [ ] [Journal Vol. 196](ONS_196.md) |          |
-| [x] [Newsletter No. 84](ONS_084.md) | [ ] [Journal Vol. 197](ONS_197.md) |          |
+| [x] [Occasional Paper 17](OP_017.md) | [x] [Journal Vol. 194](ONS_194.md) |          |
+| [x] [Information Sheet 25](IS_025.md) | [x] [Journal Vol. 195](ONS_195.md) |          |
+| [x] [Newsletter No. 82-3](ONS_082-083.md) | [x] [Journal Vol. 196](ONS_196.md) |          |
+| [x] [Newsletter No. 84](ONS_084.md) | [x] [Journal Vol. 197](ONS_197.md) |          |
 | [x] [Newsletter No. 85-6](ONS_085-086.md) | [ ] [197 Supl.](ONS_Supplement_197.md) |          |
 | [x] [Newsletter No. 87](ONS_087.md) |                    |          |
 | **1984** | **2009** |          |
-| [x] [Occasional Paper 18](OP_018.md) | [ ] [Journal Vol. 198](ONS_198.md) |          |
+| [x] [Occasional Paper 18](OP_018.md) | [x] [Journal Vol. 198](ONS_198.md) |          |
 | [x] [Information Sheet 26](IS_026.md) | [ ] [Journal Vol. 199](ONS_199.md) |          |
 | [x] [Newsletter No. 88](ONS_088.md) | [ ] [Journal Vol. 200](ONS_200.md) |          |
 | [x] [Newsletter No. 89](ONS_089.md) | [ ] [Journal Vol. 201](ONS_201.md) |          |

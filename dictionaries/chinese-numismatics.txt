@@ -1353,3 +1353,17 @@ Terrien
 Thibet
 tshags
 zhol
+
+# ONS_204 — Extracting copper for casting coins during the Yuan dynasty (Sidorovich)
+Chengping
+Dexing
+Franke
+Kartashov
+Pavel
+Qianshan
+Raozhou
+Ratchnevsky
+Sidorovich
+Xingli
+Xinzhou
+Zhili

@@ -6365,3 +6365,56 @@ reshamasah
 maal
 Told
 Tolds
+
+# ONS_204 — Auspicious Symbols and Ancient Coins of Myanmar review (Robinson); Index Geographicus Indicus review (Tabor); Ranbir Singh Dogra coins (Rhodes); Palembang Shi-dan pitis (Jih); More Members' News
+Avahouse
+Baness
+Dedaye
+Dipo
+Frowde
+Geographicus
+Hominum
+Htun
+Indicus
+Javaman
+Konbaung
+Koninklijk
+Oswal
+Oudheidkundig
+Palembang
+Pangeran
+Parveen
+pitis
+Remick
+Salvator
+Sanjeev
+Shatrughan
+shwepyisoe
+soutan
+Veera
+
+# ONS_205 — Mughal/Bengal Nazarana coins: Mihrabi legends, Mustaqir al-Khilafa, Karimabad mint, Delwara mint (Bhandare)
+Delwara
+Dholera
+Dohad
+Halwad
+Karimabad
+Kathiawad
+Mihrabi
+mustaqir
+Mustaqir
+Sirohi
+
+# ONS_205 — Coins of Ratlam state, 1773-1857 (introduction and catalogue)
+Bhairisal
+Chandirjhar
+Chhatrasal
+Dhamrode
+Hattehsingh
+Raoti
+Sajjan
+
+# ONS_205 — Contents of the Supplement to Journal 205
+Adivaraha
+Gondia
+SSIC

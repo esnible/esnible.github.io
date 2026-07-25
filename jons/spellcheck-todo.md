@@ -119,12 +119,12 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | **1984** | **2009** |          |
 | [x] [Occasional Paper 18](OP_018.md) | [x] [Journal Vol. 198](ONS_198.md) |          |
 | [x] [Information Sheet 26](IS_026.md) | [ ] [Journal Vol. 199](ONS_199.md) |          |
-| [x] [Newsletter No. 88](ONS_088.md) | [ ] [Journal Vol. 200](ONS_200.md) |          |
-| [x] [Newsletter No. 89](ONS_089.md) | [ ] [Journal Vol. 201](ONS_201.md) |          |
+| [x] [Newsletter No. 88](ONS_088.md) | [x] [Journal Vol. 200](ONS_200.md) |          |
+| [x] [Newsletter No. 89](ONS_089.md) | [x] [Journal Vol. 201](ONS_201.md) |          |
 | [x] [Newsletter No. 90-91](ONS_090-091.md) |                    |          |
 | [x] [Newsletter No. 92-93](ONS_092-093.md) |                    |          |
 | **1985** | **2010** |          |
-| [x] [Occasional Paper 19](OP_019.md) | [ ] [Journal Vol. 202](ONS_202.md) |          |
+| [x] [Occasional Paper 19](OP_019.md) | [x] [Journal Vol. 202](ONS_202.md) |          |
 | [x] [Occasional Paper 20](OP_020.md) |  |          |
 | [x] [Newsletter No. 94-95](ONS_094-095.md) | [ ] [Journal Vol. 204](ONS_204.md) |          |
 | [x] [Newsletter No. 96](ONS_096.md) | [ ] [Journal Vol. 205](ONS_205.md) |          |

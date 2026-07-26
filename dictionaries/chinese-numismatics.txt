@@ -1367,3 +1367,13 @@ Sidorovich
 Xingli
 Xinzhou
 Zhili
+
+# ONS_207 — British Museum catalogue of the Japanese Coin Collection (Kutsuki Masatsuna)
+Furuta
+Kornicki
+Kutsuki
+Masatsuna
+Sakuraki
+
+# ONS_208 — A Qianlong Board of Revenue/Board of Works mule (Kaplan)
+Kaplan

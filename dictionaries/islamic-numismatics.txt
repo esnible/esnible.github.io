@@ -1774,6 +1774,8 @@ Quli
 Roshnabad
 seeah
 sicca
+siccas
+Siccas
 Suphi
 Tashfin
 
@@ -7305,17 +7307,45 @@ Zour
 Zubaida
 
 # ONS_205 — Late Aksumite coin types reconsidered (Wolfgang Hahn)
+Abgar
+Abjar
+Abreha
 Allamidas
+Amida
+Armaha
 Armeh
 Armeh's
+Asbeha
 Ashama
+Ashwa
+Atherphotam
+Barrandon
+Ellagabaz
+Ellesboam
+Ethasas
+Fiaccadori
 Gabaz
 Gabra
 Gersem
 Godet
+Gregentius
+Habiba
+Habiba's
+Hataz
+Hathath
 Hethasas
+Jezlia
+Kropp
+Littmann
 Masqal
+Nagasi
 Paribeni
+Phillipson
+Pietruscha
+Ramhai
+Ryckmans
+Sumuyafa
+Taphar
 Wazen
 
 # ONS_205 — ONS meeting news / Important Indian coins in the Kunsthistorisches Museum, Vienna (European institutions and scholars)
@@ -7324,3 +7354,53 @@ Hügel's
 Kunsthistorisches
 Vaux
 Vondrovec
+
+# ONS_206 — Sana'a dinar (Zaidi/Rassid Yemen)
+Jebal
+Rassi
+
+# ONS_206 — Tiflis Ja'farid/Shaddadid coin type (Paghava & Turkia)
+Ganjah
+Manṣūr
+Qaṭrān
+Shaddādid
+Shaddādids
+Shāwur
+Shirvānshāhs
+Tabrīzī
+
+# ONS_207 — Ottoman coin catalogues (New and Recent Publications)
+Beyazıt
+Damalı
+Uslu
+
+# ONS_207 — An emergency coinage in Antioch AD 540-2 (Mansfield)
+Antioch
+Procopius
+Theopolis
+
+# ONS_207 — The Mongol conquest of Balkh according to numismatic sources (Grachev)
+Sabuday
+
+# ONS_207 — The Indo-Parthian coins in the British Museum (Rienjang)
+Rienjang
+Ubouzanes
+
+# ONS_207 — The discovery of a rupee of the Mughal claimant, Nikusiyar (Lingen & Billoo)
+Nikusiyar
+
+# ONS_208 — Some coins of Ahmad Khan Domboli
+Domboli
+Khuy
+
+# ONS_208 — An elusive stage in the Samarqand archer coinage (Naymark)
+Abdurrakhman
+Atakhodzhaev
+Boroffka
+Karnab
+Manylov
+Narpai
+Nakhshab
+Qara-tepe
+Vinogradskaia
+Zarafshan

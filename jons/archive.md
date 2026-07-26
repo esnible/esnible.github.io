@@ -125,7 +125,7 @@ This site currently contains the journals, without images, rendered as text.
 | [Newsletter No. 92-93](/jons/ONS_092-093.html) |                    |          |
 | **1985**             | **2010**           |          |
 | [Occasional Paper 19](/jons/OP_019.html)  | [Journal Vol. 202](/jons/ONS_202.html) |          |
-| [Occasional Paper 20](/jons/OP_020.html)  | Journal Vol. 203 |          |
+| [Occasional Paper 20](/jons/OP_020.html)  | [Journal Vol. 203](/jons/ONS_203.html) |          |
 | [Newsletter No. 94-95](/jons/ONS_094-095.html) | [Journal Vol. 204](/jons/ONS_204.html) |          |
 | [Newsletter No. 96](/jons/ONS_096.html)    | [Journal Vol. 205](/jons/ONS_205.html) |          |
 | [Newsletter No. 97](/jons/ONS_097.html)    | [205 Supl.](/jons/ONS_Supplement_205.html) |

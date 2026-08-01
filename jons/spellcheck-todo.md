@@ -143,8 +143,8 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | **1987** | **2012** |          |
 | [x] [Occasional Paper 22](OP_022.md) | [x] [Journal Vol. 210](ONS_210.md) |          |
 | [x] [Newsletter No. 107](ONS_107.md) | [x] [Journal Vol. 211](ONS_211.md) |          |
-| [x] [Newsletter No. 108](ONS_108.md) | [ ] [Journal Vol. 212](ONS_212.md) |          |
-| [x] [Newsletter No. 109](ONS_109.md) | [ ] [Journal Vol. 213](ONS_213.md) |          |
+| [x] [Newsletter No. 108](ONS_108.md) | [x] [Journal Vol. 212](ONS_212.md) |          |
+| [x] [Newsletter No. 109](ONS_109.md) | [x] [Journal Vol. 213](ONS_213.md) |          |
 | **1988** | **2013** |          |
 | [x] [Newsletter No. 110](ONS_110.md) | [ ] [Journal Vol. 214](ONS_214.md) |          |
 | [x] [Newsletter No. 111](ONS_111.md) | [ ] [Journal Vol. 215](ONS_215.md) |          |

@@ -7204,3 +7204,46 @@ Vaisrava
 Walajipet
 Wodeyars
 Hyder
+
+# ONS_215 — Rewriting Gupta genealogy (Sanjeev Kumar article)
+Rāmagupta
+Kāchagupta
+Kācha
+Kācagupta
+Devichandragupta
+Garuḍa
+garuḍadhavja
+Garudadhvaja
+Garudadhavaja
+Garudhavaja
+Cakra
+
+# ONS_215 — Some more coins from the Nicholas Rhodes collection (Tripura/Jaintiapur)
+Mānikya
+Devah
+Ratnapur
+Ratnapure
+Śake
+Mukut
+Parbatrai
+Bargosain
+Buranjis
+
+# ONS_215 — Tāram (Beena Sarasan article)
+Tāram
+Taram
+tāram
+taram
+tārams
+Tārams
+tarams
+Alupa
+Nayanar
+Nārāyana
+puthens
+Pattambi
+Kottayam
+Ramaswamy
+
+# ONS_215 — Copper coins earlier attributed to Kongu Cheras / Ummattur chiefs
+Machtri

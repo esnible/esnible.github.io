@@ -149,13 +149,13 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 110](ONS_110.md) | [x] [Journal Vol. 214](ONS_214.md) |          |
 | [x] [Newsletter No. 111](ONS_111.md) | [x] [Journal Vol. 215](ONS_215.md) |          |
 | [x] [Newsletter No. 112](ONS_112.md) | [x] [Journal Vol. 216](ONS_216.md) |          |
-| [x] [Newsletter No. 113](ONS_113.md) | [ ] [Journal Vol. 217](ONS_217.md) |          |
+| [x] [Newsletter No. 113](ONS_113.md) | [x] [Journal Vol. 217](ONS_217.md) |          |
 | [x] [Newsletter No. 114](ONS_114.md) |                    |          |
 | [x] [Newsletter No. 115](ONS_115.md) |                    |          |
 | **1989** | **2014** |          |
-| [x] [Occasional Paper 23](OP_023.md) | [ ] [Journal Vol. 218](ONS_218.md) |          |
-| [x] [Newsletter No. 116](ONS_116.md) | [ ] [Journal Vol. 219](ONS_219.md) |          |
-| [x] [Newsletter No. 117](ONS_117.md) | [ ] [Journal Vol. 220](ONS_220.md) |          |
+| [x] [Occasional Paper 23](OP_023.md) | [x] [Journal Vol. 218](ONS_218.md) |          |
+| [x] [Newsletter No. 116](ONS_116.md) | [x] [Journal Vol. 219](ONS_219.md) |          |
+| [x] [Newsletter No. 117](ONS_117.md) | [x] [Journal Vol. 220](ONS_220.md) |          |
 | [x] [Newsletter No. 118](ONS_118.md) | [ ] [Journal Vol. 221](ONS_221.md) |          |
 | [x] [Newsletter No. 119](ONS_119.md) |                    |          |
 | [x] [Newsletter No. 120](ONS_120.md) |                    |          |

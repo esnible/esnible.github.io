@@ -2100,3 +2100,13 @@ overdates
 
 # ONS_221 — Chopmarked Carolus/Cap-and-Rays 8-reales in Chinese trade (Groenendijk/Gullberg review)
 chopmarking
+
+# ONS_222 — ONS NEWS: East Asian collection at the Ashmolean Museum (Jankowski)
+Jankowski
+Lyce
+
+# ONS_222 — Three unknown Chinese spade coins article (Op den Velde & Hartill)
+Borgholzhausen
+Höpker
+Münzauktion
+Teutoburger

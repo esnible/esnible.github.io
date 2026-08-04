@@ -7362,3 +7362,20 @@ biche
 fleur
 fleurs
 Mahé
+
+# ONS_221 — Seleucid/Greco-Bactrian coins of Sogdiana; Sikh coinage
+Bhupinder
+Euthydemus
+Gobindshahi
+Mahinder
+Narinder
+Panjikant
+Rajinder
+Yadwinder
+
+# ONS_221 — Bengal Gupta coin hoards and findspots
+Ahiran
+Bhagirathi
+Bijoypur
+Bodhpur
+Varendra

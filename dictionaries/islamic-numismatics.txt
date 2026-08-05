@@ -8754,3 +8754,34 @@ qirān
 salātīn
 Salṭanat
 shāhān
+
+# ONS_223 — Coinage of the Iranian Huns and their Successors book review (Bracey)
+Nezak
+
+# ONS_223 — The chronological framework of Aksumite coinage article (Hahn)
+argyroi
+argyros
+chalkoi
+chalkous
+chrysoi
+chrysos
+clipeata
+clipeus
+habba
+Hahn
+miliaresia
+Ouazebas
+tremissis
+
+# ONS_223 — The coinage of the Musha'sha' article (Akopyan & Mosanef)
+Dizfūl
+Fallāḥ
+Ḥuwayza
+Khuzistān
+Mājid
+Mushaʿshaʿ
+Muḥsin
+Wasīṭ
+
+# ONS_223 — Silver coinage issued at Kākhed article (Paghava & Gabashvili)
+Khudābandah

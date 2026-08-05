@@ -7585,3 +7585,9 @@ Portuguesas
 Rohan
 Território
 tutenag
+
+# ONS_223 — Dating and locating Mujatria and the two Kharahostes article (Cribb)
+dhramika
+kṣatrapa
+mahakṣatrapa
+Mujatria

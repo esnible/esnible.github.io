@@ -8427,6 +8427,7 @@ Novák
 Náprstek
 
 # ONS_215 — Ottoman coins in Kakheti (Paghava article)
+Zagem
 Zagemi
 Zagami
 Kākhet
@@ -8785,3 +8786,37 @@ Wasīṭ
 
 # ONS_223 — Silver coinage issued at Kākhed article (Paghava & Gabashvili)
 Khudābandah
+
+# ONS_226 — More about the very rare Georgian coins from Megrelia with the mintname Dādiyān article (Akopyan)
+Dadiani
+Dādiyān
+Megrelia
+Samegrelo
+Zugdidi
+
+# ONS_227 — A note on the Idrisid fulūs struck by Rāšid b. Qādim article (Liétard & Benchekroun)
+Idrīs
+Qādim
+Rāšid
+Tāhart
+Walīla
+
+# ONS_235 — Kākhetābād, A New Georgian-Safavid Mint article (Paghava)
+ābād
+abbāsī
+Alibek
+Archvadze
+Avars
+Elisu
+farmāns
+Gremi
+K'akhi
+Kākhetābād
+Malkhaz
+nokhūd
+Qāketī
+Saingilo
+Telavi
+Ts'akhurs
+tūmān
+Zaqatala

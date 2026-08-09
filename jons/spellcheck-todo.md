@@ -191,14 +191,14 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 138](ONS_138.md) |                    |          |
 | **1994** | **2019** |          |
 | [x] [Newsletter No. 139](ONS_139.md) | [x] [Journal Vol. 235](ONS_235.md) |          |
-| [x] [Newsletter No. 140](ONS_140.md) | [ ] [Journal Vol. 236](ONS_236.md) |          |
-| [x] [Newsletter No. 141](ONS_141.md) | [ ] [Journal Vol. 237](ONS_237.md) |          |
-| [x] [Newsletter No. 142](ONS_142.md) | [ ] [Journal Vol. 238](ONS_238.md) |          |
+| [x] [Newsletter No. 140](ONS_140.md) | [x] [Journal Vol. 236](ONS_236.md) |          |
+| [x] [Newsletter No. 141](ONS_141.md) | [x] [Journal Vol. 237](ONS_237.md) |          |
+| [x] [Newsletter No. 142](ONS_142.md) | [x] [Journal Vol. 238](ONS_238.md) |          |
 | **1995** | **2020** |          |
-| [x] [Newsletter No. 143](ONS_143.md) | [ ] [Journal Vol. 239](ONS_239.md) |          |
-| [x] [Newsletter No. 144](ONS_144.md) | [ ] [Journal Vol. 240](ONS_240.md) |          |
-| [x] [Newsletter No. 145](ONS_145.md) | [ ] [Journal Vol. 241](ONS_241.md) |          |
-|                                              | [ ] [Journal Vol. 242](ONS_242.md) |          |
+| [x] [Newsletter No. 143](ONS_143.md) | [x] [Journal Vol. 239](ONS_239.md) |          |
+| [x] [Newsletter No. 144](ONS_144.md) | [x] [Journal Vol. 240](ONS_240.md) |          |
+| [x] [Newsletter No. 145](ONS_145.md) | [x] [Journal Vol. 241](ONS_241.md) |          |
+|                                              | [x] [Journal Vol. 242](ONS_242.md) |          |
 
 
 ### Files not in the published archive
@@ -209,7 +209,7 @@ The following `.md` files exist in `jons/` but are not linked from `archive.md` 
 | :-------------------- | :-------------------- |
 | [ ] [12](12.md)       | [x] [OP 024](OP_024.md)  |
 | [ ] [13](13.md)       | [ ] [ONS 029](ONS_029.md) |
-| [ ] [14](14.md)       | [ ] [ONS 243](ONS_243.md) |
+| [ ] [14](14.md)       | [x] [ONS 243](ONS_243.md) |
 | [ ] [15](15.md)       | [ ] [ONS 248](ONS_248.md) |
 | [ ] [16](16.md)       | [ ] [ONS 249](ONS_249.md) |
 | [ ] [17](17.md)       |                        |

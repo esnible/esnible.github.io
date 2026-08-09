@@ -2111,16 +2111,15 @@ Höpker
 Münzauktion
 Teutoburger
 
-# ONS_236 — Fifth Century Sasanian Coins Found in Guangdong Province article (Cribb)
+# ONS_236 — Fifth Century Sasanian Coins Found in Guangdong Province, Southern China article (Cribb)
 Anlu
 Bianwan
 Dingxian
 erqian
-faque
 gumu
 haishang
-jiazang
 Jianwu
+jiazang
 jinyin
 Lianyang
 Luoyan
@@ -2139,6 +2138,16 @@ Xixi
 Yingde
 Yongyuan
 Zhanjiang
+
+# ONS_237 — ONS News: Leiden meeting, Tenasserim coinage talk (Van den Cruyce)
+Cruyce
+Dawei
+Hansa
+Mergui
+Tanintharyi
+Tavoy
+taweh
+Toungoo
 
 # ONS_239 — Sino-Kharoshthi Coins of Kucha: A New Discovery article (Cribb, Zhou, Mitsuda, Liu)
 Aiermitashi

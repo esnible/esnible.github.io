@@ -8822,41 +8822,52 @@ Ts'akhurs
 tūmān
 Zaqatala
 
+# ONS_236 — Fifth Century Sasanian Coins Found in Guangdong Province, Southern China article (Cribb)
+Asuristan
+Gunde
+Karzi
+Khvarrah
+Shirajan
+Walkash
+
 # ONS_236 — Dinars of Malek al-Umara Qaraje Saghi, Atabeg of Fars article (Mosanef)
 Aghlermesh
 Asra
 Astarabadi
 atābek
-ḍarb
 Bindari
+bismillāh
 Chaveli
+ḍarb
 Dinevar
 Fadhl
 Fadluye
 Farbod
 fasā
-Hajja
 haḏā
+Hajja
 ḥarth
 khamsamāya
 Khumartakin
 Mankubars
 mua'ẓẓam
-mughīth
 Mughith
+mughīth
 Neyshaburi
 Nukhbat
 Nusra
-Qarache
 Qaraja
+Qarache
 Qaraje
 QARAJE
+Qaraje's
 qarājah
 Qarategin
 Rahat
 Ravandi
 Saghi
 SAGHI
+Saghi's
 saljūq
 Seljuqname
 Senglakh
@@ -8874,11 +8885,11 @@ Zarkub
 Zubdat
 
 # ONS_236 — Ottoman Coinage of Mehmed III in Ardanuç article (Schindel)
-Anadolu
 Ardanuç
 ARDANUÇ
 Artvin
 Beçin
+Beizeichen
 Bülten
 Canca
 Cilt
@@ -8904,7 +8915,6 @@ Türk
 Üsküp
 
 # ONS_236 — A Safavid Copper Coin of Yazd City article (Millancourt)
-bismillāh
 elahi
 FINT
 folus
@@ -8916,54 +8926,37 @@ peyvasteh
 taghayyoordeh
 zadim
 
-# ONS_236 — Christian Copper Coin Type from Medieval Caucasus article (Paghava, Chachava & Gabashvili)
-Chachava
-Kvemo
-Paphlagonian
-Romanus
-Rustavi
-Samshvilde
-Samsvhilde
-Shulaveri
-Tzimisces
+# ONS_236 — Ottoman Coinage of Mehmed III in Ardanuç article, Table 1 chart labels (Schindel)
+Stil
 
-# ONS_236 — Fifth Century Sasanian Coins Found in Guangdong Province article (Cribb): Sasanian rulers, mints, and mint marks
-Asuristan
-Curtis
-Gunde
-Karsi
-Karzi
-Khvarrah
-Shirajan
-Walkash
-Watt
-
-# ONS_236 — ONS Study Day, Oxford: Afghanistan coinage talk (Cribb) and Ummayad Gold Coinage talk (Byfield)
+# ONS_236 — ONS News: Study Day, Oxford article
 Byfield
 Gozgan
 Jowzjan
-Tegin
+Ummayad
 Zhulad
 
 # ONS_237 — A Kufic Graffito Citing al-Hajjaj? article (Schindel)
 Akbarzadeh
 Bleitessera
-Hağğağ
+Namen
 Orumiyeh
 Osten
 Prokesch
+umayyadische
 Yussuf
-Yūsuf
 
 # ONS_237 — Aghbugha I the Great, Shaykh Uways Jalayir and Bagrat V article (Paghava, Chumburidze & Gabashvili)
 Abuserisdze
-AGHBUGHA
 Aghbugha
+AGHBUGHA
+Aghbugha's
 Akhal
+Akhalsikh
 Akhaltsike
 Akhaltsikh
-Akhalsikh
-Akhalsīkh
+amirspasalar
+Amirspasalar
 atabag
 atabags
 Beka
@@ -8971,13 +8964,14 @@ Beridze
 Chumburidze
 Dundua
 Ghvaberdize
-Ghvaberidze
+hasbi
+hexafoil
 Irine
 Ivane
-JALAYIR
-Jalayir
 Jaqeli
 Jaqelis
+Jalayir
+JALAYIR
 Jojua
 Kakabadze
 Kekelidze
@@ -8997,18 +8991,14 @@ Shahadah
 Sitikhatun
 Temo
 Tsikhe
-amirspasalar
-Amirspasalar
-hasbi
-hasbī
 
-# ONS_237 — ONS meeting, Leiden report: Ilkhan coinage talk (Altay)
+# ONS_237 — ONS News: Leiden meeting, Ilkhanid coinage talk (Altay)
 Altay
 Ābāqā
 Ġāzān
+Ġāzān's
 Ghāzan
 Māḥmūd
-Yiğit
 
 # ONS_238 — Charles Masson's Finds from Begram and Identifying the Islamic Mint of Farwān article (Cribb)
 Allchin

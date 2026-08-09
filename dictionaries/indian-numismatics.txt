@@ -7737,7 +7737,6 @@ Badri
 Baduka
 Badukā
 bādukāya
-Deccan
 Govindraya
 Halder
 Haritiputra
@@ -7761,14 +7760,10 @@ Vilivayakura
 Cunha
 Farwardīn
 Gerson
-Gibbs
-Guthrie
 Ilāhī
-JBBRAS
 Jahāngīr
 Jahāngīri
-Mongheer
-Moorshedabad
+JBBRAS
 schroff
 Shahryar
 Tūzuk
@@ -7779,7 +7774,6 @@ AFZALABAD
 Afzalgarh
 Arvind
 Bakshi
-Bareilly
 Bijnor
 Fatehganj
 Kalika
@@ -7789,46 +7783,43 @@ Najibuddaulah
 Ramghat
 Ranjan
 Rohillkhand
-Shahjahanpur
 Uttarakhand
 
-# ONS_236 — Coins Struck at Monghyr by the East India Company? article (Stevens)
+# ONS_236 — Coins of the East India Company Presidency Series & Coins Struck at Monghyr by the East India Company articles (Johnston & Stevens)
+Gopurum
 Kasim
+Marudhar
+Mongheer
+Moorshedabad
+Murshīdābād
 O'Malley
 
-# ONS_236 — Coins of the East India Company Presidency Series: Addendum & Errata article (Johnston)
-Marudhar
+# ONS_236 — A New Obverse in the 1862 Rupee article (Surana)
+Daryanani
+Kashinath
+Misra
 
-# ONS_236 — ONS meeting, Ahmedabad report
+# ONS_236 — ONS News
 Jagdish
 Jinjuvadiya
-
-# ONS_236 — A New Obverse in the 1862 Rupee article (Surana)
-Ballard
-Clarke
-Daryanani
-Hyde
-Jubbulpore
-Kashinath
 Motiwala
-Misra
 Wodak
 
-# ONS_237 — Second Specimen of a New Coin Type of Amyntas article (Gawlik & Zahid)
+# ONS_237 — Second Specimen of a New Coin Type of Amyntas, and the Legends on Rectangular Indo-Greek Coins article (Gawlik & Zahid)
 Agathuklayasa
 Amitasa
-apadihatasa
 Apaladatasa
+apadihatasa
 arscoinwien
 aternae
 Aslam
 chalkon
 cngcoins
 Evukratidasa
-Heraklean
 indusvalley
 irantik
 jayadharasa
+Jens
 Menamdrasa
 Pamtalevasa
 Parapamisidae
@@ -7842,48 +7833,33 @@ Xagoraris
 Bagahvara
 bagakhvara
 Bagakhvara
-bagī
-bagīcca
-Bagīcca
-bagīkhhka
-bagīkhhkha
-Bagīkhkha
-bagīkhvara
-Baśiccha
-Baśiṣṭha
-Jens
+Baktrien
+Blockley
+Dokumente
+Harrassowitz
+Iranisches
 Kabirwala
-Khiṅgila
+khca
+khkha
 Khuncha
 Khundha
 khunva
 Khunva
-Blockley
 Kunchas
 Kunkhas
 Mirahvara
-Pāratarājas
 Priscus
-Rāṇāditya
-Śruta
-Vaśiṣṭha
-Vaysāra
 Vaysira
-khca
-khkha
-khkhakhkhivaḥ
-jarī
 
 # ONS_237 — Akbar Copper Coin of Surat Mint article (Chatterjee)
-Brāhmī
 Buland
 Champaner
 Commisariat
 Darwaza
 Hamzaban
-Hodiwalla
-I'timad
+hastad
 Ikhtyar
+I'timad
 Jallejallallah
 Kalij
 Khambayat
@@ -7892,69 +7868,44 @@ Mirzas
 Moosvi
 Mughul
 Nagaur
+nuhshad
 Sawwal
 Shireen
-hastad
-nuhshad
+Wolseley
 
 # ONS_237 — Some Late Benares Control Marks article (DeShazo)
 Ahsun
+darogha
 Govindoss
 Lutchmun
 Shaik
-Wolseley
-darogha
 
 # ONS_237 — New Bust Varieties of 'Victoria Empress' Half Rupees article (Rezaul)
-Kias
+Kunnappally
 Leitton
 Rezaul
 
 # ONS_237 — Two Tea Garden Tokens from Sylhet article (Bose & Sarkar)
-Babosthāi
-Bāganer
-Bāgāner
 Bhattacharjee
 Dooars
 Jagcherra
 JAGCHERRA
 Labu
-Mudrā
-Mȗdrā
 Nuruzzaman
-Paisā
 
-# ONS_237 — ONS meeting, Pune report
+# ONS_237 — ONS News: Pune meeting article
 Balla
+Basti
 Bhalerao
 Buxar
 Dumraon
-Kunnappally
+Kias
 Manjiri
-Nanaka
 nanaka
+Nanaka
 nane
 Seuna
-Smṛiti
 Someshvara
-Yājñavalkya
-
-# ONS_237 — Spink advertisement
-Kelsang
-PCGS
-
-# ONS_237 — ONS News: Leiden and other meeting reports
-Basti
-Cruyce
-Dawei
-Hansa
-Mergui
-Phags
-Tanintharyi
-Taxiphone
-Tavoy
-Toungoo
-taweh
 
 # ONS_238 — Stan Goron's The Coins of the Indian Sultanates / Some New Types and Varieties of Sultanate Coins / Dates in Arabic Letters in the Margins of Bengal Sultanate Coins / Political Changes in Coins of Sunargaon Mint / The Coin Hoards of Bengal Sultans / Were Raja Ganesh and Danujamarddana Deva the Same Person? / First Suri Rupee of Muhammad Shah Ghazi articles (In Honour of Stan Goron issue)
 abyāt

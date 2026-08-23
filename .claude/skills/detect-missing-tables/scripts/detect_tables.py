@@ -36,6 +36,11 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   enforced by the overlap test in find_tables(), not by this threshold.
 THRESH, MIN_FRAC, EDGE, SMEAR, DPI = 185, 0.12, 0.02, 2, 110
 
+# Left in a cell whose ink is not explained by OCR text, i.e. holds a figure.
+# FIGURE_PLACEHOLDER renders, so a reader sees that artwork is missing; the
+# accompanying HTML comment does not render and carries the source rect.
+FIGURE_PLACEHOLDER = "*[figure]*"
+
 
 def _longest_runs(binary):
     """Per row: (row_index, run_start, run_end) of the longest contiguous ink run."""
@@ -139,13 +144,138 @@ def caption_for(page, table, dims):
     scale = page.rect.width / W
     top = table["bbox_px"][1] * scale
     above = sorted([b for b in page.get_text("blocks") if b[3] < top], key=lambda b: b[3])
-    text = " ".join(" ".join(b[4].split()) for b in above[-2:])[-60:]
-    words = re.findall(r"[A-Za-z]{4,}", text)[-3:]
-    confident = bool(words) and not all(w.lower() in HEADERISH for w in words)
-    return text.strip(), words, confident
+
+    def keys_of(blocks):
+        text = " ".join(" ".join(b[4].split()) for b in blocks)[-60:]
+        return text.strip(), re.findall(r"[A-Za-z]{4,}", text)[-3:]
+
+    # Walk upward for the first candidate that is not just the table's own
+    # header row. A grid whose nearest text is `REVERSE NOTES` often has a real
+    # caption a line or two higher -- on IS_001 page 7 that is
+    # `5 SEMI-AUTONOMOUS MAURYAN CITIES`, two blocks up.
+    fallback = keys_of(above[-2:]) if above else ("", [])
+    for depth in range(1, min(len(above), 6) + 1):
+        text, words = keys_of(above[-depth - 1:len(above) - depth + 1] or above[-depth:])
+        if words and not all(w.lower() in HEADERISH for w in words):
+            return text, words, True
+    return fallback[0], fallback[1], False
 
 
-def cells_by_column(page, table, dims, row_gap=1.6):
+def anchor_match(lines, keys, max_span=60):
+    """Best Markdown line for `keys`, or None.
+
+    Keyword-anywhere matching is not enough: a long prose paragraph can contain
+    every keyword by coincidence and outrank the real caption. On IS_001 the
+    keys MAGADHAN/EMPIRE/CONTINUED match a prose line 63 lines before the
+    actual `## MAGADHAN EMPIRE continued.` heading.
+
+    So a candidate must contain the keywords within a compact span, and
+    heading-like lines are preferred over body text.
+    """
+    if not keys:
+        return None
+    best = None
+    for n, line in enumerate(lines):
+        low = line.lower()
+        pos = [low.find(k.lower()) for k in keys]
+        if any(p < 0 for p in pos):
+            continue
+        span = max(p + len(k) for p, k in zip(pos, keys)) - min(pos)
+        if span > max_span:
+            continue                       # keywords scattered: coincidence
+        score = (0 if line.lstrip().startswith("#") else 1, span, len(line))
+        if best is None or score < best[0]:
+            best = (score, n)
+    return None if best is None else best[1]
+
+
+def figure_mark(text, bbox, page_no, cell_words):
+    """Annotate a cell that holds artwork.
+
+    Emits a rendered placeholder so a reader can see something is missing, plus
+    an HTML comment recording where the artwork lives in the source PDF, so it
+    never has to be located again:
+
+        *[figure]* <!-- figure page=3 rect=436.7,331.0,489.2,372.4 -->
+
+    The rect is in PDF points and page-relative, so it stays valid at any DPI:
+
+        fitz.open(pdf)[page].get_pixmap(dpi=300, clip=fitz.Rect(*rect))
+
+    The placeholder goes before or after the caption to match the page: artwork
+    usually sits above its caption, but not always.
+    """
+    rect = ",".join(f"{c:.1f}" for c in (bbox.x0, bbox.y0, bbox.x1, bbox.y1))
+    mark = f"{FIGURE_PLACEHOLDER} <!-- figure page={page_no} rect={rect} -->"
+    if not text:
+        return mark
+    above = cell_words and bbox.y1 <= min(w[1] for w in cell_words)
+    return f"{mark} {text}" if above else f"{text} {mark}"
+
+
+def _trim(mask, axis, rel=0.02):
+    """First/last index along `axis` holding a non-trivial amount of ink.
+
+    Trims scanner speckle so the reported rect hugs the artwork instead of the
+    whole cell.
+    """
+    proj = mask.sum(axis=axis)
+    if not proj.any():
+        return None
+    keep = np.flatnonzero(proj >= max(1, rel * proj.max()))
+    return int(keep[0]), int(keep[-1])
+
+
+def _figure_ink(page, dims, rect, words, thresh=THRESH, inset=3.0, pad=1.5):
+    """Ink in a cell that no OCR word accounts for, with its bounding box.
+
+    The page is one flat scan, so a figure is not an embedded image object --
+    get_images() returns just the page scan. A figure is ink left over once
+    every recognised word box is masked out. The rect is inset first so the
+    cell's own ruling lines do not count as figure ink.
+
+    Returns (fraction, pixel_count, bbox) where bbox is a fitz.Rect in PDF
+    points, or None. Points are used deliberately: they are DPI-independent, so
+    a stored rect stays valid however the page is later rendered.
+    """
+    r = fitz.Rect(rect.x0 + inset, rect.y0 + inset, rect.x1 - inset, rect.y1 - inset)
+    if r.is_empty or r.width <= 0 or r.height <= 0:
+        return 0.0, 0, None
+    scale = dims[1] / page.rect.width
+    pm = page.get_pixmap(dpi=int(72 * scale), colorspace=fitz.csGRAY, clip=r)
+    if pm.width == 0 or pm.height == 0:
+        return 0.0, 0, None
+    g = np.frombuffer(pm.samples, np.uint8).reshape(pm.height, pm.width)
+    ink = g < thresh
+    px = pm.width / r.width
+    for w in words:
+        wr = fitz.Rect(w[:4]) & r
+        if wr.is_empty:
+            continue
+        x0 = max(0, int((wr.x0 - r.x0 - pad) * px))
+        x1 = min(pm.width, int((wr.x1 - r.x0 + pad) * px))
+        y0 = max(0, int((wr.y0 - r.y0 - pad) * px))
+        y1 = min(pm.height, int((wr.y1 - r.y0 + pad) * px))
+        ink[y0:y1, x0:x1] = False
+    count = int(ink.sum())
+    if not count:
+        return 0.0, 0, None
+    xs, ys = _trim(ink, 0), _trim(ink, 1)
+    bbox = None
+    if xs and ys:
+        bbox = fitz.Rect(r.x0 + xs[0] / px, r.y0 + ys[0] / px,
+                         r.x0 + (xs[1] + 1) / px, r.y0 + (ys[1] + 1) / px)
+    return float(count) / ink.size, count, bbox
+
+
+def cell_has_figure(page, dims, rect, words, min_frac=0.012, min_px=150):
+    """(found, fraction, pixel_count, bbox_in_points) for one cell."""
+    frac, count, bbox = _figure_ink(page, dims, rect, words)
+    return (frac >= min_frac and count >= min_px and bbox is not None,
+            frac, count, bbox)
+
+
+def cells_by_column(page, table, dims, row_gap=1.6, mark_figures=True):
     """Assign OCR words to columns via the vertical rules, then cluster into rows.
 
     Columns are read off the ruling lines and are dependable. Rows are not: this
@@ -192,11 +322,22 @@ def cells_by_column(page, table, dims, row_gap=1.6):
     out = []
     for band in bands:
         band_words = [w for ln in band for w in ln["ws"]]
+        top = min(w[1] for w in band_words)
+        bot = max(w[3] for w in band_words)
         cells = [""] * (len(v) - 1)
         for i in range(len(v) - 1):
             inside = [w for w in band_words if v[i] <= (w[0] + w[2]) / 2 < v[i + 1]]
             inside.sort(key=lambda w: (round(w[1] / max(1.0, line_h * 0.6)), w[0]))
             cells[i] = " ".join(w[4] for w in inside).strip()
+            if mark_figures:
+                rect = fitz.Rect(v[i], top, v[i + 1], bot)
+                # every word overlapping the cell rect, not just this band's --
+                # a figure often sits between two rows' text lines
+                near = [w for w in page.get_text("words")
+                        if fitz.Rect(w[:4]).intersects(rect)]
+                found, _, _, bbox = cell_has_figure(page, dims, rect, near)
+                if found:
+                    cells[i] = figure_mark(cells[i], bbox, page.number, inside)
         if any(cells):
             out.append(cells)
     return out
@@ -236,10 +377,7 @@ def cmd_screen(args):
                 if t["cols"] < args.min_cols:
                     continue
                 text, keys, confident = caption_for(page, t, dims)
-                hit = None
-                if keys and confident:
-                    hit = next((n for n, ln in enumerate(lines)
-                                if all(k.lower() in ln.lower() for k in keys)), None)
+                hit = anchor_match(lines, keys) if confident else None
                 if hit is None:
                     verdict, why = "UNKNOWN", ("no usable caption above grid" if not keys
                                                else "weak anchor (looks like a header row)"

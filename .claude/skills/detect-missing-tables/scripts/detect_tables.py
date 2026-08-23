@@ -117,6 +117,34 @@ def _cluster_vrules(v_rules, min_overlap=0.5):
     return clusters
 
 
+def _recover_borders(vx, h_rules, min_frac=0.3):
+    """Add the table's outer borders when they were not found as rules.
+
+    A table's outermost verticals often fail vertical-rule detection -- on
+    IS_003 pages 9-12 every page reported 4 columns against a true 6, because
+    only the interior dividers were found. The horizontal rules span the whole
+    table, so the median of their x-extents gives the missing edges.
+
+    A border is only added when the space beyond the outermost detected rule is
+    a plausible column, i.e. at least `min_frac` of the typical column width.
+    That keeps a mere page margin from becoming a spurious column: where the
+    borders *were* detected the gap is ~0 and nothing is added.
+    """
+    if len(vx) < 2 or not h_rules:
+        return vx
+    widths = [b - a for a, b in zip(vx, vx[1:])]
+    typical = float(np.median(widths))
+    if typical <= 0:
+        return vx
+    left = float(np.median([r[1] for r in h_rules]))
+    right = float(np.median([r[2] for r in h_rules]))
+    if vx[0] - left > min_frac * typical:
+        vx = [int(left)] + vx
+    if right - vx[-1] > min_frac * typical:
+        vx = vx + [int(right)]
+    return vx
+
+
 def find_tables(h_rules, v_rules, min_overlap=0.5):
     """Find every table region on a page.
 
@@ -145,15 +173,17 @@ def find_tables(h_rules, v_rules, min_overlap=0.5):
         # demanding two drops real tables.
         if not H:
             continue
+        # Sorted: _cluster_vrules() appends in y order, so these would otherwise
+        # come back scrambled and every consumer that walks adjacent boundaries
+        # to form cells would mis-assign columns.
+        vx = sorted(v[0] for v in V)
+        vx = _recover_borders(vx, H)
         out.append({
             "rows_ruled": max(0, len(H) - 1),
-            "cols": len(V) - 1,
-            "bbox_px": (x0, min(y0, min(r[0] for r in H)),
-                        x1, max(y1, max(r[0] for r in H))),
-            # Sorted: _cluster_vrules() appends in y order, so these would
-            # otherwise come back scrambled and every consumer that walks
-            # adjacent boundaries to form cells would mis-assign columns.
-            "v_px": sorted(v[0] for v in V),
+            "cols": len(vx) - 1,
+            "bbox_px": (vx[0], min(y0, min(r[0] for r in H)),
+                        vx[-1], max(y1, max(r[0] for r in H))),
+            "v_px": vx,
             "h_px": sorted(r[0] for r in H),
         })
     return sorted(out, key=lambda t: t["bbox_px"][1])
@@ -401,6 +431,28 @@ def md_pipe_lines(md_path):
     return lines, [bool(re.match(r"\s*\|", ln)) for ln in lines]
 
 
+# Markers a human writes into the Markdown to retire a finding the screen
+# cannot settle on its own. Both take a page and a reason; the reason is the
+# point, since it is what the next reader has to trust.
+#
+#   <!-- table-ok page=10 reason=continuation of the page-9 table -->
+#   <!-- table-deferred page=14 reason=dense catalogue, not transcribed -->
+#
+# `ok` means reviewed and nothing to do. `deferred` means work is possible but
+# has been declined. They are counted separately so a file that is genuinely
+# finished cannot be confused with one that has simply been parked.
+MARKER_RE = re.compile(
+    r"<!--\s*table-(ok|deferred)\s+page=(\d+)\s*(?:reason=([^>]*?))?\s*-->", re.I)
+
+
+def md_markers(lines):
+    out = {}
+    for ln in lines:
+        for kind, page, reason in MARKER_RE.findall(ln):
+            out[int(page)] = (kind.lower(), (reason or "").strip())
+    return out
+
+
 def resolve(stem):
     return PDF_DIR / f"{stem}.pdf", MD_DIR / f"{stem}.md"
 
@@ -422,12 +474,19 @@ def cmd_screen(args):
             print(f"{stem}: no Markdown at {md_path}")
             continue
         lines, ispipe = md_pipe_lines(md_path)
+        markers = md_markers(lines)
         doc = fitz.open(pdf_path)
         findings = []
         for pno, page in enumerate(doc):
             tables, dims = page_tables(page, dpi=args.dpi)
             for t in tables:
                 if t["cols"] < args.min_cols:
+                    continue
+                if pno in markers:
+                    kind, reason = markers[pno]
+                    findings.append((pno, t, [], None,
+                                     "RESOLVED" if kind == "ok" else "DEFERRED",
+                                     reason or "(no reason given)", ""))
                     continue
                 text, keys, confident = caption_for(page, t, dims)
                 hit = anchor_match(lines, keys) if confident else None
@@ -456,16 +515,24 @@ def cmd_screen(args):
                 findings.append((pno, t, keys, hit, verdict, why, text))
 
         counts = {v: sum(1 for f in findings if f[4] == v)
-                  for v in ("MISSING", "UNKNOWN", "PRESENT")}
-        if counts["MISSING"] or counts["UNKNOWN"]:
+                  for v in ("MISSING", "UNKNOWN", "PRESENT", "RESOLVED", "DEFERRED")}
+        open_items = counts["MISSING"] + counts["UNKNOWN"]
+        if open_items:
             needs_attention = True
+        tail = ""
+        if counts["RESOLVED"] or counts["DEFERRED"]:
+            tail = f" | RESOLVED {counts['RESOLVED']}  DEFERRED {counts['DEFERRED']}"
+        status = "nothing outstanding" if not open_items else f"{open_items} to review"
         print(f"{stem}: {len(findings)} bordered table(s) >= {args.min_cols} cols | "
               f"MISSING {counts['MISSING']}  UNKNOWN {counts['UNKNOWN']}  "
-              f"PRESENT {counts['PRESENT']}")
+              f"PRESENT {counts['PRESENT']}{tail}  -- {status}")
         for pno, t, keys, hit, verdict, why, text in findings:
-            if verdict == "PRESENT" and not args.verbose:
+            if verdict in ("PRESENT", "RESOLVED", "DEFERRED") and not args.verbose:
                 continue
             loc = f"md line {hit + 1}" if hit is not None else "-"
+            if verdict in ("RESOLVED", "DEFERRED"):
+                print(f"  {verdict:8} page {pno}: {t['cols']} cols | {why}")
+                continue
             print(f"  {verdict:8} page {pno}: {t['cols']} cols | anchor {keys} "
                   f"-> {loc} | {why}")
             if args.verbose:

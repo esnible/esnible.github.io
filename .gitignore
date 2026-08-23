@@ -5,3 +5,7 @@ _site
 # Suggested by https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/creating-a-github-pages-site-with-jekyll
 Gemfile.lock
 
+
+# Python bytecode from .claude/skills scripts
+__pycache__/
+*.pyc

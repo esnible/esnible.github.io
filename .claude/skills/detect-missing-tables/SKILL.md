@@ -163,9 +163,54 @@ A scanned press photograph has strong rectangular edges and readily yields enoug
 
 `page_tables()` filters these on text density. Across this corpus real tables run **3.7 to 22 words per column**; a photo scores **0**, so requiring `max(8, 1.5 × cols)` words inside the grid separates them with a wide margin. `grids` deliberately skips this filter, so it still shows raw geometry for debugging.
 
+## Retiring a finding the screen cannot settle
+
+Some findings are permanent: a continuation page has no caption to anchor, and a correctly flattened multi-up layout can never match the PDF's column count. Left alone they keep a finished file reporting `UNKNOWN`/`MISSING` forever, which trains you to ignore the output — the failure mode this screen exists to avoid.
+
+Write a marker into the Markdown and the screen honours it:
+
+```
+<!-- table-ok page=10 reason=continuation of the page-9 table; its rows are in the table above -->
+<!-- table-deferred page=14 reason=dense two-up catalogue, ~150 rows of 6pt numerics; not transcribed -->
+```
+
+- **`table-ok`** — reviewed, nothing to do. Counted as `RESOLVED`.
+- **`table-deferred`** — work is possible but declined. Counted as `DEFERRED`.
+
+They are deliberately **not** the same count. A file that is genuinely finished must not be confusable with one that has merely been parked, and `DEFERRED` is the standing list of work someone could still pick up.
+
+Both suppress every finding on that page, so a page holding two tables needs one marker. The summary then ends with `-- nothing outstanding` or `-- N to review`, and the exit status is `0` only when no `MISSING` or `UNKNOWN` remains:
+
+```
+IS_003: 9 bordered table(s) >= 3 cols | MISSING 0  UNKNOWN 0  PRESENT 1 | RESOLVED 3  DEFERRED 5  -- nothing outstanding
+```
+
+`-v` prints each marker's reason. **The reason is the substance of the marker** — it is what the next reader has to trust instead of re-deriving the judgement, so make it say why, not that.
+
+## Outer borders
+
+A table's outermost verticals often fail vertical-rule detection while every interior divider is found — `IS_003` pages 9-12 each reported 4 columns against a true 6. `find_tables()` recovers them automatically: the horizontal rules span the whole table, so the median of their x-extents gives the missing edges.
+
+A border is only added when the space beyond the outermost detected rule is a plausible column, at least 30% of the typical column width. That stops a page margin becoming a spurious column, and where the borders *were* detected the gap is ~0 and nothing is added — so pages that were already correct stay correct.
+
+If a column count still looks short, the cause is usually the opposite problem: interior dividers too faint to detect, as on `IS_001` page 4's `EMPIRE OF MAGADHA` (7 found against a true 12). Trust the page, and use band-level detection.
+
+## Multi-up print layouts
+
+Some tables are printed several-up to fit a page: `IS_003` page 12 is three side-by-side `No. | Description` pairs, and the detector reasonably reports 6 columns. Reproducing that as a 6-column Markdown table would be wrong — it would pair entry `1a` with `24` and `40`, which have nothing to do with each other. The layout is typographic, not structural.
+
+Flatten these into the logical shape instead (there, a single 2-column list of 72 entries). Continuation pages are the same idea across pages rather than across columns: `IS_003` pages 9-11 are one 67-row table, best written as one Markdown table.
+
+**Both choices make the screen misreport, permanently.**
+
+- A flattened multi-up table trips the `--col-ratio` fragment check, because 2 columns against a 6-column grid looks exactly like the mangled scraps that check exists to catch. `IS_003` page 12 reports `MISSING` even though its table is complete and correct.
+- Continuation pages have no caption of their own, so they stay `UNKNOWN` forever — `IS_003` pages 10 and 11 hold rows that live in the page-9 table.
+
+Neither is a defect to fix by loosening the checks; the guards are earning their keep elsewhere. Retire those findings with a `table-ok` marker (see above) so the file can still reach a clean state, and say in the reason why the mismatch is expected.
+
 ## Known limits
 
-- **Recall is not complete.** A clean screen is evidence, not proof. Known gaps: a table whose dividers are only partial-height (page 7's second table), and one whose column count comes out short because its sub-column dividers are too faint — page 4's `EMPIRE OF MAGADHA` reports 6 columns against a true 12. When the reported column count disagrees with the page, trust the page.
+- **Recall is not complete.** A clean screen is evidence, not proof. Known gaps: a table whose dividers are only partial-height (`IS_001` page 7's second table), and one whose column count comes out short because its sub-column dividers are too faint — page 4's `EMPIRE OF MAGADHA` reports 7 columns against a true 12. When the reported column count disagrees with the page, trust the page.
 - **A grid needs only one horizontal rule.** The vertical rules already bound the table, and bottom borders are frequently lost at the page edge, so demanding two dropped real tables. This is what lets photographs in, which is why the word-density filter above exists.
 - **Dense, noisy scans defeat Tier 2.** `IS_003` page 14 is a catalogue page whose reconstructed cells are unusable. Reconstruct by hand from the rendered image in those cases.
 - The screen only knows about *bordered* tables. Tables laid out with whitespace alone have no rules to find and are invisible to it.

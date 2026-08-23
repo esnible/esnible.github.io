@@ -150,8 +150,11 @@ def find_tables(h_rules, v_rules, min_overlap=0.5):
             "cols": len(V) - 1,
             "bbox_px": (x0, min(y0, min(r[0] for r in H)),
                         x1, max(y1, max(r[0] for r in H))),
-            "v_px": [v[0] for v in V],
-            "h_px": [r[0] for r in H],
+            # Sorted: _cluster_vrules() appends in y order, so these would
+            # otherwise come back scrambled and every consumer that walks
+            # adjacent boundaries to form cells would mis-assign columns.
+            "v_px": sorted(v[0] for v in V),
+            "h_px": sorted(r[0] for r in H),
         })
     return sorted(out, key=lambda t: t["bbox_px"][1])
 

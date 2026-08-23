@@ -96,36 +96,86 @@ def page_grid(page, dpi=DPI, thresh=THRESH, min_frac=MIN_FRAC, edge=EDGE):
     return h, v, (H, W)
 
 
-def find_tables(h_rules, v_rules, min_overlap=0.5):
-    """Group mutually-overlapping rules into table regions.
+def _cluster_vrules(v_rules, min_overlap=0.5):
+    """Group vertical rules that share a y-extent, one group per table.
 
-    Returns dicts with `cols` (reliable) and `rows` (NOT reliable -- interior
-    horizontal rules are frequently absent, so rows must come from clustering
-    word boxes; see cells_by_column()).
+    A page may carry several stacked tables. Treating the page as one grid
+    fails both ways: two tables whose spans happen to overlap merge into a
+    single bogus column count, and two that do not cancel out entirely, because
+    no rule covers half of the combined span. Clustering first avoids both.
+    """
+    clusters = []
+    for r in sorted(v_rules, key=lambda r: r[1]):
+        for c in clusters:
+            cy0, cy1 = min(x[1] for x in c), max(x[2] for x in c)
+            overlap = min(r[2], cy1) - max(r[1], cy0)
+            if overlap > min_overlap * max(1, min(r[2] - r[1], cy1 - cy0)):
+                c.append(r)
+                break
+        else:
+            clusters.append([r])
+    return clusters
+
+
+def find_tables(h_rules, v_rules, min_overlap=0.5):
+    """Find every table region on a page.
+
+    Returns one dict per table, ordered top to bottom, with `cols` (reliable)
+    and `rows_ruled` (NOT reliable -- interior horizontal rules are frequently
+    absent, so rows must come from clustering word boxes; see
+    cells_by_column()).
     """
     if len(h_rules) < 2 or len(v_rules) < 2:
         return []
-    y0, y1 = min(r[1] for r in v_rules), max(r[2] for r in v_rules)
-    x0, x1 = min(r[0] for r in v_rules), max(r[0] for r in v_rules)
-    H = [r for r in h_rules
-         if min(r[2], x1) - max(r[1], x0) > min_overlap * max(1, x1 - x0)]
-    V = [r for r in v_rules
-         if min(r[2], y1) - max(r[1], y0) > min_overlap * max(1, y1 - y0)]
-    if len(H) < 2 or len(V) < 3:
-        return []
-    return [{
-        "rows_ruled": len(H) - 1,
-        "cols": len(V) - 1,
-        "bbox_px": (min(v[0] for v in V), min(r[0] for r in H),
-                    max(v[0] for v in V), max(r[0] for r in H)),
-        "v_px": [v[0] for v in V],
-        "h_px": [r[0] for r in H],
-    }]
+    out = []
+    for V in _cluster_vrules(v_rules, min_overlap):
+        if len(V) < 3:
+            continue
+        y0, y1 = min(r[1] for r in V), max(r[2] for r in V)
+        x0, x1 = min(r[0] for r in V), max(r[0] for r in V)
+        pad = 0.02 * max(1, y1 - y0)
+        # 0.35 rather than min_overlap: a header underline is often segmented by
+        # sub-column dividers (IS_001 page 4's `OBVERSE MARKS` band) and fails a
+        # half-width test despite being a genuine rule.
+        H = [r for r in h_rules
+             if y0 - pad <= r[0] <= y1 + pad
+             and min(r[2], x1) - max(r[1], x0) > 0.35 * max(1, x1 - x0)]
+        # One horizontal rule is enough. The vertical rules already bound the
+        # table, and a table's bottom border is often lost at the page edge, so
+        # demanding two drops real tables.
+        if not H:
+            continue
+        out.append({
+            "rows_ruled": max(0, len(H) - 1),
+            "cols": len(V) - 1,
+            "bbox_px": (x0, min(y0, min(r[0] for r in H)),
+                        x1, max(y1, max(r[0] for r in H))),
+            "v_px": [v[0] for v in V],
+            "h_px": [r[0] for r in H],
+        })
+    return sorted(out, key=lambda t: t["bbox_px"][1])
+
+
+def _word_count(page, table, dims):
+    scale = page.rect.width / dims[1]
+    x0, y0, x1, y1 = [c * scale for c in table["bbox_px"]]
+    return sum(1 for w in page.get_text("words")
+               if x0 <= (w[0] + w[2]) / 2 <= x1 and y0 <= (w[1] + w[3]) / 2 <= y1)
 
 
 def page_tables(page, **kw):
+    """Tables on a page, with photographs filtered out.
+
+    A scanned photograph has strong rectangular edges and readily yields enough
+    rules to look like a grid -- ONS_146 page 0 is two press photos that
+    register as a 9-column table. Real tables carry text: measured across this
+    corpus they run 3.7 to 22 words per column, while a photo scores 0. Requiring
+    a modest word density separates them with a wide margin.
+    """
     h, v, dims = page_grid(page, **kw)
-    return find_tables(h, v), dims
+    tables = [t for t in find_tables(h, v)
+              if _word_count(page, t, dims) >= max(8, 1.5 * t["cols"])]
+    return tables, dims
 
 
 HEADERISH = {"no", "date", "notes", "obverse", "reverse", "shape", "weight",
@@ -382,10 +432,24 @@ def cmd_screen(args):
                     verdict, why = "UNKNOWN", ("no usable caption above grid" if not keys
                                                else "weak anchor (looks like a header row)"
                                                if not confident else "anchor not found in md")
-                elif any(ispipe[hit:hit + args.window]):
-                    verdict, why = "PRESENT", f"pipe table within {args.window} lines"
                 else:
-                    verdict, why = "MISSING", f"no pipe table within {args.window} lines"
+                    # Widest pipe row near the anchor. Presence alone is not
+                    # enough: pdfmd often leaves a mangled 2-3 column fragment
+                    # where a wide table belongs, and treating that as the table
+                    # yields a false PRESENT -- the one error that silently ends
+                    # the investigation.
+                    near = [lines[n].count("|") - 1
+                            for n in range(hit, min(len(lines), hit + args.window))
+                            if ispipe[n]]
+                    md_cols = max(near) if near else 0
+                    if not md_cols:
+                        verdict, why = "MISSING", f"no pipe table within {args.window} lines"
+                    elif md_cols < args.col_ratio * t["cols"]:
+                        verdict, why = ("MISSING",
+                                        f"nearby table has {md_cols} cols, PDF grid has "
+                                        f"{t['cols']} -- looks like a fragment")
+                    else:
+                        verdict, why = "PRESENT", f"{md_cols}-col table within {args.window} lines"
                 findings.append((pno, t, keys, hit, verdict, why, text))
 
         counts = {v: sum(1 for f in findings if f[4] == v)
@@ -447,6 +511,9 @@ def main():
     s.add_argument("stems", nargs="+")
     s.add_argument("--window", type=int, default=15,
                    help="lines after the anchor to search for a pipe table")
+    s.add_argument("--col-ratio", type=float, default=0.6,
+                   help="a nearby Markdown table must have at least this "
+                        "fraction of the PDF grid's columns to count as PRESENT")
     s.add_argument("--min-cols", type=int, default=3,
                    help="ignore grids narrower than this; 2 admits genuine "
                         "2-column tables but also multi-column page layouts")

@@ -9,7 +9,7 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 |                      |                    |          |
 | :------------------: | :----------------: | :------: |
 | **1971** | **1996** | **2021** |
-| [x] [Information Sheet 01](IS_001.md) | [x] [Newsletter No. 146](ONS_146.md) |  |
+| [x] [Information Sheet 01](IS_001.md) | [x] [Newsletter No. 146](ONS_146.md) | [x] [Journal Vol. 244](ONS_243.md) |
 |                      | [x] [Newsletter No. 147](ONS_147.md) | [x] [Journal Vol. 244](ONS_244.md) |
 |                      | [x] [Newsletter No. 148](ONS_148.md) | [x] [Journal Vol. 245](ONS_245.md) |
 |                      | [x] [Newsletter No. 149](ONS_149.md) | [x] [Journal Vol. 246](ONS_246.md) |
@@ -17,21 +17,21 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 |                      |                    |          |
 | **1972** | **1997** | **2022** |
 | [x] [Information Sheet 02](IS_002.md) | [x] [Newsletter No. 151](ONS_151.md) | [x] [Journal Vol. 247](ONS_247.md) |
-| [x] [Information Sheet 03](IS_003.md) | [x] [Newsletter No. 152](ONS_152.md) |  |
-|                      | [x] [Newsletter No. 153](ONS_153.md) |  |
-|                      | [x] [Newsletter No. 154](ONS_154.md) |  |
+| [x] [Information Sheet 03](IS_003.md) | [x] [Newsletter No. 152](ONS_152.md) | [ ] [Journal Vol. 247](ONS_248.md) |
+|                      | [x] [Newsletter No. 153](ONS_153.md) | [ ] [Journal Vol. 247](ONS_249.md) |
+|                      | [x] [Newsletter No. 154](ONS_154.md) | Journal Vol. 250 |
 |                      | [x] [Newsletter No. 155](ONS_155.md) |          |
 |                      | [x] [Newsletter No. 156](ONS_156.md) |          |
 | **1973** | **1998** | **2023** |
-| [x] [Information Sheet 04](IS_004.md) | [x] [Newsletter No. 157](ONS_157.md) |  |
-| [x] [Information Sheet 05](IS_005.md) | [x] [Newsletter No. 158](ONS_158.md) |  |
-| [x] [Information Sheet 06](IS_006.md) | [x] [Newsletter No. 159](ONS_159.md) |  |
-| [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) |  |
+| [x] [Information Sheet 04](IS_004.md) | [x] [Newsletter No. 157](ONS_157.md) | Journal Vol. 251 |
+| [x] [Information Sheet 05](IS_005.md) | [x] [Newsletter No. 158](ONS_158.md) | Journal Vol. 252 |
+| [x] [Information Sheet 06](IS_006.md) | [x] [Newsletter No. 159](ONS_159.md) | Journal Vol. 253 |
+| [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) | Journal Vol. 254 |
 | **1974** | **1999** | **2024** |
-| [x] [Occasional Paper 01](OP_001.md) | [x] [Newsletter No. 160](ONS_160.md) |  |
-| [x] [Occasional Paper 02](OP_002.md) | [x] [Newsletter No. 161](ONS_161.md) |  |
-| [x] [Occasional Paper 03](OP_003.md) | [x] [Newsletter No. 162](ONS_162.md) |  |
-| [x] [Occasional Paper 04](OP_004.md) |                    |  |
+| [x] [Occasional Paper 01](OP_001.md) | [x] [Newsletter No. 160](ONS_160.md) | Journal Vol. 255 |
+| [x] [Occasional Paper 02](OP_002.md) | [x] [Newsletter No. 161](ONS_161.md) | Journal Vol. 256 |
+| [x] [Occasional Paper 03](OP_003.md) | [x] [Newsletter No. 162](ONS_162.md) | Journal Vol. 257 |
+| [x] [Occasional Paper 04](OP_004.md) |                    | Journal Vol. 258 |
 | [x] [Occasional Paper 05](OP_005.md) |                    |          |
 | [x] [Occasional Paper 06](OP_006.md) |                    |          |
 | [x] [Occasional Paper 07](OP_007.md) |                    |          |
@@ -39,13 +39,13 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Information Sheet 09](IS_009.md) |                    |          |
 | [x] [Information Sheet 10](IS_010.md) |                    |          |
 | **1975** | **2000** | **2025** |
-| [x] [Occasional Paper 08](OP_008.md) | [x] [Newsletter No. 163](ONS_163.md) |  |
-| [x] [Occasional Paper 09](OP_009.md) | [x] [Newsletter No. 164](ONS_164.md) |  |
-| [x] [Information Sheet 11](IS_011.md) | [x] [Newsletter No. 165](ONS_165.md) |  |
-| [x] [Information Sheet 12](IS_012.md) | [x] [Newsletter No. 166](ONS_166.md) |  |
+| [x] [Occasional Paper 08](OP_008.md) | [x] [Newsletter No. 163](ONS_163.md) | Journal Vol. 259 |
+| [x] [Occasional Paper 09](OP_009.md) | [x] [Newsletter No. 164](ONS_164.md) | Journal Vol. 260 |
+| [x] [Information Sheet 11](IS_011.md) | [x] [Newsletter No. 165](ONS_165.md) | Journal Vol. 261 |
+| [x] [Information Sheet 12](IS_012.md) | [x] [Newsletter No. 166](ONS_166.md) | Journal Vol. 262 |
 |                      | [x] [Newsletter No. 167](ONS_167.md) |          |
 | **1976** | **2001** | **2026** |
-| [x] [Occasional Paper 10](OP_010.md) | [x] [Newsletter No. 168](ONS_168.md) |  |
+| [x] [Occasional Paper 10](OP_010.md) | [x] [Newsletter No. 168](ONS_168.md) | Journal Vol. 263 |
 | [x] [Information Sheet 13](IS_013.md) | [x] [Newsletter No. 169](ONS_169.md) |          |
 | [x] [Information Sheet 14](IS_014.md) | [x] [Newsletter No. 170](ONS_170.md) |          |
 | [x] [Information Sheet 15](IS_015.md) |                    |          |
@@ -161,10 +161,11 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 120](ONS_120.md) |                    |          |
 | [x] [Newsletter No. 121](ONS_121.md) |                    |          |
 | **1990** | **2015** |          |
-| [x] [Information Sheet 27](IS_027.md) | [x] [Journal Vol. 222](ONS_222.md) |          |
-| [x] [Information Sheet 28](IS_028.md) | [x] [Journal Vol. 223](ONS_223.md) |          |
-| [x] [Newsletter No. 122](ONS_122.md) | [x] [Journal Vol. 224](ONS_224.md) |          |
-| [x] [Newsletter No. 123](ONS_123.md) | [x] [Journal Vol. 225](ONS_225.md) |          |
+| [ ] [Occasional Paper 24](OP_024.md) | [x] [Journal Vol. 222](ONS_222.md) |          |
+| [x] [Information Sheet 27](IS_027.md) | [x] [Journal Vol. 223](ONS_223.md) |          |
+| [x] [Information Sheet 28](IS_028.md) | [x] [Journal Vol. 224](ONS_224.md) |          |
+| [x] [Newsletter No. 122](ONS_122.md) | [x] [Journal Vol. 225](ONS_225.md) |          |
+| [x] [Newsletter No. 123](ONS_123.md) |                    |          |
 | [x] [Newsletter No. 124](ONS_124.md) |                    |          |
 | [x] [Newsletter No. 125](ONS_125.md) |                    |          |
 | [x] [Newsletter No. 126](ONS_126.md) |                    |          |
@@ -200,19 +201,3 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 145](ONS_145.md) | [x] [Journal Vol. 241](ONS_241.md) |          |
 |                                              | [x] [Journal Vol. 242](ONS_242.md) |          |
 
-
-### Files not in the published archive
-
-The following `.md` files exist in `jons/` but are not linked from `archive.md` — fragments without IS/OP/ONS numbering, plus a handful of recent additions.
-
-| Bare fragments        | Orphan OP / ONS       |
-| :-------------------- | :-------------------- |
-| [ ] [12](12.md)       | [x] [OP 024](OP_024.md)  |
-| [ ] [13](13.md)       | [ ] [ONS 029](ONS_029.md) |
-| [ ] [14](14.md)       | [x] [ONS 243](ONS_243.md) |
-| [ ] [15](15.md)       | [ ] [ONS 248](ONS_248.md) |
-| [ ] [16](16.md)       | [ ] [ONS 249](ONS_249.md) |
-| [ ] [17](17.md)       |                        |
-| [ ] [18](18.md)       |                        |
-| [ ] [19](19.md)       |                        |
-| [ ] [20](20.md)       |                        |

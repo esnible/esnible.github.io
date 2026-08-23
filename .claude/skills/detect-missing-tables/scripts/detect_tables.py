@@ -431,6 +431,28 @@ def md_pipe_lines(md_path):
     return lines, [bool(re.match(r"\s*\|", ln)) for ln in lines]
 
 
+# Markers a human writes into the Markdown to retire a finding the screen
+# cannot settle on its own. Both take a page and a reason; the reason is the
+# point, since it is what the next reader has to trust.
+#
+#   <!-- table-ok page=10 reason=continuation of the page-9 table -->
+#   <!-- table-deferred page=14 reason=dense catalogue, not transcribed -->
+#
+# `ok` means reviewed and nothing to do. `deferred` means work is possible but
+# has been declined. They are counted separately so a file that is genuinely
+# finished cannot be confused with one that has simply been parked.
+MARKER_RE = re.compile(
+    r"<!--\s*table-(ok|deferred)\s+page=(\d+)\s*(?:reason=([^>]*?))?\s*-->", re.I)
+
+
+def md_markers(lines):
+    out = {}
+    for ln in lines:
+        for kind, page, reason in MARKER_RE.findall(ln):
+            out[int(page)] = (kind.lower(), (reason or "").strip())
+    return out
+
+
 def resolve(stem):
     return PDF_DIR / f"{stem}.pdf", MD_DIR / f"{stem}.md"
 
@@ -452,12 +474,19 @@ def cmd_screen(args):
             print(f"{stem}: no Markdown at {md_path}")
             continue
         lines, ispipe = md_pipe_lines(md_path)
+        markers = md_markers(lines)
         doc = fitz.open(pdf_path)
         findings = []
         for pno, page in enumerate(doc):
             tables, dims = page_tables(page, dpi=args.dpi)
             for t in tables:
                 if t["cols"] < args.min_cols:
+                    continue
+                if pno in markers:
+                    kind, reason = markers[pno]
+                    findings.append((pno, t, [], None,
+                                     "RESOLVED" if kind == "ok" else "DEFERRED",
+                                     reason or "(no reason given)", ""))
                     continue
                 text, keys, confident = caption_for(page, t, dims)
                 hit = anchor_match(lines, keys) if confident else None
@@ -486,16 +515,24 @@ def cmd_screen(args):
                 findings.append((pno, t, keys, hit, verdict, why, text))
 
         counts = {v: sum(1 for f in findings if f[4] == v)
-                  for v in ("MISSING", "UNKNOWN", "PRESENT")}
-        if counts["MISSING"] or counts["UNKNOWN"]:
+                  for v in ("MISSING", "UNKNOWN", "PRESENT", "RESOLVED", "DEFERRED")}
+        open_items = counts["MISSING"] + counts["UNKNOWN"]
+        if open_items:
             needs_attention = True
+        tail = ""
+        if counts["RESOLVED"] or counts["DEFERRED"]:
+            tail = f" | RESOLVED {counts['RESOLVED']}  DEFERRED {counts['DEFERRED']}"
+        status = "nothing outstanding" if not open_items else f"{open_items} to review"
         print(f"{stem}: {len(findings)} bordered table(s) >= {args.min_cols} cols | "
               f"MISSING {counts['MISSING']}  UNKNOWN {counts['UNKNOWN']}  "
-              f"PRESENT {counts['PRESENT']}")
+              f"PRESENT {counts['PRESENT']}{tail}  -- {status}")
         for pno, t, keys, hit, verdict, why, text in findings:
-            if verdict == "PRESENT" and not args.verbose:
+            if verdict in ("PRESENT", "RESOLVED", "DEFERRED") and not args.verbose:
                 continue
             loc = f"md line {hit + 1}" if hit is not None else "-"
+            if verdict in ("RESOLVED", "DEFERRED"):
+                print(f"  {verdict:8} page {pno}: {t['cols']} cols | {why}")
+                continue
             print(f"  {verdict:8} page {pno}: {t['cols']} cols | anchor {keys} "
                   f"-> {loc} | {why}")
             if args.verbose:

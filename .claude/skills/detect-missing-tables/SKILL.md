@@ -40,9 +40,11 @@ python3 .../detect_tables.py screen $(ls jons/*.md | xargs -n1 basename | sed 's
 
 Output is per detected grid:
 
-- `PRESENT` — a pipe table already follows the anchor. Nothing to do.
-- `MISSING` — anchor located in the Markdown, no table near it. **This is the only positive finding.**
+- `PRESENT` — a Markdown table of comparable width already follows the anchor. Nothing to do.
+- `MISSING` — anchor located in the Markdown, but no table near it, **or only a narrow fragment**. This is the only positive finding.
 - `UNKNOWN` — no usable caption above the grid, or the anchor did not match. Needs a human look; it is not evidence of a problem.
+
+`PRESENT` requires the nearby table to have at least `--col-ratio` (default 0.6) of the PDF grid's columns. Mere presence is not enough: `pdfmd` often leaves a mangled two- or three-column fragment exactly where a wide table belongs. `IS_001` page 6 is an 11-column table whose Markdown holds a 6-column scrap — counting that as `PRESENT` silently ends the investigation, which is the worst failure this screen can produce.
 
 If a file reports `MISSING 0` and you are content to leave `UNKNOWN`s alone, stop. That is the intended cheap path.
 
@@ -135,13 +137,18 @@ Defaults in the script: `THRESH=185`, `MIN_FRAC=0.12`, `EDGE=0.02`, `SMEAR=2`, `
 - **`SMEAR`** ORs each row/column with its ±2 neighbours so a slightly skewed scan still yields one long run instead of many short ones. Heavily skewed scans need deskewing first.
 - **`--min-cols` defaults to 3** to suppress multi-column *page layouts* being read as tables — the `ONS_246` contents page is a 2-column layout that would otherwise register. Pass `--min-cols 2` when you specifically want genuine two-column tables, and expect layout noise.
 
-## Two tables on one page
+## Several tables on one page
 
-The detector groups all mutually-overlapping rules on a page into **one** grid. A page carrying two stacked tables therefore reports a single grid with a blended, meaningless column count — `IS_001` page 7 holds `5 SEMI-AUTONOMOUS MAURYAN CITIES` and `6 ? POST-MAURYAN PERIOD` and reports "9 cols", which matches neither (both are 10).
+`find_tables()` clusters the vertical rules on their y-extents and returns one entry per cluster, so stacked tables are reported separately.
 
-Suspect this whenever a page renders with more than one caption, or the reported column count disagrees with the image. Separate the tables by clustering the **vertical** rules on their y-extents; do not split on the largest horizontal-rule gap, which lands inside a table whose rows are tall rather than between the two tables.
+This matters more than it sounds. Treating a page as a single grid fails in **both** directions, and one of them is silent:
 
-The second table may also be invisible to the page-level scan. On that page its dividers are only partial-height, so no `min_frac` setting finds them. Re-run rule detection on a clip of that band alone, with the threshold taken against the **band** height rather than the page:
+- Two tables whose spans happen to overlap merge into one grid with a blended, meaningless column count — `IS_001` page 7 reported "9 cols" for two tables that are both 10.
+- Two tables whose spans do not overlap **cancel out entirely**, because the combined y-span is so tall that no single rule covers half of it. `IS_001` page 4 holds `2 KINGDOM OF KOSALA` and `3 EMPIRE OF MAGADHA` and reported *no table at all*.
+
+If you ever split tables by hand, cluster on the **vertical** rules. Splitting on the largest horizontal-rule gap is wrong: that gap falls inside a table whose rows are tall, not between the two tables.
+
+A short second table can still be missed when its dividers are only partial-height, as on page 7, where no `min_frac` finds them. Re-run rule detection on a clip of that band alone, with the threshold taken against the **band** height rather than the page:
 
 ```python
 pm = page.get_pixmap(dpi=150, colorspace=fitz.csGRAY, clip=band)
@@ -150,8 +157,15 @@ pm = page.get_pixmap(dpi=150, colorspace=fitz.csGRAY, clip=band)
 
 That recovered its 9 rules and showed it shares the first table's column grid exactly, with two cells merged.
 
+## Photographs are not tables
+
+A scanned press photograph has strong rectangular edges and readily yields enough rules to look like a grid — `ONS_146` page 0 is two photos that registered as a 9-column table.
+
+`page_tables()` filters these on text density. Across this corpus real tables run **3.7 to 22 words per column**; a photo scores **0**, so requiring `max(8, 1.5 × cols)` words inside the grid separates them with a wide margin. `grids` deliberately skips this filter, so it still shows raw geometry for debugging.
+
 ## Known limits
 
-- **Recall is not complete.** The extent-overlap test drops some real tables; `IS_001` page 4 has a visible table that the detector does not report. A clean screen is evidence, not proof.
+- **Recall is not complete.** A clean screen is evidence, not proof. Known gaps: a table whose dividers are only partial-height (page 7's second table), and one whose column count comes out short because its sub-column dividers are too faint — page 4's `EMPIRE OF MAGADHA` reports 6 columns against a true 12. When the reported column count disagrees with the page, trust the page.
+- **A grid needs only one horizontal rule.** The vertical rules already bound the table, and bottom borders are frequently lost at the page edge, so demanding two dropped real tables. This is what lets photographs in, which is why the word-density filter above exists.
 - **Dense, noisy scans defeat Tier 2.** `IS_003` page 14 is a catalogue page whose reconstructed cells are unusable. Reconstruct by hand from the rendered image in those cases.
 - The screen only knows about *bordered* tables. Tables laid out with whitespace alone have no rules to find and are invisible to it.

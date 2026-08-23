@@ -2711,3 +2711,6 @@ Feurdent
 Rollier
 réaux
 Societat
+
+# IS_003 — TABLE 2 reverse inscriptions (Wade-Giles with circumflex)
+chêng

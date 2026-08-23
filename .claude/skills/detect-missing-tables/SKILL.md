@@ -163,6 +163,19 @@ A scanned press photograph has strong rectangular edges and readily yields enoug
 
 `page_tables()` filters these on text density. Across this corpus real tables run **3.7 to 22 words per column**; a photo scores **0**, so requiring `max(8, 1.5 × cols)` words inside the grid separates them with a wide margin. `grids` deliberately skips this filter, so it still shows raw geometry for debugging.
 
+## Multi-up print layouts
+
+Some tables are printed several-up to fit a page: `IS_003` page 12 is three side-by-side `No. | Description` pairs, and the detector reasonably reports 6 columns. Reproducing that as a 6-column Markdown table would be wrong — it would pair entry `1a` with `24` and `40`, which have nothing to do with each other. The layout is typographic, not structural.
+
+Flatten these into the logical shape instead (there, a single 2-column list of 72 entries). Continuation pages are the same idea across pages rather than across columns: `IS_003` pages 9-11 are one 67-row table, best written as one Markdown table.
+
+**Both choices make the screen misreport, permanently.**
+
+- A flattened multi-up table trips the `--col-ratio` fragment check, because 2 columns against a 6-column grid looks exactly like the mangled scraps that check exists to catch. `IS_003` page 12 reports `MISSING` even though its table is complete and correct.
+- Continuation pages have no caption of their own, so they stay `UNKNOWN` forever — `IS_003` pages 10 and 11 hold rows that live in the page-9 table.
+
+Neither is a defect to fix by loosening the checks; the guards are earning their keep elsewhere. Record the decision where the next reader will see it, and expect those pages never to screen clean.
+
 ## Known limits
 
 - **Recall is not complete.** A clean screen is evidence, not proof. Known gaps: a table whose dividers are only partial-height (page 7's second table), and one whose column count comes out short because its sub-column dividers are too faint — page 4's `EMPIRE OF MAGADHA` reports 6 columns against a true 12. When the reported column count disagrees with the page, trust the page.

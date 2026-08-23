@@ -117,6 +117,34 @@ def _cluster_vrules(v_rules, min_overlap=0.5):
     return clusters
 
 
+def _recover_borders(vx, h_rules, min_frac=0.3):
+    """Add the table's outer borders when they were not found as rules.
+
+    A table's outermost verticals often fail vertical-rule detection -- on
+    IS_003 pages 9-12 every page reported 4 columns against a true 6, because
+    only the interior dividers were found. The horizontal rules span the whole
+    table, so the median of their x-extents gives the missing edges.
+
+    A border is only added when the space beyond the outermost detected rule is
+    a plausible column, i.e. at least `min_frac` of the typical column width.
+    That keeps a mere page margin from becoming a spurious column: where the
+    borders *were* detected the gap is ~0 and nothing is added.
+    """
+    if len(vx) < 2 or not h_rules:
+        return vx
+    widths = [b - a for a, b in zip(vx, vx[1:])]
+    typical = float(np.median(widths))
+    if typical <= 0:
+        return vx
+    left = float(np.median([r[1] for r in h_rules]))
+    right = float(np.median([r[2] for r in h_rules]))
+    if vx[0] - left > min_frac * typical:
+        vx = [int(left)] + vx
+    if right - vx[-1] > min_frac * typical:
+        vx = vx + [int(right)]
+    return vx
+
+
 def find_tables(h_rules, v_rules, min_overlap=0.5):
     """Find every table region on a page.
 
@@ -145,15 +173,17 @@ def find_tables(h_rules, v_rules, min_overlap=0.5):
         # demanding two drops real tables.
         if not H:
             continue
+        # Sorted: _cluster_vrules() appends in y order, so these would otherwise
+        # come back scrambled and every consumer that walks adjacent boundaries
+        # to form cells would mis-assign columns.
+        vx = sorted(v[0] for v in V)
+        vx = _recover_borders(vx, H)
         out.append({
             "rows_ruled": max(0, len(H) - 1),
-            "cols": len(V) - 1,
-            "bbox_px": (x0, min(y0, min(r[0] for r in H)),
-                        x1, max(y1, max(r[0] for r in H))),
-            # Sorted: _cluster_vrules() appends in y order, so these would
-            # otherwise come back scrambled and every consumer that walks
-            # adjacent boundaries to form cells would mis-assign columns.
-            "v_px": sorted(v[0] for v in V),
+            "cols": len(vx) - 1,
+            "bbox_px": (vx[0], min(y0, min(r[0] for r in H)),
+                        vx[-1], max(y1, max(r[0] for r in H))),
+            "v_px": vx,
             "h_px": sorted(r[0] for r in H),
         })
     return sorted(out, key=lambda t: t["bbox_px"][1])

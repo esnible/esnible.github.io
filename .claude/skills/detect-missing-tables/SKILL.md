@@ -148,6 +148,8 @@ This matters more than it sounds. Treating a page as a single grid fails in **bo
 
 If you ever split tables by hand, cluster on the **vertical** rules. Splitting on the largest horizontal-rule gap is wrong: that gap falls inside a table whose rows are tall, not between the two tables.
 
+**Landscape pages are often two logical pages side by side**, which confuses the anchor as well as the geometry. `IS_005` page 8 carries three tables on its left half and a seventh-column governors table on its right; the detector reports one grid covering the left half but pairs it with the *right* half's caption, because both captions sit at the top of the same physical page. Treat a landscape page as two pages and check each half against the render before believing either the column count or the anchor.
+
 A short second table can still be missed when its dividers are only partial-height, as on page 7, where no `min_frac` finds them. Re-run rule detection on a clip of that band alone, with the threshold taken against the **band** height rather than the page:
 
 ```python
@@ -161,7 +163,9 @@ That recovered its 9 rules and showed it shares the first table's column grid ex
 
 A scanned press photograph has strong rectangular edges and readily yields enough rules to look like a grid — `ONS_146` page 0 is two photos that registered as a 9-column table.
 
-`page_tables()` filters these on text density. Across this corpus real tables run **3.7 to 22 words per column**; a photo scores **0**, so requiring `max(8, 1.5 × cols)` words inside the grid separates them with a wide margin. `grids` deliberately skips this filter, so it still shows raw geometry for debugging.
+`page_tables()` filters these on **ink density**, rejecting a grid that is more than 35% ink. A halftone photo is dark almost everywhere — that page measures **73%** — while a table is mostly white with thin rules, **6.7% to 12.7%** across this corpus. `grids` deliberately skips the filter, so it still shows raw geometry for debugging.
+
+Text density looks like the obvious test and is the wrong one. It works until you meet a table whose figures OCR could not read: `IS_005` page 12 is a real 13-column table of dense numerics yielding **0.8 words per column**, which a text-density test discards. That silently hides a real table — the same class of failure as a false `PRESENT`, and harder to notice because nothing is reported at all.
 
 ## Retiring a finding the screen cannot settle
 

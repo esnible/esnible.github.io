@@ -35,7 +35,7 @@ tables; whitespace-aligned ones are invisible to it.
 |                      |                    |          |
 | :------------------: | :----------------: | :------: |
 | **1971** | **1996** | **2021** |
-| [ ] [Information Sheet 01](IS_001.md) | [ ] [Newsletter No. 146](ONS_146.md) | [ ] [Journal Vol. 244](ONS_243.md) |
+| [x] [Information Sheet 01](IS_001.md) | [ ] [Newsletter No. 146](ONS_146.md) | [ ] [Journal Vol. 244](ONS_243.md) |
 |                      | [ ] [Newsletter No. 147](ONS_147.md) | [ ] [Journal Vol. 244](ONS_244.md) |
 |                      | [ ] [Newsletter No. 148](ONS_148.md) | [ ] [Journal Vol. 245](ONS_245.md) |
 |                      | [ ] [Newsletter No. 149](ONS_149.md) | [ ] [Journal Vol. 246](ONS_246.md) |
@@ -234,5 +234,4 @@ place and the file's box above is ticked.
 
 | File | Page | Cols | Anchor | Markdown line |
 | :--- | :--- | :--- | :--- | :--- |
-| [IS_001](IS_001.md) | 3 | 8 | `1 EARLY JANAPADA ISSUES` | 44 |
-| [IS_001](IS_001.md) | 5 | 12 | `MAGADHAN EMPIRE continued` | 17 |
+| _(none outstanding)_ |  |  |  |  |

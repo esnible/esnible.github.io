@@ -17,8 +17,8 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 |                      |                    |          |
 | **1972** | **1997** | **2022** |
 | [x] [Information Sheet 02](IS_002.md) | [x] [Newsletter No. 151](ONS_151.md) | [x] [Journal Vol. 247](ONS_247.md) |
-| [x] [Information Sheet 03](IS_003.md) | [x] [Newsletter No. 152](ONS_152.md) | [ ] [Journal Vol. 247](ONS_248.md) |
-|                      | [x] [Newsletter No. 153](ONS_153.md) | [ ] [Journal Vol. 247](ONS_249.md) |
+| [x] [Information Sheet 03](IS_003.md) | [x] [Newsletter No. 152](ONS_152.md) | [ ] [Journal Vol. 248](ONS_248.md) |
+|                      | [x] [Newsletter No. 153](ONS_153.md) | [ ] [Journal Vol. 249](ONS_249.md) |
 |                      | [x] [Newsletter No. 154](ONS_154.md) | Journal Vol. 250 |
 |                      | [x] [Newsletter No. 155](ONS_155.md) |          |
 |                      | [x] [Newsletter No. 156](ONS_156.md) |          |
@@ -26,7 +26,7 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Information Sheet 04](IS_004.md) | [x] [Newsletter No. 157](ONS_157.md) | Journal Vol. 251 |
 | [x] [Information Sheet 05](IS_005.md) | [x] [Newsletter No. 158](ONS_158.md) | Journal Vol. 252 |
 | [x] [Information Sheet 06](IS_006.md) | [x] [Newsletter No. 159](ONS_159.md) | Journal Vol. 253 |
-| [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) | Journal Vol. 254 |
+| [x] [Information Sheet 07](IS_007.md) | [x] [Information Sheet 29](IS_029.md) | Journal Vol. 254 |
 | **1974** | **1999** | **2024** |
 | [x] [Occasional Paper 01](OP_001.md) | [x] [Newsletter No. 160](ONS_160.md) | Journal Vol. 255 |
 | [x] [Occasional Paper 02](OP_002.md) | [x] [Newsletter No. 161](ONS_161.md) | Journal Vol. 256 |
@@ -161,7 +161,7 @@ Tracks which `jons/*.md` files have been run through the `fix-ocr` skill. Check 
 | [x] [Newsletter No. 120](ONS_120.md) |                    |          |
 | [x] [Newsletter No. 121](ONS_121.md) |                    |          |
 | **1990** | **2015** |          |
-| [ ] [Occasional Paper 24](OP_024.md) | [x] [Journal Vol. 222](ONS_222.md) |          |
+| [x] [Occasional Paper 24](OP_024.md) | [x] [Journal Vol. 222](ONS_222.md) |          |
 | [x] [Information Sheet 27](IS_027.md) | [x] [Journal Vol. 223](ONS_223.md) |          |
 | [x] [Information Sheet 28](IS_028.md) | [x] [Journal Vol. 224](ONS_224.md) |          |
 | [x] [Newsletter No. 122](ONS_122.md) | [x] [Journal Vol. 225](ONS_225.md) |          |

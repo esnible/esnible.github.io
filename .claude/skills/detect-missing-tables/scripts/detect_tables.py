@@ -196,18 +196,37 @@ def _word_count(page, table, dims):
                if x0 <= (w[0] + w[2]) / 2 <= x1 and y0 <= (w[1] + w[3]) / 2 <= y1)
 
 
-def page_tables(page, **kw):
+def _ink_fraction(page, table, dims, thresh=THRESH):
+    """Share of the grid's area that is ink."""
+    scale = page.rect.width / dims[1]
+    r = fitz.Rect(*[c * scale for c in table["bbox_px"]])
+    if r.is_empty or r.width <= 0 or r.height <= 0:
+        return 0.0
+    pm = page.get_pixmap(dpi=100, colorspace=fitz.csGRAY, clip=r)
+    if pm.width == 0 or pm.height == 0:
+        return 0.0
+    g = np.frombuffer(pm.samples, np.uint8).reshape(pm.height, pm.width)
+    return float((g < thresh).mean())
+
+
+def page_tables(page, max_ink=0.35, **kw):
     """Tables on a page, with photographs filtered out.
 
     A scanned photograph has strong rectangular edges and readily yields enough
     rules to look like a grid -- ONS_146 page 0 is two press photos that
-    register as a 9-column table. Real tables carry text: measured across this
-    corpus they run 3.7 to 22 words per column, while a photo scores 0. Requiring
-    a modest word density separates them with a wide margin.
+    register as a 9-column table.
+
+    The discriminator is ink density, not text. A halftone photo is dark almost
+    everywhere (that page measures 73% ink) while a table is mostly white with
+    thin rules (6.7% to 12.7% across this corpus). Judging by text instead looks
+    reasonable until you meet a table whose figures OCR could not read: IS_005
+    page 12 is a real 13-column table that yields 0.8 words per column, and a
+    text-density test discards it -- silently hiding a real table, the same
+    class of failure as a false PRESENT.
     """
     h, v, dims = page_grid(page, **kw)
     tables = [t for t in find_tables(h, v)
-              if _word_count(page, t, dims) >= max(8, 1.5 * t["cols"])]
+              if _ink_fraction(page, t, dims) <= max_ink]
     return tables, dims
 
 

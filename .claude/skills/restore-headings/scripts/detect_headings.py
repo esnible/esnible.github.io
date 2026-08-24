@@ -72,6 +72,9 @@ THRESH, SMEAR, DPI = 185, 2, 200
 GAP, WIDTH, UNDERLINE, MARGIN, RATIO = 1.4, 0.75, 0.45, 0.25, 0.72
 
 MARKER_RE = re.compile(r"^(#{1,6}\s+|\*\*|__)")
+# Longest a marked line may be and still be trusted as a real title rather than
+# a paragraph that picked up a stray marker.
+TITLE_LEN = 60
 SKIP_MD = ("|", "<!--", "- ", "* ", "> ", "```")
 DEFAULT_MARKER = "##"
 
@@ -316,7 +319,14 @@ def locate_in_pdf(pdf_lines, text, min_ratio=RATIO):
 # running text. It is reported, and left out of the "to fix" count.
 FIXABLE = ("FOLDED", "FLAT", "OVERSET")
 OPTIONAL = ("FOLDED-PLAIN",)
-ORDER = ("FOLDED", "FLAT", "OVERSET", "FOLDED-PLAIN", "LOST", "OK")
+# Reported, never applied. A split that lands inside a word is a mis-match, not
+# a folded head: it once turned `# ORIENTAL NUMISMATIC SOCIETY INFORMATION
+# SHEET` into `# ORIEN` plus `## TAL NUMISMATIC SOCIETY INFORMATION SHEET`.
+UNSAFE = ("FOLDED-MIDWORD", "FOLDED-PLAIN-MIDWORD",
+          "FOLDED-LOWER", "FOLDED-PLAIN-LOWER")
+ORDER = ("FOLDED", "FLAT", "OVERSET", "FOLDED-MIDWORD", "FOLDED-LOWER",
+         "FOLDED-PLAIN", "FOLDED-PLAIN-MIDWORD", "FOLDED-PLAIN-LOWER",
+         "LOST", "OK")
 
 
 def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
@@ -343,6 +353,21 @@ def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
         marked = bool(MARKER_RE.match(md_lines[row].lstrip()))
         if where == "end" and col > 0:
             verdict = "FOLDED" if head else "FOLDED-PLAIN"
+            if md_lines[row][col - 1].isalnum() and md_lines[row][col].isalnum():
+                verdict += "-MIDWORD"  # reported, never applied
+            elif md_lines[row][col:col + 1].islower() and not (
+                    MARKER_RE.match(md_lines[row].lstrip())
+                    and len(md_lines[row][:col].strip()) <= TITLE_LEN):
+                # A head starting lower-case, cut out of a line that is itself
+                # running prose, is a sentence tail rather than a head: `(see`
+                # / `appendix).`, `I have now developed a` / `classific-`. The
+                # exception preserved is a by-line cut from a title --
+                # `# THE COINAGE OF COOCH BEHAR` / `by N.G. Rhodes` -- where
+                # what is left behind is a heading, not a sentence. It has to
+                # be a *short* heading: a paragraph carrying a stray `#` is
+                # still a paragraph, and letting the marker alone vouch for it
+                # cut `...to an accuracy of 0 02 of a` from `millimeter`.
+                verdict += "-LOWER"
         elif head and not marked:
             verdict = "FLAT"
         elif marked and not head:

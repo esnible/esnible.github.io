@@ -68,6 +68,9 @@ coins described in this` -- an ordinary sentence promoted to a heading, and cut
 in half by the line break -- is invisible, because there is no set-apart PDF
 line to start from.
 
+A verdict may carry a suffix, and a suffixed verdict is **reported but never
+applied** -- see "Splits that are refused" below.
+
 `fix` repairs `FOLDED`, `FLAT`, and `OVERSET`. `LOST` is reported only: inserting
 a head means choosing both its wording and its position, and the wording comes
 from the garbled OCR layer (`B I B L I O G R A P H Y`). Read the render and add
@@ -95,6 +98,42 @@ that from turning into coincidence:
 A `start` match must also account for most of its line. That is what stops the
 heading `# NOTE` from matching the body line `Note: Up to twenty small marks
 may occur...`.
+
+## Splits that are refused
+
+A `FOLDED` fix cuts a Markdown line in two. Two kinds of cut are always wrong,
+and both were found by sweeping `fix` across the corpus and auditing the result:
+
+| Suffix | Refused because |
+|:--- |:--- |
+| `-MIDWORD` | the cut lands inside a word. It turned `# ORIENTAL NUMISMATIC SOCIETY INFORMATION SHEET` into `# ORIEN` plus `## TAL NUMISMATIC SOCIETY INFORMATION SHEET`. |
+| `-LOWER` | the head starts lower-case and was cut out of running prose, so it is a sentence tail, not a head: `(see` / `appendix).`, `I have now developed a` / `classific-`, `to an accuracy of 0 02 of a` / `millimeter`. |
+
+`-LOWER` has one deliberate exception: a **by-line** cut from a title, such as
+`# THE COINAGE OF COOCH BEHAR` / `by N.G. Rhodes`. What is left behind there is
+a heading rather than a sentence, so the cut is right. The exception requires
+the remainder to be both marked *and* at most `TITLE_LEN` (60) characters --
+a paragraph that has picked up a stray `#` is still a paragraph, and letting
+the marker alone vouch for it is exactly what cut `millimeter` loose.
+
+## Auditing a fix
+
+`fix` only ever moves structure, so the word stream is the check:
+
+```python
+w = lambda t: re.findall(r'[A-Za-z0-9]+', t)
+w(old) == w(new)   # False means text was lost, duplicated, or split mid-word
+```
+
+Across a 53-file sweep this caught the one mid-word split immediately. It does
+**not** catch a cut made at a legitimate word boundary in the wrong place, so
+also check for headings the sweep created that begin lower-case:
+
+```
+git diff <before> -- jons/ | awk '/^\+\+\+ b\// {f=substr($2,3)}
+                                  /^\+## / {t=substr($0,5)
+                                             if (t ~ /^[a-z]/) print f": "t}'
+```
 
 ## Tuning
 

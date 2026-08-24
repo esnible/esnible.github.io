@@ -189,6 +189,68 @@ def find_tables(h_rules, v_rules, min_overlap=0.5):
     return sorted(out, key=lambda t: t["bbox_px"][1])
 
 
+def _rules_inside(h_rules, table, min_overlap=0.35):
+    """Horizontal rules falling inside `table`.
+
+    min_overlap defaults to the 0.35 that find_tables uses. rule_probe passes a
+    lower value deliberately: it is asking whether horizontal ink was thrown away,
+    not whether it forms a clean rule.
+    """
+    x0, y0, x1, y1 = table["bbox_px"]
+    pad = 0.02 * max(1, y1 - y0)
+    return sorted(r[0] for r in h_rules
+                  if y0 - pad <= r[0] <= y1 + pad
+                  and min(r[2], x1) - max(r[1], x0) > min_overlap * max(1, x1 - x0))
+
+
+def rule_probe(page, table, dims, fracs=(0.08, 0.06), dpi=DPI, probe_overlap=0.10):
+    """Advisory: do looser thresholds reveal more interior rules in this grid?
+
+    Interior horizontal rules are frequently under-detected -- IS_007 page 6 is
+    a 12x10 character chart whose 25 rules come back as 21 at the default
+    min_frac, silently merging four label/glyph band pairs into one band each.
+    Nothing about the default's own output shows this; the count simply looks
+    plausible.
+
+    Rather than guess a rule is missing from band spacing (charts are legitimately
+    bimodal -- that page alternates 22px label bands with 44px glyph bands, so any
+    "outsized band" heuristic either misses the merge or flags every glyph row),
+    this re-runs detection at looser thresholds and reports what appears INSIDE
+    this grid, using a LOWER overlap than find_tables: it is asking whether
+    horizontal ink was discarded, not whether a clean rule was found.
+
+    That distinction is the whole point. On IS_007 page 6 the four missing rules
+    are detected even at the default -- as 79-159px fragments, because handwritten
+    glyphs cross and break them -- and find_tables then rejects them for spanning
+    under 0.35 of a 765px table. So `--min-frac` alone does NOT recover them, and
+    this note deliberately says "check the render" rather than naming a flag that
+    would not help. Rules broken by cell content need their positions taken from
+    the raw h_rules by hand, which is what IS_007 page 6 required.
+
+    Lowering the threshold globally is not the fix -- it inflates column counts on
+    real tables (IS_005 page 8's verified 7-column grid reads as 14 at 0.06) and
+    manufactures grids from line artwork (IS_007 page 9's two coin sketches read
+    as 3 columns at 0.08), which is why `screen` keeps the strict default.
+    """
+    found = len(table["h_px"])
+    out = []
+    for f in fracs:
+        if f >= MIN_FRAC:
+            continue
+        h, _, d = page_grid(page, dpi=dpi, min_frac=f)
+        if d != dims:
+            continue
+        n = len(_rules_inside(h, table, min_overlap=probe_overlap))
+        if n > found:
+            out.append((f, n))
+    return out
+
+
+def band_heights(h_px):
+    """Gaps between consecutive horizontal rules, top to bottom."""
+    return [b - a for a, b in zip(h_px, h_px[1:])]
+
+
 def _word_count(page, table, dims):
     scale = page.rect.width / dims[1]
     x0, y0, x1, y1 = [c * scale for c in table["bbox_px"]]
@@ -565,27 +627,43 @@ def cmd_grids(args):
     pages = [args.page] if args.page is not None else range(doc.page_count)
     for pno in pages:
         page = doc[pno]
-        h, v, dims = page_grid(page, dpi=args.dpi)
+        h, v, dims = page_grid(page, dpi=args.dpi, min_frac=args.min_frac)
         tables = find_tables(h, v)
         print(f"page {pno}: raw h={len(h)} v={len(v)} raster={dims[1]}x{dims[0]}"
-              f" -> {len(tables)} table(s)")
+              f" -> {len(tables)} table(s)  [min_frac={args.min_frac}]")
         for t in tables:
             print(f"   cols={t['cols']}  rows_ruled={t['rows_ruled']}"
                   f" (rows_ruled is unreliable; cluster text for real rows)")
             print(f"   bbox_px={t['bbox_px']}  v_px={t['v_px']}")
+            print(f"   h_px={t['h_px']}")
+            print(f"   bands={band_heights(t['h_px'])}")
+            probe = rule_probe(page, t, dims, dpi=args.dpi)
+            if probe:
+                f, n = probe[0]
+                print(f"   NOTE  {n} horizontal ink runs sit inside this grid but "
+                      f"only {len(t['h_px'])} became rules: interior rules are "
+                      f"under-detected, so `bands` above is wrong.")
+                print(f"         Rules broken by cell content stay rejected at any "
+                      f"--min-frac; check the render and read positions off "
+                      f"`page_grid(page, min_frac={f})` by hand.")
     return 0
 
 
 def cmd_cells(args):
     pdf_path, _ = resolve(args.stem)
     page = fitz.open(pdf_path)[args.page]
-    tables, dims = page_tables(page, dpi=args.dpi)
+    tables, dims = page_tables(page, dpi=args.dpi, min_frac=args.min_frac)
     if not tables:
         print(f"no bordered table found on page {args.page}")
         return 1
     for t in tables:
         grid = cells_by_column(page, t, dims)
         print(f"page {args.page}: {t['cols']} cols x {len(grid)} clustered row(s)")
+        probe = rule_probe(page, t, dims, dpi=args.dpi)
+        if probe:
+            print(f"# NOTE  {probe[0][1]} horizontal ink runs sit inside this grid "
+                  f"but only {len(t['h_px'])} became rules: rows that should split "
+                  f"at an interior rule may be merged. Check the render.")
         for r in grid:
             print("| " + " | ".join(c.replace("|", r"\|") or " " for c in r) + " |")
     return 0
@@ -615,12 +693,16 @@ def main():
     g.add_argument("stem")
     g.add_argument("--page", type=int, default=None)
     g.add_argument("--dpi", type=int, default=DPI)
+    g.add_argument("--min-frac", type=float, default=MIN_FRAC,
+                   help="ink-run length a ruling line must reach, as a fraction of page width/height. Lower finds faint or short interior rules, but also splits real columns and turns line artwork into grids -- tune it per page here, never for `screen`.")
     g.set_defaults(func=cmd_grids)
 
     c = sub.add_parser("cells", help="Tier 2: column-bucketed OCR text")
     c.add_argument("stem")
     c.add_argument("--page", type=int, required=True)
     c.add_argument("--dpi", type=int, default=DPI)
+    c.add_argument("--min-frac", type=float, default=MIN_FRAC,
+                   help="ink-run length a ruling line must reach, as a fraction of page width/height. Lower finds faint or short interior rules, but also splits real columns and turns line artwork into grids -- tune it per page here, never for `screen`.")
     c.set_defaults(func=cmd_cells)
 
     args = ap.parse_args()

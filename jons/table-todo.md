@@ -52,7 +52,7 @@ tables; whitespace-aligned ones are invisible to it.
 | [ ] [Information Sheet 04](IS_004.md) | [ ] [Newsletter No. 157](ONS_157.md) | Journal Vol. 251 |
 | [ ] [Information Sheet 05](IS_005.md) | [ ] [Newsletter No. 158](ONS_158.md) | Journal Vol. 252 |
 | [ ] [Information Sheet 06](IS_006.md) | [ ] [Newsletter No. 159](ONS_159.md) | Journal Vol. 253 |
-| [ ] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) | Journal Vol. 254 |
+| [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) | Journal Vol. 254 |
 | **1974** | **1999** | **2024** |
 | [ ] [Occasional Paper 01](OP_001.md) | [ ] [Newsletter No. 160](ONS_160.md) | Journal Vol. 255 |
 | [ ] [Occasional Paper 02](OP_002.md) | [ ] [Newsletter No. 161](ONS_161.md) | Journal Vol. 256 |

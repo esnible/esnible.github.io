@@ -63,6 +63,8 @@ fitz.open(PDF)[PAGE].get_pixmap(dpi=110).save("/tmp/page.png")   # then Read the
 python3 .../detect_tables.py grids IS_001 --page 3
 ```
 
+It also prints `bands` — the gaps between consecutive horizontal rules — and, when the rules look incomplete, a `NOTE`. Both `grids` and `cells` take `--min-frac` for per-page tuning; **never** lower it for `screen` (see *Tuning*).
+
 ### Tier 2 — rebuild and insert
 
 ```
@@ -136,6 +138,24 @@ Defaults in the script: `THRESH=185`, `MIN_FRAC=0.12`, `EDGE=0.02`, `SMEAR=2`, `
 - **`DPI` 110 and 150 find the same grids** on the files tested; 110 is 2.5× cheaper, so screen at 110.
 - **`SMEAR`** ORs each row/column with its ±2 neighbours so a slightly skewed scan still yields one long run instead of many short ones. Heavily skewed scans need deskewing first.
 - **`--min-cols` defaults to 3** to suppress multi-column *page layouts* being read as tables — the `ONS_246` contents page is a 2-column layout that would otherwise register. Pass `--min-cols 2` when you specifically want genuine two-column tables, and expect layout noise.
+- **`--min-frac` is a Tier 1/2 flag only.** `grids` and `cells` accept it; `screen` deliberately does not. Lowering it globally does not mainly find new tables — it inflates column counts on real ones and manufactures grids from line artwork. Measured across the four verified files: at 0.06 `IS_005` page 8's hand-verified 7-column governors table reads as **14 columns**, and `7 < 0.6 × 14` flips a correct `PRESENT` into a false `MISSING`; at 0.08 `IS_007` page 9 yields a phantom 3-column grid that is two hand-drawn coin sketches, which the ink-density filter misses because line drawings are sparse where halftone photos are dense. A screen that unions several thresholds inherits every false positive from the loosest one.
+
+### When rules are missing but `--min-frac` will not help
+
+`grids` and `cells` print a `NOTE` when more horizontal ink runs sit inside a grid than became rules. It is advisory — it never changes a verdict — and it exists because nothing in the default output reveals this: the rule count simply looks plausible.
+
+`IS_007` page 6 is the case to understand. It is a 12×10 character chart with 25 rules; the default finds 21, silently merging four label/glyph band pairs, so `bands` reports one 134px band where four bands belong. **Lowering `--min-frac` does not fix it.** The four rules are detected even at the default — as 79–159px fragments, because the handwritten glyphs cross and break them — and `find_tables()` then rejects them for spanning under 0.35 of a 765px-wide table. The threshold that rejects them is the *overlap* test, not `min_frac`.
+
+So when the `NOTE` fires, do not reach for a flag. Read the rule positions off the raw detection and pass them in yourself:
+
+```python
+h, v, dims = page_grid(page, min_frac=0.08)
+hy = sorted({r[0] for r in h if y0 <= r[0] <= y1})   # extents ignored on purpose
+```
+
+Then check the count against the rendered page before using it. This is what page 6's 120 cells required.
+
+Do not confuse the `NOTE` with a defect: it fires on 9 of the 22 grids in the four verified files, and on all 9 the band data genuinely is incomplete. It makes the documented untrustworthiness of `rows_ruled` visible per grid instead of as a blanket warning.
 
 ## Several tables on one page
 

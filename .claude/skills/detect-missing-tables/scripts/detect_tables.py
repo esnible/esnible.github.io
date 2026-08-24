@@ -526,6 +526,28 @@ MARKER_RE = re.compile(
     r"<!--\s*table-(ok|deferred)\s+page=(\d+)\s*(?:reason=([^>]*?))?\s*-->", re.I)
 
 
+def flattened_lines(lines):
+    """Line numbers whose text carries the fingerprint of a flattened table.
+
+    `pdfmd` escapes pipe characters when it renders a bordered table as running
+    prose, so `\\|` in a non-table line is a direct signature of the failure this
+    skill exists to find -- and one the grid screen structurally cannot see, since
+    it asks whether a table is near an anchor, never whether the surrounding prose
+    is intelligible.
+
+    Measured on IS_003, whose pages 13-16 were 263 lines of interleaved two-up
+    catalogue: 55 hits inside that region and 0 in the entire rest of the file.
+    It also finds residue in files the grid screen calls clean -- IS_001 kept 2
+    such lines and IS_005 kept 11 after every missing table in them was restored.
+
+    Lines that are themselves pipe-table rows are excluded: cells_by_column()
+    escapes pipes inside cell text, so a correctly rebuilt table legitimately
+    contains them.
+    """
+    return [n for n, ln in enumerate(lines)
+            if "\\|" in ln and not ln.lstrip().startswith("|")]
+
+
 def md_markers(lines):
     out = {}
     for ln in lines:
@@ -597,16 +619,27 @@ def cmd_screen(args):
 
         counts = {v: sum(1 for f in findings if f[4] == v)
                   for v in ("MISSING", "UNKNOWN", "PRESENT", "RESOLVED", "DEFERRED")}
-        open_items = counts["MISSING"] + counts["UNKNOWN"]
+        flat = [] if args.no_flat else flattened_lines(lines)
+        open_items = counts["MISSING"] + counts["UNKNOWN"] + (1 if flat else 0)
         if open_items:
             needs_attention = True
         tail = ""
         if counts["RESOLVED"] or counts["DEFERRED"]:
             tail = f" | RESOLVED {counts['RESOLVED']}  DEFERRED {counts['DEFERRED']}"
+        if flat:
+            tail += f" | FLATTENED {len(flat)} line(s)"
         status = "nothing outstanding" if not open_items else f"{open_items} to review"
         print(f"{stem}: {len(findings)} bordered table(s) >= {args.min_cols} cols | "
               f"MISSING {counts['MISSING']}  UNKNOWN {counts['UNKNOWN']}  "
               f"PRESENT {counts['PRESENT']}{tail}  -- {status}")
+        if flat:
+            shown = flat if args.verbose else flat[:3]
+            print(f"  FLATTENED {len(flat)} non-table line(s) carry an escaped pipe "
+                  f"-- prose left behind by a table pdfmd did not convert:")
+            for n in shown:
+                print(f"      md line {n + 1}: {lines[n].strip()[:88]!r}")
+            if len(flat) > len(shown):
+                print(f"      ... {len(flat) - len(shown)} more (-v to list)")
         for pno, t, keys, hit, verdict, why, text in findings:
             if verdict in ("PRESENT", "RESOLVED", "DEFERRED") and not args.verbose:
                 continue
@@ -687,6 +720,9 @@ def main():
     s.add_argument("--dpi", type=int, default=DPI)
     s.add_argument("-v", "--verbose", action="store_true",
                    help="also list tables that ARE present")
+    s.add_argument("--no-flat", action="store_true",
+                   help="skip the flattened-prose check (escaped pipes in "
+                        "non-table lines) and judge on grid findings alone")
     s.set_defaults(func=cmd_screen)
 
     g = sub.add_parser("grids", help="Tier 1: grid geometry per page")

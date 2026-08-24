@@ -179,6 +179,16 @@ pm = page.get_pixmap(dpi=150, colorspace=fitz.csGRAY, clip=band)
 
 That recovered its 9 rules and showed it shares the first table's column grid exactly, with two cells merged.
 
+## Flattened prose is a second failure mode
+
+The grid screen asks whether a table sits near an anchor. It never asks whether the surrounding prose is intelligible, so a file can be 260 lines of interleaved garbage and still report `nothing outstanding` — `IS_003` did exactly that, because its `table-deferred` markers suppressed the pages while the flattened text between them stayed in the file, including five bogus 2–4 column Markdown tables built from noise. A reader sees `| 6.3 | 29.3 |` and has no way to know it is not data.
+
+`screen` therefore also reports `FLATTENED n line(s)`. The signal is an **escaped pipe in a non-table line**: `pdfmd` escapes pipes when it renders a bordered table as running prose, so `\|` outside a table row is a direct signature of the conversion failing. Lines that are themselves pipe-table rows are excluded — `cells_by_column()` escapes pipes inside cell text, so a correctly rebuilt table legitimately contains them.
+
+It separates cleanly. On `IS_003` before repair: 53 hits inside the corrupt region, **0** in the entire rest of the file; after repair, 0. It also finds residue in files the grid screen calls clean — `IS_001` kept 2 such lines and `IS_005` 11 after every missing table in them was restored. Corpus-wide it fires on 131 of 269 files.
+
+A non-zero count makes the file count as outstanding. Pass `--no-flat` to judge on grid findings alone.
+
 ## Photographs are not tables
 
 A scanned press photograph has strong rectangular edges and readily yields enough rules to look like a grid — `ONS_146` page 0 is two photos that registered as a 9-column table.
@@ -231,6 +241,22 @@ Flatten these into the logical shape instead (there, a single 2-column list of 7
 - Continuation pages have no caption of their own, so they stay `UNKNOWN` forever — `IS_003` pages 10 and 11 hold rows that live in the page-9 table.
 
 Neither is a defect to fix by loosening the checks; the guards are earning their keep elsewhere. Retire those findings with a `table-ok` marker (see above) so the file can still reach a clean state, and say in the reason why the mismatch is expected.
+
+## When to restore the skeleton instead of the table
+
+`IS_003` TABLE 3 is the case: 673 entries × 11 columns of 6pt numerics, printed two-up on a skewed scan. At 420 dpi the digit pairs 3/5 and S/8 are still not separable, and unlike the `IS_005` page-8 tables there are no column totals to check a transcription against. Transcribing it would mean inventing roughly 7,000 cells nobody could verify.
+
+But the catalogue is not all that was lost. Interleaved through the garbage were the table's **narrative headings** — emperor sections, reign titles, and two prose notes — all in 10pt type, all perfectly legible, and all recoverable. Restoring those and marking each catalogue block with the entry range it stands for turns 263 lines of noise into an accurate document, without inventing a digit:
+
+```
+## EMPEROR. KAO TSUNG 1127-1162.
+
+Reign Titles: Chien Yen 1127-1130. Shao Hsing 1131-1162.
+
+*[table: entries 1-14 — PDF page 13, left column]*
+```
+
+Read the structure off the page images, not the text layer: the `EMPEROR`/`Reign Title` bands are large enough to OCR badly but recognisably, and the entry ranges come from the first and last `List No.` visible in each column. Getting the boundaries right matters — on page 13 the Kingdom of Ch'i interlude is a **single entry** (15), after which the numbering returns to Kao Tsung's Shao Hsing reign at 16, which the flattened text gives no way to see.
 
 ## Known limits
 

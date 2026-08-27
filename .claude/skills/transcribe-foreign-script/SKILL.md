@@ -94,6 +94,8 @@ Same shape as `detect-missing-tables`' `table-ok` / `table-deferred`, and read b
 
 Without a marker, an inserted reading (verified or guessed) is indistinguishable from unverified garble to the screen — it is still a run of foreign-script codepoints — so it re-flags as `RAW` forever. Always mark what you resolve, guess, or defer.
 
+**When the transcribed content is a reconstructed table (columns like image/native script/transliteration), leave a blank line between the table's last row and its marker.** GitHub's renderer needs a table set off by blank lines on *both* sides — `detect-missing-tables`' own governors-table fix on `IS_005` covered the "comment directly before a table" direction; a marker directly after a table with no blank line is the same bug from the other side, and `IS_006`'s 14 reconstructed tables hit it. `find_candidates()` in the script tolerates exactly one blank line here — a marker separated from its table by a blank still resolves every row in it, not just the last one — so this costs nothing but the blank line itself.
+
 ### `rect=` — recording where on the page, not just which page
 
 `page=N` alone is ambiguous when several deferred regions share one page — `IS_005` page 12 (0-based) holds four catalog sections *and* an unrelated already-`table-deferred` distribution table below them. Add `rect=x0,y0,x1,y1` (PDF points, page-relative, same convention as `detect-missing-tables`' `*[figure]*` rects) so a later pass can jump straight to `render`'s `--clip` instead of re-deriving the region:

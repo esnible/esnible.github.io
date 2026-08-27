@@ -10,8 +10,13 @@ dictionaryDefinitions:
 dictionaries:
   - en_US
   - en_GB
-  # You may need `npm install --global @cspell/dict-ar` for the Arabic dictionary
+  # Requires `npm install --global @cspell/dict-ar @cspell/dict-fa-ir` and the
+  # matching entries in `import:` below. Coin legends in this corpus are Mughal-
+  # era Perso-Arabic, so both dictionaries are needed: Modern Standard Arabic
+  # (`ar`) does not cover Persian vocabulary or Persian letterforms (KEHEH ک,
+  # FARSI YEH ی) used alongside standard Arabic letters in the same legend.
   - ar
+  - fa-ir
   - indian-numismatics
   - chinese-numismatics
   - islamic-numismatics
@@ -153,5 +158,8 @@ words:
   - subsidise
   - symbolistic
   - systematised
+  - draughtsmanship
 ignoreWords: []
-import: []
+import:
+  - "@cspell/dict-ar/cspell-ext.json"
+  - "@cspell/dict-fa-ir/cspell-ext.json"

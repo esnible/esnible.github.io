@@ -93,14 +93,22 @@ def find_candidates(lines):
     resolved, deferred, guessed = set(), set(), set()
     marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed}
     prev_content_idx = None
-    # Contiguous run of pipe-table-row indices ending at prev_content_idx, if
-    # any -- a marker right after a reconstructed table (one marker per table,
-    # not per row/cell) should resolve every row in it, not just the last one.
+    # table_block: the run of pipe-table-row indices actively being built (a
+    # genuine gap -- a blank line or other content -- ends it, same as real
+    # GFM table syntax). last_table_block: the most recently *finished* run,
+    # kept around through blank lines so a marker separated from its table by
+    # one (GitHub's renderer wants that separation -- see the rect= note)
+    # still resolves every row in it, not just the last one. Real new content
+    # (not blank, not a marker) clears both, so a marker further down the
+    # file can't reach back past unrelated lines to an old table.
     table_block = []
+    last_table_block = []
     for i, line, in_code in _strip_fenced(lines):
         stripped = line.strip()
         if not stripped:
-            table_block = []
+            if table_block:
+                last_table_block = table_block
+                table_block = []
             continue
         m = MARKER_RE.search(line)
         if m:
@@ -109,12 +117,15 @@ def find_candidates(lines):
                 bucket = marker_bucket[m.group(1)]
                 if table_block and table_block[-1] == target:
                     bucket.update(table_block)
+                elif last_table_block and last_table_block[-1] == target:
+                    bucket.update(last_table_block)
                 else:
                     bucket.add(target)
             continue
         if in_code:
             prev_content_idx = i
             table_block = []
+            last_table_block = []
             continue
 
         is_table_row = stripped.startswith("|")
@@ -124,6 +135,7 @@ def find_candidates(lines):
             table_block = [i]
         else:
             table_block = []
+            last_table_block = []
 
         oc = OCR_COMMENT_RE.search(line)
         if oc and COMMENT_KEYWORDS.search(oc.group(0)):

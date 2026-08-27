@@ -63,22 +63,33 @@ def raw_hit_lines(lines):
     resolved = set()
     prev_content_idx = None
     in_code = False
+    # See transcribe-foreign-script's detect_script_garble.py for why there
+    # are two of these: table_block is the actively-building run (a genuine
+    # gap ends it); last_table_block survives exactly the blank line GitHub's
+    # renderer wants between a table and a following comment, so a marker
+    # separated from its table by one still resolves every row in it.
     table_block = []
+    last_table_block = []
     for i, line in enumerate(lines):
         stripped = line.strip()
         if not stripped:
-            table_block = []
+            if table_block:
+                last_table_block = table_block
+                table_block = []
             continue
         if stripped.startswith("```"):
             in_code = not in_code
             prev_content_idx = i
             table_block = []
+            last_table_block = []
             continue
         m = MARKER_RE.search(line)
         if m:
             if prev_content_idx is not None:
                 if table_block and table_block[-1] == prev_content_idx:
                     resolved.update(table_block)
+                elif last_table_block and last_table_block[-1] == prev_content_idx:
+                    resolved.update(last_table_block)
                 else:
                     resolved.add(prev_content_idx)
             continue
@@ -89,6 +100,7 @@ def raw_hit_lines(lines):
             table_block = [i]
         else:
             table_block = []
+            last_table_block = []
         if not in_code:
             visible = re.sub(r"<!--.*?-->", "", line)
             for run in FOREIGN_RE.findall(visible):

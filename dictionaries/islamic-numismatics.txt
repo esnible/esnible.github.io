@@ -9855,3 +9855,6 @@ Postumorum
 restauration
 veka
 veke
+
+# IS_004 — Perso-Arabic legend vocabulary (Garhwal timasha coins)
+بادشاه

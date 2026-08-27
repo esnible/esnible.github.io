@@ -20,14 +20,18 @@ Usage:
     detect_script_garble.py screen IS_001 [IS_002 ...]     # Tier 0
     detect_script_garble.py locate IS_004 --line 92        # Tier 1a
     detect_script_garble.py render IS_004 --page 4 --out /tmp/p.png   # Tier 1b
+    detect_script_garble.py spellcheck "اکبر شاه"           # Tier 2 helper
 
 Requires PyMuPDF (no OCR/vision libraries -- reading the render is a job for
-a vision-capable model, not this script).
+a vision-capable model, not this script) and, for `spellcheck`, `cspell` on
+PATH (npm install --global cspell -- see fix-ocr's own setup).
 """
 import argparse
 import pathlib
 import re
+import subprocess
 import sys
+import tempfile
 
 try:
     import fitz  # PyMuPDF
@@ -35,7 +39,9 @@ except ImportError as exc:  # pragma: no cover
     sys.exit(f"missing dependency: {exc}. Needs PyMuPDF.")
 
 PDF_DIR = pathlib.Path("~/personal/src/ons-website/static/archive").expanduser()
-MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
+MD_DIR = REPO_ROOT / "jons"
+CSPELL_CONFIG = REPO_ROOT / "cspell.config.yaml"
 
 # Unicode blocks for scripts that actually show up in this corpus (Arabic /
 # Perso-Arabic legends, Devanagari numerals and legends, Chinese characters).
@@ -60,7 +66,7 @@ COMMENT_KEYWORDS = re.compile(
     re.I,
 )
 OCR_COMMENT_RE = re.compile(r"<!--\s*OCR:.*?-->")
-MARKER_RE = re.compile(r"<!--\s*script-(ok|deferred)\b(?:[^>]*?reason=(.*?))?\s*-->")
+MARKER_RE = re.compile(r"<!--\s*script-(ok|deferred|guess)\b(?:[^>]*?reason=(.*?))?\s*-->")
 
 MIN_CHARS = 2  # shorter runs are lone stray glyphs -- fix-ocr's job (delete), not a transcription job
 
@@ -81,10 +87,11 @@ def _strip_fenced(lines):
 
 
 def find_candidates(lines):
-    """Return (comment_candidates, raw_candidates, resolved, deferred) as
+    """Return (comment_candidates, raw_candidates, resolved, deferred, guessed) as
     lists/sets of 0-based line indices, each with a reason string."""
     comment_candidates, raw_candidates = [], []
-    resolved, deferred = set(), set()
+    resolved, deferred, guessed = set(), set(), set()
+    marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed}
     prev_content_idx = None
     for i, line, in_code in _strip_fenced(lines):
         stripped = line.strip()
@@ -94,7 +101,7 @@ def find_candidates(lines):
         if m:
             target = prev_content_idx
             if target is not None:
-                (resolved if m.group(1) == "ok" else deferred).add(target)
+                marker_bucket[m.group(1)].add(target)
             continue
         if in_code:
             prev_content_idx = i
@@ -115,7 +122,7 @@ def find_candidates(lines):
 
         prev_content_idx = i
 
-    return comment_candidates, raw_candidates, resolved, deferred
+    return comment_candidates, raw_candidates, resolved, deferred, guessed
 
 
 def cmd_screen(args):
@@ -126,10 +133,11 @@ def cmd_screen(args):
             print(f"{stem}: no Markdown at {md_path}")
             continue
         lines = md_path.read_text(encoding="utf-8").splitlines()
-        comment_c, raw_c, resolved, deferred = find_candidates(lines)
+        comment_c, raw_c, resolved, deferred, guessed = find_candidates(lines)
+        handled = resolved | deferred | guessed
 
         def open_items(cands):
-            return [(i, why) for i, why in cands if i not in resolved and i not in deferred]
+            return [(i, why) for i, why in cands if i not in handled]
 
         open_comment = open_items(comment_c)
         open_raw = [] if args.no_raw else open_items(raw_c)
@@ -139,8 +147,13 @@ def cmd_screen(args):
         status = "nothing outstanding" if not n_open else f"{n_open} to review"
         print(
             f"{stem}: {len(comment_c)} flagged comment(s), {len(raw_c)} raw run(s) | "
-            f"RESOLVED {len(resolved)}  DEFERRED {len(deferred)} -- {status}"
+            f"RESOLVED {len(resolved)}  GUESSED {len(guessed)}  DEFERRED {len(deferred)} -- {status}"
         )
+        # GUESSED lines are content-added-but-unverified -- surface them every
+        # run, not just under -v, so a "plausible guess" doesn't quietly
+        # become the permanent reading nobody double-checks.
+        for i in sorted(guessed):
+            print(f"  GUESS    md line {i + 1}: {lines[i].strip()[:100]!r}")
         for i, why in open_comment:
             print(f"  COMMENT  md line {i + 1}: {why!r}")
         for i, why in open_raw:
@@ -179,6 +192,36 @@ def cmd_locate(args):
         print("  no page matched -- the surrounding text may itself be OCR garble; widen --window")
 
 
+def cmd_spellcheck(args):
+    """Check a guessed reading against the corpus's cspell config (ar/fa-ir
+    dictionaries + islamic/chinese/indian-numismatics word lists). Used to
+    fill in a script-guess marker's `spellcheck=` field -- this does not
+    decide whether a guess is *correct*, only whether its words are already
+    known vocabulary, which is one input to how much to trust the guess."""
+    text = " ".join(args.text) if args.text else sys.stdin.read()
+    # cspell silently reports "0 files checked" for a path outside the repo
+    # (e.g. the system /tmp) -- the scratch file has to live inside the repo
+    # tree for cspell to see it at all.
+    fd, tmp_path = tempfile.mkstemp(suffix=".md", dir=str(MD_DIR), prefix=".spellcheck_scratch_")
+    with open(fd, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        result = subprocess.run(
+            ["cspell", "--config", str(CSPELL_CONFIG), "--no-progress", tmp_path],
+            capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        sys.exit("cspell not found on PATH -- npm install --global cspell (see fix-ocr's own setup)")
+    finally:
+        pathlib.Path(tmp_path).unlink(missing_ok=True)
+    unknown = re.findall(r"Unknown word \((.+?)\)", result.stdout + result.stderr)
+    if unknown:
+        print(f"fail:{','.join(unknown)}")
+        sys.exit(1)
+    print("pass")
+    sys.exit(0)
+
+
 def cmd_render(args):
     pdf_path, _ = resolve(args.stem)
     doc = fitz.open(pdf_path)
@@ -202,6 +245,10 @@ def main():
     p.add_argument("--line", type=int, required=True, help="1-based md line number of the candidate")
     p.add_argument("--window", type=int, default=4, help="md lines each side to pull distinctive words from")
     p.set_defaults(func=cmd_locate)
+
+    p = sub.add_parser("spellcheck")
+    p.add_argument("text", nargs="*", help="the guessed reading (or pipe it via stdin)")
+    p.set_defaults(func=cmd_spellcheck)
 
     p = sub.add_parser("render")
     p.add_argument("stem")

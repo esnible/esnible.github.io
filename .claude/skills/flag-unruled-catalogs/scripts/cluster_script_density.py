@@ -43,7 +43,7 @@ SCRIPT_BLOCKS = {
     "CJK": "一-鿿㐀-䶿",
 }
 FOREIGN_RE = re.compile("[" + "".join(SCRIPT_BLOCKS.values()) + "]+")
-MARKER_RE = re.compile(r"<!--\s*script-(ok|deferred)\b")
+MARKER_RE = re.compile(r"<!--\s*script-(ok|deferred|guess)\b")
 MIN_CHARS = 2
 
 CATALOG_THRESHOLD = 5  # hits at or above this size in one cluster -> CATALOG, not a per-line job

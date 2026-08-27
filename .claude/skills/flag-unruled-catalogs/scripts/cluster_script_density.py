@@ -56,24 +56,39 @@ def resolve(stem):
 def raw_hit_lines(lines):
     """0-based line indices with a foreign-script run outside any HTML
     comment, excluding lines already covered by an adjacent script-ok/
-    script-deferred marker. Mirrors transcribe-foreign-script's RAW pass."""
+    script-deferred/script-guess marker. Mirrors transcribe-foreign-script's
+    RAW pass, including its table-block extension: a marker right after a
+    reconstructed table resolves every row in it, not just the last one."""
     hits = []
     resolved = set()
     prev_content_idx = None
     in_code = False
+    table_block = []
     for i, line in enumerate(lines):
         stripped = line.strip()
         if not stripped:
+            table_block = []
             continue
         if stripped.startswith("```"):
             in_code = not in_code
             prev_content_idx = i
+            table_block = []
             continue
         m = MARKER_RE.search(line)
         if m:
             if prev_content_idx is not None:
-                resolved.add(prev_content_idx)
+                if table_block and table_block[-1] == prev_content_idx:
+                    resolved.update(table_block)
+                else:
+                    resolved.add(prev_content_idx)
             continue
+        is_table_row = stripped.startswith("|")
+        if is_table_row and table_block and table_block[-1] == prev_content_idx:
+            table_block.append(i)
+        elif is_table_row:
+            table_block = [i]
+        else:
+            table_block = []
         if not in_code:
             visible = re.sub(r"<!--.*?-->", "", line)
             for run in FOREIGN_RE.findall(visible):

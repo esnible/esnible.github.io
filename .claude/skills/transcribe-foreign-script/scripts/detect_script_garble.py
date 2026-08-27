@@ -93,19 +93,37 @@ def find_candidates(lines):
     resolved, deferred, guessed = set(), set(), set()
     marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed}
     prev_content_idx = None
+    # Contiguous run of pipe-table-row indices ending at prev_content_idx, if
+    # any -- a marker right after a reconstructed table (one marker per table,
+    # not per row/cell) should resolve every row in it, not just the last one.
+    table_block = []
     for i, line, in_code in _strip_fenced(lines):
         stripped = line.strip()
         if not stripped:
+            table_block = []
             continue
         m = MARKER_RE.search(line)
         if m:
             target = prev_content_idx
             if target is not None:
-                marker_bucket[m.group(1)].add(target)
+                bucket = marker_bucket[m.group(1)]
+                if table_block and table_block[-1] == target:
+                    bucket.update(table_block)
+                else:
+                    bucket.add(target)
             continue
         if in_code:
             prev_content_idx = i
+            table_block = []
             continue
+
+        is_table_row = stripped.startswith("|")
+        if is_table_row and table_block and table_block[-1] == prev_content_idx:
+            table_block.append(i)
+        elif is_table_row:
+            table_block = [i]
+        else:
+            table_block = []
 
         oc = OCR_COMMENT_RE.search(line)
         if oc and COMMENT_KEYWORDS.search(oc.group(0)):

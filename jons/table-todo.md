@@ -42,14 +42,14 @@ tables; whitespace-aligned ones are invisible to it.
 |                      | [ ] [Newsletter No. 150](ONS_150.md) |          |
 |                      |                    |          |
 | **1972** | **1997** | **2022** |
-| [ ] [Information Sheet 02](IS_002.md) | [ ] [Newsletter No. 151](ONS_151.md) | [ ] [Journal Vol. 247](ONS_247.md) |
-| [ ] [Information Sheet 03](IS_003.md) | [ ] [Newsletter No. 152](ONS_152.md) | [ ] [Journal Vol. 248](ONS_248.md) |
+| [x] [Information Sheet 02](IS_002.md) | [ ] [Newsletter No. 151](ONS_151.md) | [ ] [Journal Vol. 247](ONS_247.md) |
+| [x] [Information Sheet 03](IS_003.md) | [ ] [Newsletter No. 152](ONS_152.md) | [ ] [Journal Vol. 248](ONS_248.md) |
 |                      | [ ] [Newsletter No. 153](ONS_153.md) | [ ] [Journal Vol. 249](ONS_249.md) |
 |                      | [ ] [Newsletter No. 154](ONS_154.md) | Journal Vol. 250 |
 |                      | [ ] [Newsletter No. 155](ONS_155.md) |          |
 |                      | [ ] [Newsletter No. 156](ONS_156.md) |          |
 | **1973** | **1998** | **2023** |
-| [ ] [Information Sheet 04](IS_004.md) | [ ] [Newsletter No. 157](ONS_157.md) | Journal Vol. 251 |
+| [x] [Information Sheet 04](IS_004.md) | [ ] [Newsletter No. 157](ONS_157.md) | Journal Vol. 251 |
 | [ ] [Information Sheet 05](IS_005.md) | [ ] [Newsletter No. 158](ONS_158.md) | Journal Vol. 252 |
 | [ ] [Information Sheet 06](IS_006.md) | [ ] [Newsletter No. 159](ONS_159.md) | Journal Vol. 253 |
 | [x] [Information Sheet 07](IS_007.md) | [ ] [Information Sheet 29](IS_029.md) | Journal Vol. 254 |

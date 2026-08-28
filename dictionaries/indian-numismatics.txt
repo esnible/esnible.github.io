@@ -617,7 +617,6 @@ bakht
 Baluch
 Baluchs
 Barakzais
-Bhattarcharyya
 Bhotan
 Bhots
 Butan
@@ -9447,3 +9446,7 @@ rdha
 rdhi
 rtha
 stra
+
+# IS_010 — coinage of Cooch Behar: scholars, terms
+Aitchison
+prooflike

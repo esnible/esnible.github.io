@@ -1174,6 +1174,7 @@ Zurcher
 Zusaria
 
 # IS_011 — Dogra silver coinage of Jammu and Kashmir: terms, scholars, places
+Chilas
 Chilki
 Codrington
 Jummoo
@@ -1183,6 +1184,7 @@ Pearse
 pipal
 Rukshu
 tulwar
+Zaskar
 
 # IS_012 — coinage of Tonk State: rulers, places, terms
 Buner

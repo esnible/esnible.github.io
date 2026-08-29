@@ -1894,8 +1894,10 @@ Spinks
 # IS_021 — Copper doits of Banjarmasin: places, rulers, scholars, Dutch/Malay terms
 Aloewi
 Bandjarmasin
+Bandjermasin
 Bandscher
 BANDJARMASIN
+BANDJERMASIN
 Banjarese
 Banjarmasin
 BANJARMASIN

@@ -2020,10 +2020,9 @@ turcomanes
 
 # IS_022 — Early Arab Coins of Tunisia: Hafsid dynasty (AH 627-982)
 alsultan
-Honenstaufens
+Baqa
+Hohenstaufens
 Muayad
-Sakariya
-Wathigq
 Wadids
 
 # OP_015 — The larin: trade money of the Arabian Gulf (van Laere)

@@ -13,7 +13,7 @@ These override every other instruction in this skill. If a fix would violate one
 
 - **Never remove or merge line breaks.** Preserve every line break exactly as OCR'd, including hard breaks that fall mid-sentence. Never join two lines, even when a sentence is split across them.
 - **Never change capitalization.** Leave every letter's case exactly as OCR'd. Do not capitalize sentence starts or proper nouns, and do not lowercase anything.
-- **Never add punctuation.** Do not insert a period, comma, dash, apostrophe, or any other mark — not even to close a sentence or restore a mark the OCR appears to have dropped. You may delete stray punctuation glyphs that are clearly OCR noise; you may not add any.
+- **Never *insert* punctuation; substitute one mark for another only with the page image as evidence.** Do not add a mark where the text layer has none — not to close a sentence, not to restore a mark the OCR appears to have dropped. You may delete a stray mark that is clearly OCR noise. `.`↔`,` and `;`↔`:` are real glyph confusions — the shapes differ by a pixel or two — so you *may* correct one to the other, but **only** after rendering the source page and seeing which mark is actually printed there. From the render it is a glyph fix like `rn`→`m`; from grammar or sentence flow alone it is inventing structure, and stays forbidden. Rendering is not part of this skill's default loop — reach for it only for these substitution candidates (`python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N [--clip x0 y0 x1 y1] --out /tmp/p.png`, then Read the PNG; `locate <STEM> --line N` ranks which page a line came from). If you will not render, leave the mark and list it for the user.
 - **Never delete a run of more than 12 consecutive characters.** A pure deletion — replacing text with nothing — may span at most 12 characters. To remove a longer run (OCR'd image digits, page-break garbage, a corrupted passage), you must substitute something in its place: a corrected reading, or an HTML comment such as `<!-- OCR: ... -->`. If you cannot supply a replacement, leave the run as-is and list it for the user.
 
 Within these limits, still fix letter-level OCR garble: wrong letters, doubled or dropped letters, digit/letter swaps, and stray non-Latin glyphs.
@@ -107,8 +107,9 @@ Then re-read for the patterns grep can't pin down:
 
 - **Doubled trailing letter** — `coinagee` → `coinage`, `dependenciese` → `dependencies`. Remove the spurious letter; never replace it with a period, even if the sentence then looks unfinished.
 - **Doubled lowercase `e` after a name** — `Ashoka'se`, `Mauryans'e` → `Ashoka's`, `Mauryans'`.
-- **Trailing `e` that is really a dropped period** — tokens like `B.Ce` or `(ce` where the `e` is a misread `.`. Leave these untouched: removing the `e` leaves an incomplete token, and adding the period is forbidden.
+- **Trailing `e` that is really a dropped period** — tokens like `B.Ce` or `(ce` where the `e` is a misread `.`. Leave these untouched by default: removing the `e` leaves an incomplete token, and inserting a period is forbidden. Only if you render the page (see Hard constraints) and it plainly shows `B.C.` is correcting `e`→`.` allowed — it is then the same glyph fix as `,`→`.`.
 - **`am` vs. `an`** when followed by a vowel — `am other` → `an other` or `another` per context.
+- **Comma (or semicolon) where a sentence plainly ends** — `…both obverse and reverse, The meaning of…`. Do **not** fix these from context. Collect them, then resolve each by rendering that page (see the render command in Hard constraints): a printed period → correct the `,` to `.`; a printed comma → it is the authors' own typo, leave it and note it in the report. A page render is the only reliable evidence here, and the swap is 1-for-1 so it does not disturb the line-count invariant.
 
 ## Dictionary updates
 
@@ -156,7 +157,7 @@ After verification passes, check the box for this file in `jons/spellcheck-todo.
 
 - Don't remove or merge line breaks — preserve every line break, including mid-sentence ones.
 - Don't change the capitalization of any letter.
-- Don't add punctuation of any kind, even to finish a sentence or restore a mark the OCR dropped.
+- Don't *insert* punctuation — not to finish a sentence, not to restore a mark the OCR dropped. Correcting one existing mark to another (`,`→`.`) is allowed only when you have rendered the page and seen the intended mark (see Hard constraints).
 - Don't delete a run of more than 12 consecutive characters without supplying a replacement — leave it and report it instead.
 - Don't rewrite prose for style — only fix OCR errors.
 - Don't change British spellings to American or vice versa.

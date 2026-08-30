@@ -2316,18 +2316,30 @@ mithqal
 equids
 
 # IS_025 — Sikh coinage of Kashmir: monetary units, travellers, rulers, terms
+Ardali
+Astut
 bahagain
 bahagains
 Birbal
+Chuni
 dangs
-Furukhji
+Haraji
 Jacquemont
+Jarb
+Karak
+Kasamira
+Kashir
 kauri
 kauris
 Khushwant
+Kirpa
 Kumedan
+Mehan
 Moorcroft
+Muhyid
+Panjal
 pice
+Purukhji
 punsu
 punsus
 sasun

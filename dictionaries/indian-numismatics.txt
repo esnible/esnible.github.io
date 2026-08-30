@@ -9468,3 +9468,7 @@ stra
 # IS_010 — coinage of Cooch Behar: scholars, terms
 Aitchison
 prooflike
+
+# OP_001 — annotated list of books published in India: places, dynasties
+Bagan
+Yadus

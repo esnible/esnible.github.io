@@ -53,8 +53,8 @@ If a file reports `MISSING 0` and you are content to leave `UNKNOWN`s alone, sto
 For each `MISSING`, render the page and look at it. This is not optional: it is how you learn the true row and column counts, catch a page-layout false positive, and see which cells span columns.
 
 ```python
-import fitz
-fitz.open(PDF)[PAGE].get_pixmap(dpi=110).save("/tmp/page.png")   # then Read the image
+import pymupdf
+pymupdf.open(PDF)[PAGE].get_pixmap(dpi=110).save("/tmp/page.png")   # then Read the image
 ```
 
 `grids` prints the geometry the detector inferred, for comparison against what you see:
@@ -99,8 +99,8 @@ A cell holding a figure is annotated with two parts:
 The rect is `x0,y0,x1,y1` in **PDF points**, page-relative. Points rather than pixels deliberately: they are DPI-independent, so the stored rect stays valid no matter how the page is later rendered. Detection runs at 110 dpi, but the same rect extracts cleanly at any resolution:
 
 ```python
-import fitz
-fitz.open(pdf)[3].get_pixmap(dpi=350, clip=fitz.Rect(441.4, 373.9, 520.1, 405.8)) \
+import pymupdf
+pymupdf.open(pdf)[3].get_pixmap(dpi=350, clip=pymupdf.Rect(441.4, 373.9, 520.1, 405.8)) \
    .save("figure.png")
 ```
 
@@ -173,7 +173,7 @@ If you ever split tables by hand, cluster on the **vertical** rules. Splitting o
 A short second table can still be missed when its dividers are only partial-height, as on page 7, where no `min_frac` finds them. Re-run rule detection on a clip of that band alone, with the threshold taken against the **band** height rather than the page:
 
 ```python
-pm = page.get_pixmap(dpi=150, colorspace=fitz.csGRAY, clip=band)
+pm = page.get_pixmap(dpi=150, colorspace=pymupdf.csGRAY, clip=band)
 # ... then require runs >= 0.35 * pm.height
 ```
 

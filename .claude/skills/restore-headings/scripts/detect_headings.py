@@ -47,8 +47,11 @@ import re
 import sys
 
 try:
-    import fitz  # PyMuPDF
     import numpy as np
+    try:
+        import pymupdf as fitz  # PyMuPDF >= 1.24.3
+    except ImportError:  # older PyMuPDF only exposes the legacy `fitz` name
+        import fitz
 except ImportError as exc:  # pragma: no cover
     sys.exit(f"missing dependency: {exc}. Needs PyMuPDF and numpy.")
 

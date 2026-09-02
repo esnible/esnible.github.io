@@ -9,3 +9,6 @@ Gemfile.lock
 # Python bytecode from .claude/skills scripts
 __pycache__/
 *.pyc
+
+# Local venv for the .claude/skills scripts (see .claude/skills/requirements.txt)
+.venv/

@@ -34,9 +34,12 @@ import sys
 import tempfile
 
 try:
-    import fitz  # PyMuPDF
-except ImportError as exc:  # pragma: no cover
-    sys.exit(f"missing dependency: {exc}. Needs PyMuPDF.")
+    import pymupdf as fitz  # PyMuPDF >= 1.24.3
+except ImportError:  # older PyMuPDF only exposes the legacy `fitz` name
+    try:
+        import fitz
+    except ImportError as exc:  # pragma: no cover
+        sys.exit(f"missing dependency: {exc}. Needs PyMuPDF.")
 
 PDF_DIR = pathlib.Path("~/personal/src/ons-website/static/archive").expanduser()
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]

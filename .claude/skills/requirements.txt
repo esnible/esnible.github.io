@@ -1,0 +1,8 @@
+# Python deps for the .claude/skills scripts that do `import fitz`
+# (detect_tables.py, detect_headings.py, detect_script_garble.py).
+# Set up a repo-local venv once:
+#   uv venv --python 3.12 .venv
+#   uv pip install --python .venv/bin/python -r .claude/skills/requirements.txt
+# then run scripts with .venv/bin/python instead of the PEP 668-locked system python3.
+PyMuPDF
+numpy

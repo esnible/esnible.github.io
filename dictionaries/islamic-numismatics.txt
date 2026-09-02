@@ -794,6 +794,7 @@ Edirne
 elmuzaffer
 evvel
 Eylül
+Eylûl
 Ferman
 Friedberg
 fundukli
@@ -810,6 +811,7 @@ Islami
 Istanbulda
 Janissaries
 Kanun
+Kânun
 Kataloğu
 Kosova
 Kostantiniye
@@ -843,6 +845,7 @@ Paralari
 paraları
 Quesne
 Reşad
+sâni
 Schaendlinger
 Schlumberger
 SCHL

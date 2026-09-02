@@ -9472,3 +9472,6 @@ prooflike
 # OP_001 — annotated list of books published in India: places, dynasties
 Bagan
 Yadus
+
+# OP_003 — a tentative Hyderabad date list: publication titles
+Handminting

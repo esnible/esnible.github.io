@@ -3288,17 +3288,18 @@ Satamana
 citty
 Citty
 clipp
-Counci
-CounciU
+Councill
 coynes
 currantly
 denyall
 Dollers
+engrosseing
+equall
 expences
 fanam
 fanams
 finess
-Govemour
+Governour
 Honble
 inconveniencyes
 Inhabitts
@@ -3307,8 +3308,6 @@ Pags
 Pridmore
 refuseall
 severall
-tanam
-tanams
 Traffique
 
 # ONS_133 — JNSI/Numismatic Studies bibliography; Ujjain & Ganapati Naga coins; Parthian Tanlis countermark

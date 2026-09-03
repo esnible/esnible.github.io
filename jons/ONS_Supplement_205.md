@@ -1,3 +1,5 @@
+[Original PDF](https://www.orientalnumismaticsociety.org/archive/ONS_Supplement_205.pdf)
+
 # Supplement to ONS Journal 205
 
 # A SEMINAR ON THE OCCASION OF THE

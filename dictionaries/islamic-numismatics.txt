@@ -741,6 +741,7 @@ Australien
 Bayezid'in
 Blätter
 Busso
+Denkmünzen
 Deutschen
 Fonrobert
 Fonrobert'schen
@@ -9864,3 +9865,7 @@ veke
 
 # IS_004 — Perso-Arabic legend vocabulary (Garhwal timasha coins)
 بادشاه
+
+# OP_009 — Modern gold coins of Ottoman Egypt (Lachman): foreign-coin names as spelled in the paper
+Bounduki
+Dabloun

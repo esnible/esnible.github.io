@@ -245,6 +245,7 @@ jewellery
 kalimah
 Kharijism
 Kharijite
+KLIO
 Kufic
 Masriah
 misr
@@ -1244,6 +1245,7 @@ CIVIT
 Cleja
 Coinquest
 Commagene
+commémoratifs
 commercants
 Commercants
 CONFIDENS

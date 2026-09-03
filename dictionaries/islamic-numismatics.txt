@@ -9874,3 +9874,9 @@ veke
 # OP_009 — Modern gold coins of Ottoman Egypt (Lachman): foreign-coin names as spelled in the paper
 Bounduki
 Dabloun
+
+# ONS_055 — Newsletter 55: Islamic Coins catalogue review (Ariel Berman); Revue Belge bibliography index
+Daniela
+Ḥamā
+Sarukhans
+Urtuqids

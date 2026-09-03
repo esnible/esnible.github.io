@@ -1,3 +1,5 @@
+[Original PDF](https://www.orientalnumismaticsociety.org/archive/ONS_Supplement_197.pdf)
+
 **Supplement to Newsletter 197**
 
 # CAUCASIAN NUMISMATICS

@@ -42,6 +42,7 @@ Requires PyMuPDF and numpy.
 """
 import argparse
 import difflib
+import os
 import pathlib
 import re
 import sys
@@ -55,7 +56,12 @@ try:
 except ImportError as exc:  # pragma: no cover
     sys.exit(f"missing dependency: {exc}. Needs PyMuPDF and numpy.")
 
-PDF_DIR = pathlib.Path("~/personal/src/ons-website/static/archive").expanduser()
+# ONS_ARCHIVE_DIR overrides the default checkout-relative path -- set it when
+# the ons-website PDFs live somewhere else on this machine (they come from
+# the private esnible/ons-website repo, not this one, so the path varies).
+PDF_DIR = pathlib.Path(
+    os.environ.get("ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")
+).expanduser()
 MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 
 # --- tuned defaults -------------------------------------------------------

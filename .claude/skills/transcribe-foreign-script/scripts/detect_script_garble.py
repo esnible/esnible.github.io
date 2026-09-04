@@ -27,6 +27,7 @@ a vision-capable model, not this script) and, for `spellcheck`, `cspell` on
 PATH (npm install --global cspell -- see fix-ocr's own setup).
 """
 import argparse
+import os
 import pathlib
 import re
 import subprocess
@@ -41,7 +42,12 @@ except ImportError:  # older PyMuPDF only exposes the legacy `fitz` name
     except ImportError as exc:  # pragma: no cover
         sys.exit(f"missing dependency: {exc}. Needs PyMuPDF.")
 
-PDF_DIR = pathlib.Path("~/personal/src/ons-website/static/archive").expanduser()
+# ONS_ARCHIVE_DIR overrides the default checkout-relative path -- set it when
+# the ons-website PDFs live somewhere else on this machine (they come from
+# the private esnible/ons-website repo, not this one, so the path varies).
+PDF_DIR = pathlib.Path(
+    os.environ.get("ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")
+).expanduser()
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
 MD_DIR = REPO_ROOT / "jons"
 CSPELL_CONFIG = REPO_ROOT / "cspell.config.yaml"

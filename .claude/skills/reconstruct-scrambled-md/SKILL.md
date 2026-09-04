@@ -12,7 +12,7 @@ You are rebuilding a Markdown file whose source PDF used a two-column (or multi-
 Before using this skill, confirm the file actually has this failure mode rather than plain OCR garble:
 
 1. Read a page or two of the target `.md` file. Column-scrambled text reads as genuinely incoherent — sentences cut off mid-word and resume with unrelated content — not just misspelled.
-2. Find the source PDF, typically at `~/personal/src/ons-website/static/archive/<basename>.pdf` (matching the `.md` filename, e.g. `ONS_216.md` → `ONS_216.pdf`).
+2. Find the source PDF, typically at `~/personal/src/ons-website/static/archive/<basename>.pdf` (matching the `.md` filename, e.g. `ONS_216.md` → `ONS_216.pdf`). The PDFs come from the private `esnible/ons-website` repo and this path varies by machine — if it's not there, check for a `$ONS_ARCHIVE_DIR` override (the same env var the `detect-missing-tables`, `restore-headings`, and `transcribe-foreign-script` scripts read) or ask the user where their checkout lives.
 3. Sample it with `pdftotext -layout <pdf> - | sed -n '1,80p'` and compare against the `.md` file's opening. If `pdftotext -layout` reads coherently in proper column order and the `.md` file does not, this skill applies.
 
 If `pdftotext -layout` is *also* garbled (rare — happens with some scanned-image PDFs), this skill's primary method won't work; fall back to the image-transcription method throughout instead (see "Image fallback" below).

@@ -9508,5 +9508,14 @@ Ramakantham
 Bagalkot
 Sashti
 
+# ONS_097 — Newsletter 97 Miscellany bibliography: New Publications items
+Devagarh
+Hanborough
+Kanishkas
+Mauriya
+Millwood
+Visnukundin
+Willcot
+
 # ONS_098 — Book Review: Ancient Indian Silver Punchmarked Coins of the Magadha-Maurya Karshapana Series (Gupta & Hardaker)
 Bisson

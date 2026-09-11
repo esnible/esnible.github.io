@@ -163,6 +163,8 @@ words:
   - symbolistic
   - systematised
   - draughtsmanship
+  - personalise
+  - Serbo
 ignoreWords: []
 import:
   - "@cspell/dict-ar/cspell-ext.json"

@@ -334,6 +334,7 @@ duang
 fuang
 Khmer
 MacKenzie
+Mahathat
 Phra
 Ruang
 Sao
@@ -2723,3 +2724,8 @@ amuletic
 jettons
 Morioka
 Trinh
+
+# ONS_099 — Newsletter 99: Korean cast coinage (Mandel/KCDA numbering, Sang Pyong Tong Bo)
+KCDA
+Kriz
+Pyong

@@ -3732,6 +3732,7 @@ undertypes
 # OP_029 — Index of Interesting Items in the ONS Newsletter 1976–1992 (Wiggins): mints, places, terms
 Amraoti
 Balapur
+Balapurs
 Belas
 Chupperbund
 Gakkar
@@ -9519,3 +9520,6 @@ Willcot
 
 # ONS_098 — Book Review: Ancient Indian Silver Punchmarked Coins of the Magadha-Maurya Karshapana Series (Gupta & Hardaker)
 Bisson
+
+# ONS_099 — Newsletter 99: Smithsonian "Aditi: the monies of India" exhibition
+Aditi

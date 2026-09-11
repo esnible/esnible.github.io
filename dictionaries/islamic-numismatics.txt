@@ -4185,6 +4185,7 @@ vostochnavo
 Aban
 Ardibihisht
 Azar
+Farwardi
 Isfandarmuz
 Nauroz
 Shahrewar
@@ -9881,6 +9882,13 @@ veke
 # IS_004 — Perso-Arabic legend vocabulary (Garhwal timasha coins)
 بادشاه
 
+# ONS_099 — Perso-Arabic legend vocabulary (Girvan Yuddha coins, Akbar's Coppers of Balapur)
+المورہ
+بالاپور
+برهانپور
+فروردی
+كيربان
+
 # OP_009 — Modern gold coins of Ottoman Egypt (Lachman): foreign-coin names as spelled in the paper
 Bounduki
 Dabloun
@@ -9951,3 +9959,7 @@ Vays
 Weltgeschichte
 Yunus
 Zentralasien
+
+# ONS_099 — Newsletter 99: ANS Medieval and Islamic photofile
+photofile
+Ryba

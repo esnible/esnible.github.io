@@ -9523,3 +9523,33 @@ Bisson
 
 # ONS_099 — Newsletter 99: Smithsonian "Aditi: the monies of India" exhibition
 Aditi
+
+# ONS_090-091 — Gadahara connection bibliography; coin of Rana Bahadur Shah of Nepal; Chupperbund counterfeiters
+Almorah
+Baluchies
+Bheema
+Chupperbunds
+Gadahara
+Mozuffernagar
+Nicholls
+Nursinghpore
+Satpal
+
+# ONS_094-095 — Bhutan coin symbolism; coinage of Las Bela
+adhelo
+adhri
+Alladdini
+Blaker
+damri
+dukar
+Jamot
+karimkhani
+kashani
+kasiro
+Khudadad
+Khudadad's
+Kureshi
+Manof
+Minchin
+Pottinger
+Sadozais

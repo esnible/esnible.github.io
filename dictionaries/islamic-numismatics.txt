@@ -2734,7 +2734,9 @@ Dughlat
 Hashtad
 Hasrat
 Huzu
+IAPN
 Kangun
+Komaroff
 Mamluke
 Muqaddasi
 Nasratabad
@@ -2750,6 +2752,7 @@ Söhnen
 Sultanahu
 Uman
 unrecognisable
+Whitehouse
 Zuriba
 
 # ONS_103 — Sasanian/BBA-Balkh article; Afghan coins; Aksumite; larin attribution; Kashmir

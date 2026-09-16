@@ -239,9 +239,11 @@ Vincentians
 Huhehaote
 Tsai
 
-# ONS_105 — Tibetan pattern coins dated in Chinese Kala Chakra system
+# ONS_105 — Tibetan pattern coins dated in Chinese Kala Chakra system; Hong Kong coin finds
 Huobi
+JHKAS
 Lidai
+Tsuen
 Zhongguo
 
 # ONS_106 — Kwangtung 20 cent; Kuang Hsu coinage varieties

@@ -2654,7 +2654,9 @@ Moghul
 
 # ONS_105 — Sallarid dirham; Ziyarid; SE Asian encyclopedia; Tibetan pattern coins; Ottoman coin types
 Acheh
+Aevi
 Asvar
+BSOAS
 Gilan
 Ardabil
 bi'llah
@@ -2668,6 +2670,8 @@ Damavand
 Damghan
 Daylam
 Dvin
+Eurasiae
+Fass
 Ghiyath
 Guerche
 Hauqal
@@ -2683,10 +2687,10 @@ Kurdi
 Kangarids
 Kankar
 Kasravi
-lagab
 Langar
 Madelung
 Marzuban
+Medii
 Miyana
 Mengal
 Miskawayh
@@ -2698,6 +2702,7 @@ Musafir
 Musafirids
 Mustajir
 Muti
+Mutic
 Osteuropas
 Pasai
 Qimis
@@ -2710,9 +2715,11 @@ Sallarids
 Sembilan
 Sharmazan
 Shenwari
-Simnin
+Simnan
 Tarum
+tawhid
 Vahsudan
+Versteeg
 Vesmer
 Vushmgir
 Wahsudan

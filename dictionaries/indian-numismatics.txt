@@ -2571,11 +2571,22 @@ Beed
 Hoshang
 Rampuria
 
-# ONS_110 — Interesting Native State Coins: Baroda, Rewa, Gwalior; Maratha rupees of Jabalpur
+# ONS_110 — Interesting Native State Coins: Baroda, Rewa, Gwalior; Maratha rupees of Jabalpur; Burmese symbolic coins
+Burmans
 Gaikwad
+Gawaliar
+Ghatka
 Khanderao
+Khel
+Mundula
+Parsojee
+Raghujee
+Riwa
+Sanh
+Shamsher
 Vishwanathsimha
 Viswanathsimha
+Yandabo
 
 # ONS_113 — ONS Newsletter 113: Moghal puppet Akbar Shah; Vigra coins from Paithan; Kotah mohur
 Bakhar
@@ -2631,6 +2642,7 @@ Vigra
 Wani
 
 # ONS_108 — ONS Newsletter 108: Half anna of Aurangzeb; Koilkunda rupee; new Indian society
+Colebrooke
 Gadwal
 Imtiyazgadh
 Khujista

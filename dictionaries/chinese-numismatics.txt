@@ -278,6 +278,11 @@ Zhenai
 Zhenfeng
 Zunxiang
 
+# ONS_108 — ONS Newsletter 108: Kestner Museum coin room; China Year Book publication note
+Hongkai
+Kestner
+Xinhua
+
 # ONS_109 — Japanese coins in southern Vietnam; Dutch East India Company coin trade
 Aelst
 Blusse
@@ -303,13 +308,16 @@ Marseilles
 medalllic
 Nitidihardjo
 
-# ONS_110 — Siamese porcelain pee tokens: scholars, terms, publishers
+# ONS_110 — Siamese porcelain pee tokens: scholars, terms, publishers; Spink Circular Siam/Penang articles
+Baleseal
 Chalerm
 Donnelly
+fuangs
 Hofrichter
 Hollink
 Ramsden
 Schlegel
+thake
 Yongboonkird
 
 # ONS_112 — Vietnamese coins catalogue review; Japanese multiple cash; misc terms

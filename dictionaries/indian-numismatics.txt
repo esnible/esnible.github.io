@@ -9575,3 +9575,6 @@ Sadozais
 Bahamani
 rajadi
 Subhedar
+
+# ONS_111 — Newsletter 111: members' news place name
+Seoni

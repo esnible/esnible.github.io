@@ -2858,12 +2858,15 @@ Vishnukundin
 # ONS_127 — Garhwal timashas hoard; Bhutanese overstrikes; newsletter items
 Ashvini
 Agrawal
+Bayly
 Bhonsla
 Chandrashekhar
+Cormick
 Goga
 Gombrich
 Girvan
 Gorkha
+Grewal
 # ONS_124 — ONS Newsletter 124: Indian coins, Rajasthani fakes, Mintex 90 exhibition
 Amarendra
 Arya
@@ -2996,6 +2999,7 @@ Bhonsle
 Boulton
 Cauveri
 Chumble
+CWTHROC
 Dalley
 Datta
 Desalji
@@ -3029,6 +3033,7 @@ Pethkar
 Pratipal
 Pukhraj
 Rajaramsingh
+Reasonings
 Rujuvula
 RUJUVULA
 Sanscrit
@@ -3045,6 +3050,7 @@ Trichanapalli
 Trichnopoly
 tranka
 Uraiyur
+Vasantarao
 Vasantrao
 Vijay
 # ONS_129 — Western Satraps, Zeionises, Sind coins, Kangra, Sikh coins, Rajasthan

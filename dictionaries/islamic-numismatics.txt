@@ -892,6 +892,7 @@ turques
 Turquie
 
 # Place names
+Basle
 Tarzana
 Thessalonika
 Tarzana
@@ -3745,12 +3746,18 @@ Zaidi
 Zuray'ids
 
 # ONS_127 — Kakuyid dirham article; Byzantine countermark article; newsletter items
+Abadi
 Baihaqi
+Dibaji
 Dikigoropoulos
+Emperaturiye
+Eslam
 Farrash
 Fayyaz
 Gonbad
+Habibi
 Hamdavi
+Hann
 Heracleonas
 Heraclian
 Heraclius
@@ -3758,6 +3765,7 @@ Heraclonas
 Hionides
 HPAK
 Isnaf
+Jariques
 Jing
 Jibal
 Jozjan
@@ -3769,21 +3777,27 @@ Kakuyids
 Kharcha
 Kitab
 Medinat
+Médéa
 Muhammadiya
 Naoto
+Nokhostin
 Pavlou
 Pesar
 Qarakhanid
 Qanun
+Sepharad
 Shifa
+Sina
 Sipahan
 Sinouffi
 Stratos
 Tabaristanian
 Theoupolis
+Tibb
 Titteri
 Viguera
 Vologases
+Whittemore
 Yamani
 Yamini
 Zahra

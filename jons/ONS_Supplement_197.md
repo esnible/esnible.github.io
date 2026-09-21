@@ -100,6 +100,7 @@ jj,>fno)CiJob,>6i) oiftot^ïnbo, 1981 ) 10 \[Pakhomov Ye * * *Coins of Georgia* 
 *oflrakhll* Tbilisi 1974 \] (In Russian Poraea A 3aHaTKn KanHTajiH3Ma B FpysHH H nojiHTHKa HpaKJiHH II TSHJTHCH 1974 )
 
 \* The scene may have some connotation with the Tiflis foundation legend and thus could serve as a city coat of arms We would like to acknowledge Mr G Lobzhanidze who expressed this idea in a private conversation
+
 # A GROUP OF UNUSUAL SIRMA ABAZIS: DIE ANALYSIS
 
 ## By Irakli Paghava and Gia Bebia
@@ -258,6 +259,7 @@ The die analysis of 394 sirma coins that we performed allowed us to come to the 
 We would like to express our sincere gratitude to our loyal friend, Mr Severian Turkia for his substantial and generous help, as well as to Messrs Pavie Chantunshvili, Kees Uitenbroek and Dr Alexander Akopyan lor their extremely valuable support *References*
 
 \[Akopyan A, Molchanov A The New Data about the Monetary Production ot Ganja of the Second Half of the 18\* century In *Abstracts* *of the 14''' All-Russian* *Numismatic* *Conference* Saint Petersburg, 2007 Pp 98 99\] (In Russian A B AKonan, A A MoJinaHOB HoBwe aaHHue o MOHeXHOM HCKaHe faH/iaCH BTOpofl nOJlOBHHbl XVllI B TeSHCbl XIV BcepOCCHHCKOH HyMHSMaXHHeCKOH KOH(\{)epeHUHH Cn6, 2007 c 98-99) Albums *A Checklist of Islamic Coins* Santa Rosa 1998
+
 # I I
 
 Album S *Sylloge of Islamic Coins* *in* *the Ashmolean* Volume 9 *Iran after* *the* *Mongol* *Invasion,* ** ** **Ashmolean Museum** Oxford, 2001 \[Dumbadze M (editor) *Studies* *in* *Georgian history,* V 4 Tbilisi, 1973 \] (In Georgian (o;j8öódg (\|S,ri8olj
@@ -306,6 +308,7 @@ One of the authors launched the Georgian Numismatics special project (http//www 
 Number of specimens from various collections not available for the immediate *de visu* study, but available via Zeno Oriental Coins Database •\*' Total number of sirma abazi coins available at Zeno Oriental Coins Database Some of them are available for immediate *de* *VISU* study and are represented in the cell above
 
 Some coins (10) in our opinion do not constitute official Tiflis issues and hence were disregarded
+
 # VARIATIONS IN THE COMPOSITION AND ARRANGEMENT OF DATES ON SIRMA
 
 # COINS: APPROACH TO DIE ANALYSIS By Irakli Paghava
@@ -362,6 +365,7 @@ Here is an example instead of Pakhomov's designation *29c* for an abazi bearing 
 1179Isd(3) 118/ 2I1H 1182Isd(3) 1182-IsidM 1183Isd(3) 118/ 4-IiH 1184-Car(3) 1180 M M 1186-IiH 11 87 SH 1189Isd(3) 1189IsiiM II9I1H 119-IiH 119Is(3) 119-Isd(3) 119-Ii(3) 119 Ii(3) 11 9 Isd(3) 119 1sisM 119TM 119-IiM 1191 Ii(3) 1192-Ii(3) 1192-Isisd(3) 1192Isii(3) 1193-lsd(3) 1193-li(3) 1193-S(1) 1193-IsisM 1194-S(1) 1195-S(1) 1195-Ii(l) 1195 Isd(l) 1195-lsisdM 1196-lsd('') 11 96 IsdC) 1196-ls('') 1196 IsiidC) 1197-ls(l) 1197-lsd(l) 1198 ls(l) 1198-lsd(l) 1198 IsiidM 1199 Isd(l) 1199-li(l) 12 /;(P) 12 ls(l) 12-S(1) 12ol S(l) 12 1 ls(l) 12ol-ls(l) 12ol-li(l) 121-ls(l)
 
 12/2-11(1) 12oo2-S(l) 12oo2-S(l) 12/2-S(I) 12o/o2-li(l) 12o/o3-Ii(l)
+
 ## nu
 abazi abazi abazi abazi abazi abazi '/z and '/i abazi *VA* abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi *Vi* and *'A* abazi *Vi* abazi abazi abazi abazi abazi *Vi* and *VA* abazi *Vi* abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi abazi *Vi* abazi *Vi* abazi abazi abazi abazi abazi abazi *Vi* and *VA* abazi
 
@@ -414,6 +418,7 @@ Album S *Sylloge of Islamic Coins in the Ashmolean* Volume 9 *Iran after ihe Mon
 1910.  \[Pakhomov Ye *Coins of Georgia* Tbilisi 1970 \] (In Russian IlaxoMOB E A MoHCTbi rpy3HH TSHJIHCM 1970)
 
 *Tiflis in the 18" century * *(Image courtesy B Koblianidze)*
+
 # THE CROSS MOTIVE ON TIFLIS, GANJA, NAKHJAWAN AND TABRIZ COINS MINTED
 
 # IN AH 1181-1190 By Irakli Paghava and Severian Turkia
@@ -531,6 +536,7 @@ London,1911. 7. Yih, T.D. 'Hidden Christian/Nestorian Symbols on Chagatayid Coin
 from Zinjiang: Fact or Fantasy?' In: *Oriental Numismatic Society* *Newsletter,* #150, Autumn 1996. Pp. 21-24. 8. Zeno  Oriental Coins Database, <http://www.zeno.ru/>
 
 *Fig.8 Tabriz Khanate, AR, Tabriz, AH 1182; weight 4.60 g; size * *26-26.8 mm; die a.xis 18:00.*
+
 # A SERIES OF PECULIAR MINOR
 
 DENOMINATION SIRMA^" COINS: MODERN FAKES OR CONTEMPORARY IMITATIONS? **By Irakli** Paghava
@@ -784,6 +790,7 @@ All the above makes us incline to the idea that these items are probably modem f
 5.  \[Kapanadze D. Georgian Numismatics. Tbilisi, 1969.\] (In Georgian: j,bJó6.idg ej. J.'ïfóorgc^o 6j8o88,')gojó. cnboc?(.l)C), 1969.) 6.  Lang D: *Studies in the Numismatic* *History of Georgia m* *Transcaucasia.* New-York, 1955. 7.  \[Mayer T. (editor) *Sylloge of Coins of Caucasus and Eastern* *Europe.* Wiesbaden, 2005.\] (In German: Mayer T. (bearbeitet von). Sylloge der Miinzen des Kaukasus und Osteuropas. Wiesbaden, 2005.) 8.  \[Pakhomov E.: *Coins of Georgia.* Tbilisi, 1970.\] (In Russian: HaxoMOB E.A. MoHexbi FpyjHH. T6HJIHCH, 1970). 9.  Turkia S., Paghava I., Kesmedzhi A.: "Coin imitating a Tiflis abbasi 1131 AH: West Georgian or Daghestani origin", in: *Journal of the Oriental Numismatic* *Socierv,* 194, Winter 2008.
 
 10.  Zeno Oriental Coins Database, <http://www.zeno.ru/> *Giorgi XII*
+
 # THE START OF SIRMA COINAGE: THE SIRMA ABAZI OF AH "1166" AND ITS DATING
 
 ## By Severian Turkia and Irakli Paghava
@@ -962,6 +969,7 @@ Perry J *Karim Khan Zand* Oxford, 2006 I Sharashenidze Z *Iran m the Second Half
 ## (12107)
 
 ## (12157) *Chart showing* *die-links*
+
 # THE YELLOW METAL COINS ASCRIBED TO EREKLE II AND THE FATE OF
 
 # GEORGIAN DIES OF THE 17™-18^" CENTURY By Irakli Paghava
@@ -1115,6 +1123,7 @@ Das Asiatische Museum der Kaiserlichen Akademie der Wissenschaften zu St Petersb
 10.  \[Kutelia T *Georgia* *and Safavid* *Iran (according* *to* *numismatic* *data)* Tbilisi 1979\] (In Russian KyxejiHa T rpy3na M CecjieBHacKHH HpaH (noaannbiM HyMHSMaxHKn) T5HJIHCH, 1979)
 
 Lang D * * *Studies* *in* *the Numismatic* *History* *of* *Georgia* *in* *Transcaucasia* New-York, 1955 \[Langlois V *An Attempt to Classify the Monetary Series of Georgia* *from Ancient* *Times till the Present Day* Pans 1860\] (In French Langlois V *Essai de Classification* *des Suites Monetaires* *de la* *Georgië depuis I Antiquitejusqu* *anos Jours* Paris 1860) Managadze I (Editor) *Money in Georgia* Tbilisi, 2003 \[Morgan J de *Scientific Mission to Caucasus* *Aicheological* *and* *Historical* *Essays* *Vol II Studies* *on the Oiigm* *of Peoples* *of* *Caucasus* Pans 1889\] (In French Morgan J de * * *Mission* *scientifique* *au Caiicase,* *Etudes* *Archeologiques* *&* *Histoiiques* *Tome Deuxieme. Recherches sur les origines des peuples* *du Caucase* Pans, 1889 ) \[Pakhomov Ye * * *Coins of Georgia* Tbilisi, 1970\] (In Russian naxoMOB E A Monexbi rpy3HM TSHJIMCH, 1970) Spasskiy I Novodels In * * *The Past* *of our* *Motherland* *m* *Numismatic* *Relics* Leningrad, 1977 Pp 105-125\] (In Russian CnaccKHH H f HoBoaejibi 'Tlpomnoe Hameii poannbi B naMflxHHKax HyMH3MaxMKH JleHHHrpazi 1977 Cxp 105-125) JUzdennikov V " Novodel Coins' In *The Coins of Russia of the 18'''* *- Beginning of the 19"'C* Moscow 1994 Pp 178 188\] (In Russian y3fleHHHK0B B HoBoaejibHbie MOHexbi 'MoHexbi POCCHH XVIll Haqajia XIX BCKa MocKBa, 1994 Cxp 178-188) \[Uzdennikov V * * *Russian* *Coins* Moscow, 1985\] (In Russian VsaeHHHKOB B Monexbi POCCHH MocKBa, 1985) \[VinklerP *I rom the History of Minting in Russia Minting Coins for* *Georgia* *(1804-1811)* Saint Petersburg 1898\] * * *(in* Russian BHHKaep n H3 HCxopHH MOHexHoro aeaa B POCCHH HeKaHKa MOHCX aJiü 1 pysHM (1804 1833 rr ) C n 5 1898 )
+
 # COUNTERMARKING OF COPPER COINS IN LATE 18'" CENTURY GEORGIA
 
 ## By Irakli Paghava, Giorgi Lobzhanidze, Severian Turkia
@@ -1325,6 +1334,7 @@ In our opinion current coins could be countermarked in order to demonstrate thei
 It IS remarkable that a lot of the coins of Teimuraz and Erekle which bear their countermarks are heavily worn, this is particularly true for the coins countermarked with the countermark of Teimuraz In our opinion, the *\\iorn-out coins* could easily be perceived as a defective currency (to be countermarked in order to be allowed to circulate freely or as a full-value currency) They
 
 "'' Including the Ottoman occupation (172S 1735) and the Afshand yoke (1735-1747) '^" For a very valuable analysis on the issue please refer to T Kutelia s work *Catalogue of the Iranian Copper Mone\\ (in accordance with* *holdingi of the State Museum of Georgia)* a publication of 546 Persian autonomous copper coins \[f7\], particularly to \[17, pp 8, 10-11, 28, 30-31, 46 47 49\]
+
 ## may have been given the same status as foreign coins, even
 though they were Georgian, particularly if the effigy was worn away to the extent of the coin being barely recognisable On the other hand, even the worn-out coins of the father and son could still be considered legal tender for the reasons of prestige mentioned above So we cannot say, whether the approach to national and foreign (incl antiquated) worn out coins was differentiated In our opinion, perhaps not - the simplest solution is the best On the other hand, the free countermarking cannot be exluded in the case of the worn out coins of Teimuraz II and Erekle II, but not of the foreign coins this would have spared the credibility ot Georgian coins as opposed to that of the foreign coins
 
@@ -1422,6 +1432,7 @@ Listed as 1206AH (1791/92AD), but no date is visible on the provided drawing **R
 #3126 of Georgian State Museum \[Ku, p. 91, no. 494, table XXXI, no. 494\] \[Ke69,p. 154, table 18, no. 227a\] Published for the first time \[Pa, p. 270\]
 
 *Camels in Tiflis \{Image courtesy B.Koblianidze) *
+
 # GANJA COINS OF GEORGIAN TYPES, AH 1200-1205 By Alexander Akopyan ***Historical*** ***Background***
 
 The coinage of the south Caucasian khanates in the second half of the 18\* - beginning of the 19"" centuries (12th - 13"' centunes AH) has been poorly investigated by scholars till now Unfortunately, the only activity conducted in the field has been a classification of coinage as well as an accumulation of new numismatic facts No comprehensive study or an attempt to bring the entire numismatic data together has been done so far The author of this note has been working on a corpus of coins of the Ganjd Khanate which is still in progress'""\*, and this note is a preliminary communication on the Ganja coinage during the short period of AH 1200-1205
@@ -1494,6 +1505,7 @@ Abazis of type Tl are known for the following years *Date* AH * * *Weight* *Diam
 For AH 1205 (or AH 1207, the dating is very doubtful as the symbols are distorted) the Vi abazi is known but seems to be an imitation (1 30 g, 17 mm, *cf* Fig 5'^')
 
 '"' Pakhomov Ye A *Monety Gruzii* Tbilisi 1970 P 238 *\[Coins of* *Georgia\]* (further *PG)* ''" *ibid* P 237 '^' *ibid* P 341 ' " As on fig 3 with footnote on Kapanadze *op cit* P 131 '" Kapanadze D G *Gruzinskaya Nwni-matika* Tbilisi 1955 Plate XV, no 191 *\[Georgian Numismatics\]* In this book (P 131) the coins ot this type dated AH 1201-1205 are mentioned '^•' Pakhomov Ye A *Moneln\\e* *Klad\\* *Azerba\\jana i diu^ikh respuhlik* *kraex i oblaste\\ Kaxkaza* Vols I-IX Baku 1926-1966 *\[Monetary* *Hoards of Azerbaijan and other Republics Lands and Districts of the* *Caucasus\]* *^\{further* *PA)* Vol V no 1496 '" Collection ot Igor Dehnsky (coin I) "' Kapanadze op at No XV 191 Attributed to AD 1788/89 = AH 1203 (P 174) but likely AH 1201 (coin U) ' " M vol m no 917 "« *ibid* *'''''* In the author s collection (coin IlO
+
 # ^^tit **^** ** ** **,**
 
 *Fig. 5 Type T2, imitation of'Aabazi * *of AH 1205? (coin ill).* **Type T2** *Obverse:* **Shi'ite Kalima**

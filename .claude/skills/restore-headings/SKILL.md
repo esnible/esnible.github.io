@@ -62,16 +62,26 @@ it.
 | | `FLAT` | on its own line already, but with no marker |
 | | `LOST` | a head with no counterpart in the Markdown at all |
 | Markdown → PDF | `OVERSET` | the Markdown marks it as a head; the scan does not |
+| | `UNMATCHED` | the Markdown marks it as a head, and its text matches no line of the scan at all |
 
 Without the second direction, `## The attribution: and chronology of some of the
 coins described in this` -- an ordinary sentence promoted to a heading, and cut
 in half by the line break -- is invisible, because there is no set-apart PDF
 line to start from.
 
+`UNMATCHED` is what `OVERSET` cannot see: a heading that is not in the scan
+at all. It is almost always garble -- a borderless table OCR'd one column at
+a time, whose lines happened to start with `#` (`IS_020`'s catalogue became
+`## Qa'itbay " " Reign 841-842 842-857 ...` and `#8 © EF EEE + Ww`). Headings
+shorter than 4 letters (`## by`) are too short to match and are not reported.
+
 A verdict may carry a suffix, and a suffixed verdict is **reported but never
 applied** -- see "Splits that are refused" below.
 
-`fix` repairs `FOLDED`, `FLAT`, and `OVERSET`. `LOST` is reported only: inserting
+`fix` repairs `FOLDED`, `FLAT`, and `OVERSET`. `UNMATCHED` is reported only and
+counted as "to review", not "to fix": dropping the marker would leave the garble
+behind, so it goes to `restructure-flattened-md` (a flattened table) or
+`fix-ocr`. `LOST` is reported only: inserting
 a head means choosing both its wording and its position, and the wording comes
 from the garbled OCR layer (`B I B L I O G R A P H Y`). Read the render and add
 it by hand. `FOLDED-PLAIN` needs `--include-plain`, because a wrong call there

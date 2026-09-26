@@ -21,7 +21,7 @@ Usage:
     detect_script_garble.py locate IS_004 --line 92        # Tier 1a
     detect_script_garble.py render IS_004 --page 4 --out /tmp/p.png   # Tier 1b
     detect_script_garble.py spellcheck "اکبر شاه"           # Tier 2 helper
-    detect_script_garble.py check-markers [ONS_140 ...]     # verify page=N markers
+    detect_script_garble.py check-markers [ONS_140 ...]     # verify figure/script page=N markers
 
 Requires PyMuPDF (no OCR/vision libraries -- reading the render is a job for
 a vision-capable model, not this script) and, for `spellcheck`, `cspell` on
@@ -232,11 +232,14 @@ def cmd_locate(args):
         print("  no page matched -- the surrounding text may itself be OCR garble; widen --window")
 
 
-# Every `page=N` marker the skills write -- figure, script-ok/guess/deferred,
-# table-ok/deferred. N is the 0-based PDF page index (what `render --page`
-# takes), never the printed folio or a 1-based count.
+# The `page=N` markers check-markers verifies -- figure and script-ok/guess/
+# deferred. N is the 0-based PDF page index (what `render --page` takes),
+# never the printed folio or a 1-based count. table-ok/deferred use the same
+# convention but are skipped: they sit after the table they retire, beside the
+# next page's text, so nearby words point at the wrong page. detect_tables.py
+# `screen` is the check for those.
 PAGE_MARKER_RE = re.compile(
-    r"<!--\s*(figure|script-ok|script-guess|script-deferred|table-ok|table-deferred)\s+page=(\d+)")
+    r"<!--\s*(figure|script-ok|script-guess|script-deferred)\s+page=(\d+)")
 
 
 def cmd_check_markers(args):
@@ -348,7 +351,7 @@ def main():
     p.add_argument("--window", type=int, default=4, help="md lines each side to pull distinctive words from")
     p.set_defaults(func=cmd_locate)
 
-    p = sub.add_parser("check-markers", help="verify every page=N marker points at the right 0-based PDF page")
+    p = sub.add_parser("check-markers", help="verify figure/script-* page=N markers point at the right 0-based PDF page")
     p.add_argument("stems", nargs="*", help="default: every jons/*.md")
     p.add_argument("--window", type=int, default=4, help="md lines each side to pull distinctive words from")
     p.add_argument("--max-pages", type=int, default=3, help="ignore words found on more PDF pages than this")

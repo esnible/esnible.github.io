@@ -74,7 +74,7 @@ one, stop and hand that piece to the owning skill instead.
 - **Never drop a `*[figure]*` placeholder or its `<!-- figure page=N ... -->`
   comment.** The placeholder is the only signal to a reader that artwork is missing;
   the comment is the only record of where it lives in the PDF. Caption text beside a
-  drawing is a caption, not the drawing's content. **`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies every marker in a file.
+  drawing is a caption, not the drawing's content. **`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies `figure` and `script-*` markers.
 - **Don't fabricate.** A conjectural genealogy stays conjectural: preserve every name
   and its rough position, do not invent a parent-child link the scan does not draw.
   An illegible legend gets a flagged guess or an honest comment (per

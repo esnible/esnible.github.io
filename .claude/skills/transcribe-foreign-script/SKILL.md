@@ -75,7 +75,7 @@ python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300 --out /tmp/
 
 ## Markers
 
-**`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies every marker in a file.
+**`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies `figure` and `script-*` markers.
 
 Same shape as `detect-missing-tables`' `table-ok` / `table-deferred`, and read by `find_candidates()` in the script — a marker comment applies to the nearest preceding non-blank content line:
 

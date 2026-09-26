@@ -21,6 +21,7 @@ Usage:
     detect_script_garble.py locate IS_004 --line 92        # Tier 1a
     detect_script_garble.py render IS_004 --page 4 --out /tmp/p.png   # Tier 1b
     detect_script_garble.py spellcheck "اکبر شاه"           # Tier 2 helper
+    detect_script_garble.py check-markers [ONS_140 ...]     # verify page=N markers
 
 Requires PyMuPDF (no OCR/vision libraries -- reading the render is a job for
 a vision-capable model, not this script) and, for `spellcheck`, `cspell` on
@@ -231,6 +232,68 @@ def cmd_locate(args):
         print("  no page matched -- the surrounding text may itself be OCR garble; widen --window")
 
 
+# Every `page=N` marker the skills write -- figure, script-ok/guess/deferred,
+# table-ok/deferred. N is the 0-based PDF page index (what `render --page`
+# takes), never the printed folio or a 1-based count.
+PAGE_MARKER_RE = re.compile(
+    r"<!--\s*(figure|script-ok|script-guess|script-deferred|table-ok|table-deferred)\s+page=(\d+)")
+
+
+def cmd_check_markers(args):
+    """Check that each `page=N` marker sits next to text found on PDF page N.
+
+    Scores pages by distinctive words (5+ letters) from the marker line and a
+    few lines around it, counting only words that occur on at most
+    --max-pages pages so boilerplate doesn't vote. Verdicts:
+      ok        page N scores at least as well as any other page
+      OFF-BY-1  page N-1 beats page N -- the marker was written 1-based or
+                from the printed folio
+      MISMATCH  some other page wins
+      RANGE     N is past the last page (certainly not 0-based)
+      weak      too little matching text to judge either way
+    """
+    stems = args.stems or sorted(p.stem for p in MD_DIR.glob("*.md"))
+    counts = {}
+    flagged = False
+    for stem in stems:
+        pdf_path, md_path = resolve(stem)
+        if not pdf_path.exists() or not md_path.exists():
+            continue
+        lines = md_path.read_text(encoding="utf-8").splitlines()
+        marks = [(i, m.group(1), int(m.group(2)))
+                 for i, line in enumerate(lines) for m in PAGE_MARKER_RE.finditer(line)]
+        if not marks:
+            continue
+        doc = fitz.open(pdf_path)
+        texts = [page.get_text().lower() for page in doc]
+        for i, kind, n in marks:
+            words = _distinctive_words(lines, i, window=args.window)
+            words = {w for w in words
+                     if 0 < sum(w in t for t in texts) <= args.max_pages}
+            scores = [sum(w in t for w in words) for t in texts]
+            if n >= len(texts):
+                verdict = "RANGE"
+            else:
+                top = max(scores)
+                if top < args.min_hits:
+                    verdict = "weak"
+                elif scores[n] >= top:
+                    verdict = "ok"
+                elif n >= 1 and scores[n - 1] == top:
+                    verdict = "OFF-BY-1"
+                else:
+                    verdict = "MISMATCH"
+            counts[verdict] = counts.get(verdict, 0) + 1
+            if verdict in ("OFF-BY-1", "MISMATCH", "RANGE") or (args.verbose and verdict == "weak"):
+                flagged = flagged or verdict != "weak"
+                best = max(range(len(texts)), key=lambda p: scores[p])
+                here = scores[n] if n < len(texts) else "-"
+                print(f"{verdict:8} {stem}:{i + 1}  {kind} page={n}  "
+                      f"(page {n} scored {here}, best page {best} scored {scores[best]})")
+    print("summary: " + "  ".join(f"{k} {v}" for k, v in sorted(counts.items())))
+    sys.exit(1 if flagged else 0)
+
+
 def cmd_spellcheck(args):
     """Check a guessed reading against the corpus's cspell config (ar/fa-ir
     dictionaries + islamic/chinese/indian-numismatics word lists). Used to
@@ -284,6 +347,14 @@ def main():
     p.add_argument("--line", type=int, required=True, help="1-based md line number of the candidate")
     p.add_argument("--window", type=int, default=4, help="md lines each side to pull distinctive words from")
     p.set_defaults(func=cmd_locate)
+
+    p = sub.add_parser("check-markers", help="verify every page=N marker points at the right 0-based PDF page")
+    p.add_argument("stems", nargs="*", help="default: every jons/*.md")
+    p.add_argument("--window", type=int, default=4, help="md lines each side to pull distinctive words from")
+    p.add_argument("--max-pages", type=int, default=3, help="ignore words found on more PDF pages than this")
+    p.add_argument("--min-hits", type=int, default=2, help="best page needs this many hits to judge")
+    p.add_argument("-v", "--verbose", action="store_true", help="also list weak (unjudgeable) markers")
+    p.set_defaults(func=cmd_check_markers)
 
     p = sub.add_parser("spellcheck")
     p.add_argument("text", nargs="*", help="the guessed reading (or pipe it via stdin)")

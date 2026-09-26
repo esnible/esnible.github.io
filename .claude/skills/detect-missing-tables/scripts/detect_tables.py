@@ -736,7 +736,7 @@ def main():
 
     g = sub.add_parser("grids", help="Tier 1: grid geometry per page")
     g.add_argument("stem")
-    g.add_argument("--page", type=int, default=None)
+    g.add_argument("--page", type=int, default=None, help="0-based PDF page index (not the printed folio)")
     g.add_argument("--dpi", type=int, default=DPI)
     g.add_argument("--min-frac", type=float, default=MIN_FRAC,
                    help="ink-run length a ruling line must reach, as a fraction of page width/height. Lower finds faint or short interior rules, but also splits real columns and turns line artwork into grids -- tune it per page here, never for `screen`.")
@@ -744,7 +744,7 @@ def main():
 
     c = sub.add_parser("cells", help="Tier 2: column-bucketed OCR text")
     c.add_argument("stem")
-    c.add_argument("--page", type=int, required=True)
+    c.add_argument("--page", type=int, required=True, help="0-based PDF page index (not the printed folio)")
     c.add_argument("--dpi", type=int, default=DPI)
     c.add_argument("--min-frac", type=float, default=MIN_FRAC,
                    help="ink-run length a ruling line must reach, as a fraction of page width/height. Lower finds faint or short interior rules, but also splits real columns and turns line artwork into grids -- tune it per page here, never for `screen`.")

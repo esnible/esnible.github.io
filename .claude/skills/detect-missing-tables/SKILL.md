@@ -96,6 +96,8 @@ A cell holding a figure is annotated with two parts:
 - **`*[figure]*` renders.** A reader of the Markdown sees that artwork is missing rather than silently reading a caption as if it were the whole cell.
 - **The HTML comment does not render** and records where the artwork lives in the source PDF, so it never has to be located again.
 
+**`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies every marker in a file. The same holds for `table-ok` / `table-deferred`: `screen` matches their `page=` against 0-based page indexes, so a 1-based marker retires the wrong page's finding.
+
 The rect is `x0,y0,x1,y1` in **PDF points**, page-relative. Points rather than pixels deliberately: they are DPI-independent, so the stored rect stays valid no matter how the page is later rendered. Detection runs at 110 dpi, but the same rect extracts cleanly at any resolution:
 
 ```python

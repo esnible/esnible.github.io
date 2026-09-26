@@ -48,6 +48,19 @@ flattened lines map to and confirm what you are looking at is one or more of:
   fingerprint -- it rides along because it is the same page and the same rebuild;
   `restore-headings`'s underline detector is what surfaces it independently.
 
+**A borderless table can also flatten with no `\|` at all.** `IS_020`'s
+catalogue was OCR'd one column at a time -- `Mint Cairo Cairo Damascus Aleppo
+Cairo ...`, `Reign 841-842 842-857 857-865` -- with some of those lines starting
+`#` and so rendering as headings. `detect-missing-tables` reported nothing (no
+rules, no `\|`). Two other signals catch it:
+
+```
+python3 .claude/skills/restructure-flattened-md/scripts/lint_structure.py <STEM>        # WARN column dump
+python3 .claude/skills/restore-headings/scripts/detect_headings.py      scan <STEM>   # UNMATCHED headings
+```
+
+A cluster of either on the same page is this skill's job too.
+
 `detect-missing-tables`'s `FLATTENED` check is purely textual, so a `table-ok` /
 `table-deferred` marker will **not** clear it -- and there is no marker of this
 skill's own. The only thing that makes the fingerprint go away is actually removing
@@ -196,8 +209,8 @@ npx cspell lint jons/<STEM>.md
 
 - `lint_structure.py` catches the mechanical defects a big rewrite introduces:
   a `#` heading with no blank line around it, a pipe table split by a stray blank
-  line, an unbalanced ` ``` ` fence, a `*[figure]*` with no companion comment, and
-  any `\|` left outside a table row.
+  line, an unbalanced ` ``` ` fence, a `*[figure]*` with no companion comment,
+  any `\|` left outside a table row, and a column dump (below).
 - `detect-missing-tables screen` should now read `FLATTENED 0`, exit `0`.
 - Note the cspell delta (before vs. after). Greek legend words, correct book
   titles, and deliberately source-faithful typos are expected to remain flagged;

@@ -14,6 +14,9 @@ mechanical defects that render wrong but are invisible in a diff:
   * a `\\|` left in a non-table line (the fingerprint detect-missing-tables
     screens for -- the rebuild was supposed to remove it)
   * a stray Arabic / Devanagari glyph left in an English prose line
+  * a column dump -- a borderless table OCR'd one column at a time, so a
+    line repeats one word (`Cairo Cairo Cairo`) or runs bare numbers
+    (`841-842 842-857 857-865 865-872`)
 
 This does NOT check that the reconstruction is *correct* -- only that it is
 well-formed Markdown. Correctness is an eyeball-the-render job.
@@ -36,6 +39,15 @@ FOREIGN_RE = re.compile(
     "[؀-ۿݐ-ݿऀ-ॿ"
     "ﭐ-﷿ﹰ-﻿‎‏]"
 )
+
+
+# The same token three times running: `Cairo Cairo Cairo`, `3a 3a 3a`, or a
+# run of ditto marks `" " "`. The token needs two letters/digits (or is a
+# ditto mark) -- `* * *`, `- - -` and `D D D` are separators and OCR specks.
+REPEAT_RE = re.compile(r'(?<!\S)("|[^\s*_#]*[A-Za-z0-9][^\s*_#]*[A-Za-z0-9][^\s*_#]*)(?:\s+\1){2,}(?!\S)')
+# Four or more bare numbers of 2+ digits, or ranges, in a row:
+# `801-815 815-824 825-841 841-842`.
+NUMRUN_RE = re.compile(r"(?<!\S)(?:\d{2,4}(?:-\d{1,4})?\s+){3,}\d{2,4}(?:-\d{1,4})?(?!\S)")
 
 
 def is_table_row(line):
@@ -135,6 +147,19 @@ def lint(path):
         if FOREIGN_RE.search(l) and len(re.findall(r"[A-Za-z]", l)) >= 25:
             add(i + 1, "WARN",
                 f"non-Latin glyph in an English prose line: {l.strip()[:70]!r}")
+
+    # --- column dumps: a borderless table read one column at a time ------
+    # No `\|` fingerprint and no ruling for detect-missing-tables to find, so
+    # nothing else catches it. IS_020's catalogue came out as lines like
+    # `Mint Cairo Cairo Damascus Aleppo Cairo Cairo` and
+    # `Reign 841-842 842-857 857-865 865-872 872-901`.
+    for i, l in enumerate(lines):
+        if fence_state[i] or is_table_row(l) or l.lstrip().startswith("<!--"):
+            continue
+        m = REPEAT_RE.search(l) or NUMRUN_RE.search(l)
+        if m:
+            add(i + 1, "WARN",
+                f"column dump (table read one column at a time?): {m.group(0).strip()[:50]!r}")
 
     return findings
 

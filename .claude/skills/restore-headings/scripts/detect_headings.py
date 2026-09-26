@@ -313,6 +313,17 @@ def locate_in_pdf(pdf_lines, text, min_ratio=RATIO):
     return best
 
 
+WORD_RE = re.compile(r"[A-Za-zÀ-ɏḀ-ỿ'’.-]*[A-Za-zÀ-ɏḀ-ỿ]{3,}[A-Za-zÀ-ɏḀ-ỿ'’.,:;()-]*")
+
+
+def mostly_words(text, share=0.5):
+    """True when at least `share` of the tokens are Latin-script words of 3+
+    letters. `Qa'itbay " " Reign 841-842 842-857` and `#8 © EF EEE + Ww` are
+    not; `SIKH COINS OF THE LAHORE MINT` is."""
+    toks = text.split()
+    return bool(toks) and sum(bool(WORD_RE.fullmatch(t)) for t in toks) / len(toks) >= share
+
+
 # --- verdicts -------------------------------------------------------------
 #
 # FOLDED        the scan sets this head apart; the Markdown appended it to the
@@ -323,6 +334,12 @@ def locate_in_pdf(pdf_lines, text, min_ratio=RATIO):
 # OVERSET       the Markdown marks it as a head; the scan does not.
 # LOST          an underlined or capitalised head with no counterpart in the
 #               Markdown at all.
+# UNMATCHED     the reverse of LOST: a `#` heading whose text matches no line
+#               of the scan at all and is mostly not words. Usually OCR garble or a flattened
+#               table's cells that happened to start with `#` (IS_020's
+#               catalogue became `## Qa'itbay " " Reign 841-842 ...` and
+#               `#8 © EF EEE + Ww`). Reported for review, never applied --
+#               removing the marker would leave the garble in place.
 # FOLDED-PLAIN is repairable but not repaired unless asked for: it moves prose
 # that carries no marker, so a wrong call there is a wrong paragraph break in
 # running text. It is reported, and left out of the "to fix" count.
@@ -335,7 +352,8 @@ UNSAFE = ("FOLDED-MIDWORD", "FOLDED-PLAIN-MIDWORD",
           "FOLDED-LOWER", "FOLDED-PLAIN-LOWER")
 ORDER = ("FOLDED", "FLAT", "OVERSET", "FOLDED-MIDWORD", "FOLDED-LOWER",
          "FOLDED-PLAIN", "FOLDED-PLAIN-MIDWORD", "FOLDED-PLAIN-LOWER",
-         "LOST", "OK")
+         "LOST", "UNMATCHED", "OK")
+REVIEW = ("UNMATCHED",)
 
 
 def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
@@ -396,6 +414,15 @@ def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
         body = MARKER_RE.sub("", line.lstrip(), count=1).strip().rstrip("*_")
         hit = locate_in_pdf(pdf_lines, body, min_ratio)
         if hit is None:
+            # Only a `#` heading, and only one that is mostly not words: a real
+            # title the scan's OCR happened to read differently (`# THE REALMS
+            # OF PUNCHMARKED COINAGE`) is not garble, and bold run-in openers
+            # (`**Lists Received**`) are not headings at all. Too short to
+            # match reliably (`## by`) is not evidence either.
+            if (line.lstrip().startswith("#") and len(normalize(body)[0]) >= 4
+                    and not mostly_words(body)):
+                found.append({"verdict": "UNMATCHED", "pdf": None, "head": None,
+                              "row": row, "col": 0, "ratio": 0.0})
             continue
         ln, ratio = hit
         # Deliberately not requiring `set_apart` here: a centred title is often
@@ -406,7 +433,8 @@ def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
         if not head:
             found.append({"verdict": "OVERSET", "pdf": ln, "head": head,
                           "row": row, "col": 0, "ratio": ratio})
-    found.sort(key=lambda f: (ORDER.index(f["verdict"]), f["pdf"]["page"]))
+    found.sort(key=lambda f: (ORDER.index(f["verdict"]),
+                              f["pdf"]["page"] if f["pdf"] else 0, f.get("row", 0)))
     return found
 
 
@@ -417,13 +445,18 @@ def report(stem, md_lines, found, verbose):
     for f in found:
         counts[f["verdict"]] = counts.get(f["verdict"], 0) + 1
     open_n = sum(n for v, n in counts.items() if v in FIXABLE)
+    review_n = sum(n for v, n in counts.items() if v in REVIEW)
     tail = "  ".join(f"{v} {counts[v]}" for v in ORDER if v in counts)
-    print(f"{stem}: {len(found)} set-apart line(s) | {tail or 'none'}"
-          f"  -- {open_n} to fix")
+    print(f"{stem}: {len(found) - review_n} set-apart line(s) | {tail or 'none'}"
+          f"  -- {open_n} to fix" + (f", {review_n} to review" if review_n else ""))
     for f in found:
         if f["verdict"] == "OK" and not verbose:
             continue
         ln = f["pdf"]
+        if ln is None:
+            print(f"  {f['verdict']:12s} md line {f['row'] + 1}: "
+                  f"{md_lines[f['row']].strip()[:70]!r}")
+            continue
         print(f"  {f['verdict']:12s} p{ln['page']:<3d} "
               f"underline={ln.get('underline', 0.0):4.2f}"
               f"-{ln.get('margin', 0.0):4.2f} {f['head'] or 'plain':10s} "

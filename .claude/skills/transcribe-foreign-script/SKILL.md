@@ -52,8 +52,10 @@ For each candidate, find which PDF page it came from, then look at it:
 
 ```
 python3 .../detect_script_garble.py locate IS_004 --line 92
-python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300 --out /tmp/p5.png   # then Read the image
+python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300   # then Read the path it prints
 ```
+
+Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
 `locate` pulls the alphabetic words of 5+ letters from a few lines around the candidate and ranks PDF pages by how many appear in that page's text layer — the same trick as manually grepping the PDF for a distinctive nearby phrase, generalized. It is a ranking, not a certainty: garbled surrounding text yields fewer usable words, so widen `--window` or check the runner-up page if the top match's score looks weak. `render` takes an optional `--clip x0 y0 x1 y1` (PDF points) to zoom into just the legend once you know roughly where it sits on the page.
 
@@ -74,6 +76,8 @@ python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300 --out /tmp/
 5. Re-run `screen`; the finding should move to `RESOLVED`, `GUESSED`, or `DEFERRED`. Unlike `RESOLVED`/`DEFERRED`, `GUESSED` lines print on every `screen` run (not just `-v`) — they're unverified content sitting in the corpus, not settled business.
 
 ## Markers
+
+**`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies `figure` and `script-*` markers.
 
 Same shape as `detect-missing-tables`' `table-ok` / `table-deferred`, and read by `find_candidates()` in the script — a marker comment applies to the nearest preceding non-blank content line:
 

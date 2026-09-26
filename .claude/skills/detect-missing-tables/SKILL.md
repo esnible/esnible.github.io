@@ -52,10 +52,11 @@ If a file reports `MISSING 0` and you are content to leave `UNKNOWN`s alone, sto
 
 For each `MISSING`, render the page and look at it. This is not optional: it is how you learn the true row and column counts, catch a page-layout false positive, and see which cells span columns.
 
-```python
-import pymupdf
-pymupdf.open(PDF)[PAGE].get_pixmap(dpi=110).save("/tmp/page.png")   # then Read the image
 ```
+python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N --dpi 110   # then Read the path it prints
+```
+
+Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
 `grids` prints the geometry the detector inferred, for comparison against what you see:
 
@@ -95,6 +96,8 @@ A cell holding a figure is annotated with two parts:
 
 - **`*[figure]*` renders.** A reader of the Markdown sees that artwork is missing rather than silently reading a caption as if it were the whole cell.
 - **The HTML comment does not render** and records where the artwork lives in the source PDF, so it never has to be located again.
+
+**`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies `figure` and `script-*` markers. The same holds for `table-ok` / `table-deferred`: `screen` matches their `page=` against 0-based page indexes, so a 1-based marker retires the wrong page's finding — `screen` itself is the check for those, not `check-markers`.
 
 The rect is `x0,y0,x1,y1` in **PDF points**, page-relative. Points rather than pixels deliberately: they are DPI-independent, so the stored rect stays valid no matter how the page is later rendered. Detection runs at 110 dpi, but the same rect extracts cleanly at any resolution:
 

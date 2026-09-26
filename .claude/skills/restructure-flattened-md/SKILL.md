@@ -74,7 +74,7 @@ one, stop and hand that piece to the owning skill instead.
 - **Never drop a `*[figure]*` placeholder or its `<!-- figure page=N ... -->`
   comment.** The placeholder is the only signal to a reader that artwork is missing;
   the comment is the only record of where it lives in the PDF. Caption text beside a
-  drawing is a caption, not the drawing's content.
+  drawing is a caption, not the drawing's content. **`page=N` is always the 0-based PDF page index** — the same number you pass to `render --page`, so the newsletter's cover is `page=0`. Never write the folio printed on the page or a 1-based count; the scan's printed "9" is usually `page=8`. `detect_script_garble.py check-markers <STEM>` verifies `figure` and `script-*` markers.
 - **Don't fabricate.** A conjectural genealogy stays conjectural: preserve every name
   and its rough position, do not invent a parent-child link the scan does not draw.
   An illegible legend gets a flagged guess or an honest comment (per
@@ -112,12 +112,12 @@ map labels and tree names OCR'd as `# HEADING` lines.
 
 1. Map every flattened line to a PDF page and **render that page**:
 
-   ```python
-   import pymupdf
-   pymupdf.open(PDF)[PAGE].get_pixmap(dpi=140).save("/tmp/p.png")   # then Read it
+   ```
+   python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N --dpi 140   # then Read the path it prints
    ```
 
-   Crop and re-render at 300+ dpi for a genealogy's connector lines or a legend.
+   Crop (`--clip x0 y0 x1 y1`, PDF points) and re-render at 300+ dpi for a
+   genealogy's connector lines or a legend. Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
 2. Classify each structure against the list in *When this skill applies*. When a
    dense foreign-script run could be either an unruled catalogue or a plate of

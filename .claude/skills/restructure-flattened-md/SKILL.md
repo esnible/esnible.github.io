@@ -112,12 +112,12 @@ map labels and tree names OCR'd as `# HEADING` lines.
 
 1. Map every flattened line to a PDF page and **render that page**:
 
-   ```python
-   import pymupdf
-   pymupdf.open(PDF)[PAGE].get_pixmap(dpi=140).save("/tmp/p.png")   # then Read it
+   ```
+   python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N --dpi 140   # then Read the path it prints
    ```
 
-   Crop and re-render at 300+ dpi for a genealogy's connector lines or a legend.
+   Crop (`--clip x0 y0 x1 y1`, PDF points) and re-render at 300+ dpi for a
+   genealogy's connector lines or a legend. Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
 2. Classify each structure against the list in *When this skill applies*. When a
    dense foreign-script run could be either an unruled catalogue or a plate of

@@ -52,8 +52,10 @@ For each candidate, find which PDF page it came from, then look at it:
 
 ```
 python3 .../detect_script_garble.py locate IS_004 --line 92
-python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300 --out /tmp/p5.png   # then Read the image
+python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300   # then Read the path it prints
 ```
+
+Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
 `locate` pulls the alphabetic words of 5+ letters from a few lines around the candidate and ranks PDF pages by how many appear in that page's text layer — the same trick as manually grepping the PDF for a distinctive nearby phrase, generalized. It is a ranking, not a certainty: garbled surrounding text yields fewer usable words, so widen `--window` or check the runner-up page if the top match's score looks weak. `render` takes an optional `--clip x0 y0 x1 y1` (PDF points) to zoom into just the legend once you know roughly where it sits on the page.
 

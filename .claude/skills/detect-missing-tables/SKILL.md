@@ -52,10 +52,11 @@ If a file reports `MISSING 0` and you are content to leave `UNKNOWN`s alone, sto
 
 For each `MISSING`, render the page and look at it. This is not optional: it is how you learn the true row and column counts, catch a page-layout false positive, and see which cells span columns.
 
-```python
-import pymupdf
-pymupdf.open(PDF)[PAGE].get_pixmap(dpi=110).save("/tmp/page.png")   # then Read the image
 ```
+python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N --dpi 110   # then Read the path it prints
+```
+
+Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
 `grids` prints the geometry the detector inferred, for comparison against what you see:
 

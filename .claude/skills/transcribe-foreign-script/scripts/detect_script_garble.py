@@ -19,7 +19,7 @@ all reliably. Two failure shapes show up in this corpus:
 Usage:
     detect_script_garble.py screen IS_001 [IS_002 ...]     # Tier 0
     detect_script_garble.py locate IS_004 --line 92        # Tier 1a
-    detect_script_garble.py render IS_004 --page 4 --out /tmp/p.png   # Tier 1b
+    detect_script_garble.py render IS_004 --page 4                 # Tier 1b
     detect_script_garble.py spellcheck "اکبر شاه"           # Tier 2 helper
     detect_script_garble.py check-markers [ONS_140 ...]     # verify figure/script page=N markers
 
@@ -327,13 +327,26 @@ def cmd_spellcheck(args):
     sys.exit(0)
 
 
+def default_render_path(stem, page, dpi, clip):
+    """Name a render after exactly what it shows, so parallel agents never share
+    a path unless they want the identical image -- in which case sharing it is
+    harmless. A fixed name like /tmp/p.png lets one agent's page overwrite
+    another's between the write and the Read."""
+    name = f"p{page}-{dpi}"
+    if clip:
+        name += "-" + "_".join(str(round(v)) for v in clip)
+    return pathlib.Path(tempfile.gettempdir()) / "ons-render" / stem / f"{name}.png"
+
+
 def cmd_render(args):
     pdf_path, _ = resolve(args.stem)
     doc = fitz.open(pdf_path)
     page = doc[args.page]
     clip = fitz.Rect(*args.clip) if args.clip else None
-    page.get_pixmap(dpi=args.dpi, clip=clip).save(args.out)
-    print(f"saved {args.out} (page {args.page}, dpi {args.dpi}{', clipped' if clip else ''})")
+    out = pathlib.Path(args.out) if args.out else default_render_path(args.stem, args.page, args.dpi, args.clip)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    page.get_pixmap(dpi=args.dpi, clip=clip).save(str(out))
+    print(f"saved {out} (page {args.page}, dpi {args.dpi}{', clipped' if clip else ''})")
 
 
 def main():
@@ -368,7 +381,7 @@ def main():
     p.add_argument("--page", type=int, required=True, help="0-based PDF page index")
     p.add_argument("--dpi", type=int, default=300)
     p.add_argument("--clip", type=float, nargs=4, metavar=("X0", "Y0", "X1", "Y1"))
-    p.add_argument("--out", required=True)
+    p.add_argument("--out", help="default: $TMPDIR/ons-render/<STEM>/p<PAGE>-<DPI>[-<CLIP>].png -- read the path it prints")
     p.set_defaults(func=cmd_render)
 
     args = ap.parse_args()

@@ -10112,3 +10112,9 @@ rusul
 buqshah
 Kürkman
 Nümismatik
+
+# OP_015 — larins: Persian place names and Hormuz/Maldive rulers (macron forms as typed)
+Imād
+Lāristan
+Nisā
+Tūrān

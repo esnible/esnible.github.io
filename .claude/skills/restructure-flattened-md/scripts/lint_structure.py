@@ -22,6 +22,9 @@ mechanical defects that render wrong but are invisible in a diff:
     end of the paragraph before the graph
   * a line starting `#` with no space after it (`#076 and #077 ...`) --
     kramdown renders it as a heading; escape it as `\\#076`
+  * an ordered list that starts at a number other than 1 (`16.  Sel. ...`)
+    with no `{: start="16"}` after it -- kramdown ignores the first item's
+    number and renders the list from 1
   * a near-duplicate paragraph -- a pipe-mangled copy of the prose next to
     it, left behind when a spurious table was turned back into paragraphs
 
@@ -42,6 +45,8 @@ from pathlib import Path
 FENCE_RE = re.compile(r"^\s*```")
 HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
 BARE_HASH_RE = re.compile(r"^\s{0,3}#+[^#\s]")  # kramdown needs no space after `#`
+OL_ITEM_RE = re.compile(r"^\s{0,3}(\d{1,9})[.)]\s")  # an ordered-list item
+START_IAL_RE = re.compile(r"^\s*\{:.*\bstart=")      # {: start="N"} after a list
 SEP_RE = re.compile(r"^\s*\|?\s*:?-{2,}")  # a pipe-table separator row
 FOREIGN_RE = re.compile(
     "[؀-ۿݐ-ݿऀ-ॿ"
@@ -232,6 +237,36 @@ def lint(path):
         if m:
             add(i + 1, "WARN",
                 f"graph axis labels (a figure OCR'd as text?): {m[:50]!r}")
+
+    # --- ordered lists that don't start at 1 -----------------------------
+    # kramdown ignores the number on a list's first item and always renders
+    # from 1, so IS_009's catalogue `16.  Sel. ...` came out as `1.`. The
+    # fix is a `{: start="16"}` line directly after the list (or `16\.` for
+    # a number that isn't a list at all). A list runs over blank lines and
+    # indented continuations until the next unindented non-item line.
+    i = 0
+    while i < len(lines):
+        m = OL_ITEM_RE.match(lines[i])
+        if fence_state[i] or not m:
+            i += 1
+            continue
+        start = i
+        last = i
+        j = i + 1
+        while j < len(lines):
+            l = lines[j]
+            if OL_ITEM_RE.match(l) or l.startswith((" ", "\t")):
+                last = j
+            elif l.strip():
+                break
+            j += 1
+        n = int(m.group(1))
+        nxt = next((k for k in range(last + 1, len(lines)) if lines[k].strip()), None)
+        if n != 1 and not (nxt is not None and START_IAL_RE.match(lines[nxt])):
+            add(start + 1, "WARN",
+                f"ordered list starts at {n} but kramdown renders it from 1 -- "
+                f"add `{{: start=\"{n}\"}}` after the list, or escape as `{n}\\.`")
+        i = last + 1
 
     # --- near-duplicate paragraphs --------------------------------------
     # Turning a spurious pdfmd table back into prose can leave the table's

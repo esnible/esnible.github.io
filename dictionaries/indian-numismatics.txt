@@ -9609,3 +9609,12 @@ Thathari
 نانک
 # OP_030 — Eran hoard: legends
 Dhamapalasa
+# IS_009 — Manipur: people and legend words (as printed)
+Chura
+Huidromba
+Manipuresvara
+Manipuris
+Marajit
+Raghab
+Srimanmanipuresvara
+Thorburn

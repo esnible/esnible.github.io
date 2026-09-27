@@ -9588,3 +9588,22 @@ Seoni
 # ONS_146 — Numismatic Digest article titles: places
 Gooty
 Thathari
+# IS_002 — Kishangarh and Kotah legends (Perso-Arabic, as hand-lettered; transliteration printed)
+پرتهی
+سنگه
+کشنگره
+مهاراو
+وکتوریا
+# IS_026 — Sikh mint legends (Perso-Arabic, as hand-lettered; transliteration printed)
+اکال
+اکالی
+انندگهره
+بتوفیق
+پشاور
+دیره
+سمبت
+گوبند
+گورو
+مالکیریان
+ماکیریان
+نانک

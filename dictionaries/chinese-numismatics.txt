@@ -2746,14 +2746,25 @@ Yingqi
 Zhongya
 Hengyang
 # OP_018 — script styles on Chinese coins: pinyin terms, mints, rulers, calligraphers
-anyi
 Anyi
+anyi
 Desheng
+erjin
 fahua
+guwang
 Hubu
 Jianzhong
 Miao
 Puyi
 Sangui
+sanshi
 sichu
+yowan
 zhuan
+# OP_016 — Catholic medals used in China: Wade-Giles terms, missionaries, authors
+Crehan
+Gaspare
+Souza
+teng
+tsui
+Vincentian

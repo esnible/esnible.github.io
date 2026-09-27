@@ -49,6 +49,9 @@ except ImportError:  # older PyMuPDF only exposes the legacy `fitz` name
 PDF_DIR = pathlib.Path(
     os.environ.get("ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")
 ).expanduser()
+if not PDF_DIR.is_dir():
+    print(f"warning: PDF archive {PDF_DIR} does not exist -- set ONS_ARCHIVE_DIR "
+          "to the ons-website static/archive checkout", file=sys.stderr)
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
 MD_DIR = REPO_ROOT / "jons"
 CSPELL_CONFIG = REPO_ROOT / "cspell.config.yaml"

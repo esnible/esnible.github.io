@@ -15,7 +15,7 @@ These override every other instruction in this skill. If a fix would violate one
 - **Never change capitalization from context; correct a letter's case only with the page image as evidence.** Do not capitalize sentence starts or proper nouns, and do not lowercase anything, on the strength of grammar, style, or what a name "should" look like — that is inventing, and stays forbidden. But case is as legible in a render as any other glyph, so a case fix rests on the same footing as `,`→`.` below: render the source page (same command as the punctuation bullet below), see which case is actually printed, and correct to it. Rendering is not part of this skill's default loop — reach for it only for a specific candidate. If you will not render, leave the case exactly as OCR'd and list it for the user.
 
   This matters because the OCR engine's English language model **normalises the typist's own forms into commoner ones**, and case is one of the things it normalises. Restoring the page means writing `Trans-oxine` where the OCR produced `Trans-Oxiana`, `Al Moravids` where it produced `Almoravids`, `Arab-sassanian` where it produced `Arab-Sassanian`. A case fix often travels with a letter fix in the same token; that is fine, provided the render is what decided both.
-- **Never punctuate from context; add, change, or remove a mark only with the page image as evidence.** Do not touch punctuation on the strength of grammar, sentence flow, or what the sentence "needs" — inventing a mark the page does not show stays forbidden, and hallucinated sentence-ending periods are the exact failure this rule exists to stop. But a mark is as legible in a render as any other glyph. Once you have rendered the source page and seen the mark actually printed there, you may **insert** it (a dropped comma, the lost hyphen in `1-4`, the period in `B.C.`), **substitute** it (`.`↔`,`, `;`↔`:` — real glyph confusions, the shapes differ by a pixel or two), or **delete** it (a mark not on the page that is clearly OCR noise). From the render, each of these is a glyph fix like `rn`→`m`; from grammar or sentence flow alone it is inventing structure, and stays forbidden. Rendering is not part of this skill's default loop — reach for it only for a specific punctuation candidate (`python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N [--clip x0 y0 x1 y1]`, then Read the path it prints — never a fixed name like `/tmp/p.png`, which parallel agents overwrite; `N` is the 0-based PDF page index, not the printed folio; `locate <STEM> --line N` ranks which page a line came from). If you will not render, leave the punctuation exactly as OCR'd and list it for the user. A punctuation fix may change a line's character count but must never change the number of lines — it is still an in-line edit.
+- **Never punctuate from context; add, change, or remove a mark only with the page image as evidence.** Do not touch punctuation on the strength of grammar, sentence flow, or what the sentence "needs" — inventing a mark the page does not show stays forbidden, and hallucinated sentence-ending periods are the exact failure this rule exists to stop. But a mark is as legible in a render as any other glyph. Once you have rendered the source page and seen the mark actually printed there, you may **insert** it (a dropped comma, the lost hyphen in `1-4`, the period in `B.C.`), **substitute** it (`.`↔`,`, `;`↔`:` — real glyph confusions, the shapes differ by a pixel or two), or **delete** it (a mark not on the page that is clearly OCR noise). From the render, each of these is a glyph fix like `rn`→`m`; from grammar or sentence flow alone it is inventing structure, and stays forbidden. Rendering is not part of this skill's default loop — reach for it only for a specific punctuation candidate (`python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N [--clip x0 y0 x1 y1]`, then Read the path it prints — never a fixed name like `/tmp/p.png`, which parallel agents overwrite; `N` is the 0-based PDF page index, not the printed folio; `locate <STEM> --line N` ranks which page a line came from; write the four `--clip` numbers out literally — zsh does not word-split `$CLIP` into four arguments). If you will not render, leave the punctuation exactly as OCR'd and list it for the user. A punctuation fix may change a line's character count but must never change the number of lines — it is still an in-line edit.
 - **Never delete a run of more than 12 consecutive characters.** A pure deletion — replacing text with nothing — may span at most 12 characters. To remove a longer run (OCR'd image digits, page-break garbage, a corrupted passage), you must substitute something in its place: a corrected reading, or an HTML comment such as `<!-- OCR: ... -->`. If you cannot supply a replacement, leave the run as-is and list it for the user.
 
 Within these limits, still fix letter-level OCR garble: wrong letters, doubled or dropped letters, digit/letter swaps, and stray non-Latin glyphs.
@@ -26,7 +26,7 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
 ## Workflow
 
-1. **Read the target file** in full so you have the surrounding context for every change.
+1. **Read the target file** in full so you have the surrounding context for every change, and **snapshot it** (`cp <path> <scratchpad>/<STEM>.before.md`) — the Verification step compares against this snapshot, not against git, because an earlier pass (e.g. `restructure-flattened-md`) may have left the file with uncommitted changes.
 
 2. **Run cspell** against the file using the project config. Use the positional output as your working list — it gives `line:col` for every occurrence, so you can jump straight to each one and you won't miss repeats:
 
@@ -60,6 +60,14 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    - **Before using `replace_all`, check that `old_string` isn't a substring of a different, already-correct word** (e.g. `Burges` is a substring of `Burgess`) — `replace_all` will silently corrupt every such occurrence into a doubled letter (`Burgess` → `Burgesss`). Run `grep -n "<old_string>"` first and eyeball every hit, or add enough surrounding context to `old_string` that it can't match inside the longer word.
    - Never change quoted historical spellings or transliterations you cannot verify — when unsure, leave it. **This applies with extra force to any proper noun** — a person's name, a place or mint name, a dynasty or era name, a ruler's regnal name. Transliterated proper nouns routinely have more than one legitimate English spelling (`Kavad`/`Kawad`, `Karzi`/`Karsin`, `Maurya`/`Mauryan`), and archival material (correspondence, official records, mint-official rosters) can genuinely spell the same person or place inconsistently (clerks, transliteration drift, editorial variance). Two different spellings of a proper noun are therefore not on their own evidence of OCR error — including when one spelling is far more frequent, or "sounds more like" the expected name or place. Only merge two spellings of a proper noun when there's an actual visual-confusion mechanism (see "Common OCR error patterns" — e.g. `rn`↔`m`, `cl`↔`d`) tying the *specific* letters that differ, and even then prefer confirming against a bibliography entry, caption, or other independent occurrence in the same file over reasoning about which spelling is more plausible. Default to leaving both spellings exactly as OCR'd when that confirmation is absent.
    - Do not edit inside fenced code blocks, inline code (`` ` ``), URLs, or image references. The corpus rarely contains these, but check before editing.
+   - For a large batch of confirmed fixes (typically the dropped-punctuation pass below), use `scripts/apply_edits.py` instead of hundreds of `Edit` calls. It takes a file of `old => new` lines (optionally `old => new => COUNT`), requires each `old` to match exactly the expected number of times, refuses any change to the line count, prints a word-level diff per edit, and writes nothing unless every edit passes and `--write` is given:
+
+     ```
+     python3 .claude/skills/fix-ocr/scripts/apply_edits.py <path> <scratchpad>/edits1.txt           # dry run
+     python3 .claude/skills/fix-ocr/scripts/apply_edits.py <path> <scratchpad>/edits1.txt --write
+     ```
+
+     Keep each batch to one page or article so the dry-run diff stays reviewable.
 
 6. **Update dictionaries** for legitimate terms (see "Dictionary updates" section).
 
@@ -91,9 +99,20 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 - Stray pipe characters (`|`, `\|`) inside running prose — usually delete.
 - `—`, `~`, `--` runs left over from page breaks — delete the stray run. Don't replace it with an em dash or any other mark unless a render of that spot shows one printed there.
 - Sentence-initial garbage tokens like a lone `nem` at the top of a file — delete.
+- A backtick printed for *ʿayn* (`` Sa`id ``, `` `Ali ``) — write it as `'` (`Sa'id`, `'Ali`). A bare backtick in Markdown opens inline code and swallows the text up to the next one.
 
 ### Numbers that look like words
 - Long runs of digits in the middle of a sentence (e.g., `511868515 that the first two`) are OCR'd images or stamps. Replace with `[illegible]` only if the user has asked for that style; otherwise leave a HTML comment `<!-- OCR: 511868515 -->` near the spot and remove the noise from the prose.
+
+## Files that lost their punctuation wholesale
+
+Some issues' PDF text layers dropped nearly every sentence-ending period (and many colons and decimal points): the file reads `…types Whereas…`, `17 30` for `17.30`, `No A7 2` for `No. A7.2`. Rendering each spot by hand does not scale to hundreds of marks, and the PDF text layer cannot help because it is missing them too. When a sample paragraph shows this, run a second, independent OCR over the renders and align it against the Markdown:
+
+```
+python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> [--pages 2-9]
+```
+
+It prints one candidate per line — `<path>:LINE  md 'types'  page 'types.'  pN  --clip x0 y0 x1 y1` — for every aligned word whose trailing punctuation differs. Tesseract's reading is a candidate list, not evidence. Confirm candidates against the render (the printed `--clip` is ready to paste into the render command; several per page), then apply the confirmed ones in batches with `apply_edits.py`. Tesseract's `.`/`,`/`;`/`:` readings have agreed with the render in nearly every spot-checked case, so once a page's sample agrees, confirming the rest of that page by viewing the page render is enough; any candidate where tesseract's letters also differ from the Markdown needs its own look. Decimal points inside numbers (`17 30`, `2-4 1 1`) do not show up as trailing punctuation — grep for digit-space-digit runs and render those separately.
 
 ## Beyond spellcheck
 
@@ -142,13 +161,13 @@ When a surfaced word is a legitimate term:
 
 After all edits and dictionary updates:
 
-1. **Check the line-break invariant mechanically.** Every fix is an in-line edit — even one that inserts or deletes a punctuation mark — so the diff must not change the file's line *structure*:
+1. **Check the line-break invariant mechanically.** Every fix is an in-line edit — even one that inserts or deletes a punctuation mark — so the diff against the step-1 snapshot must not change the file's line *structure*:
 
    ```
-   git diff --numstat "<path>"
+   git diff --no-index --numstat <scratchpad>/<STEM>.before.md "<path>"
    ```
 
-   Added lines must equal deleted lines. If they differ, a line break was merged or a line was deleted — find and undo that change before anything else.
+   Added lines must equal deleted lines. If they differ, a line break was merged or a line was deleted — find and undo that change before anything else. (Plain `git diff --numstat` is only equivalent when the file had no uncommitted changes before this pass.)
 
 2. **Run cspell once more** and confirm that the remaining unknown words are intentional (foreign-language glosses, proper nouns the user does not want dictionary-added, etc.). Report those in the final summary.
 
@@ -166,5 +185,5 @@ After verification passes, check the box for this file in `jons/spellcheck-todo.
 - Don't change British spellings to American or vice versa.
 - Don't "correct" historical or transliteration variants (e.g., `Maurya` vs. `Mauryan`, `Karshapana` vs. `Kārṣāpaṇa`).
 - Don't touch headings, image alt text, or front matter unless they contain obvious OCR garble.
-- Don't batch many unrelated edits into a single `Edit` call — one logical fix per call so the user can audit the diff. (`replace_all` on one recurring identical misreading is fine.)
+- Don't batch many unrelated edits into a single `Edit` call — one logical fix per call so the user can audit the diff. (`replace_all` on one recurring identical misreading is fine, and so is `apply_edits.py`, which keeps one line per fix and prints each one's diff.)
 - Don't add words to multiple dictionaries to be safe — pick the right one.

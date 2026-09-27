@@ -2745,3 +2745,15 @@ Rong
 Yingqi
 Zhongya
 Hengyang
+# OP_018 — script styles on Chinese coins: pinyin terms, mints, rulers, calligraphers
+anyi
+Anyi
+Desheng
+fahua
+Hubu
+Jianzhong
+Miao
+Puyi
+Sangui
+sichu
+zhuan

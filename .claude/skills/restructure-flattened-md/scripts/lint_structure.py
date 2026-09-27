@@ -17,6 +17,9 @@ mechanical defects that render wrong but are invisible in a diff:
   * a column dump -- a borderless table OCR'd one column at a time, so a
     line repeats one word (`Cairo Cairo Cairo`) or runs bare numbers
     (`841-842 842-857 857-865 865-872`)
+  * graph-axis residue -- a line graph's tick labels OCR'd as text
+    (`1,70- 1,60- 1,50 1,40'`, `1550' 1590' '1710`), often glued onto the
+    end of the paragraph before the graph
   * a line starting `#` with no space after it (`#076 and #077 ...`) --
     kramdown renders it as a heading; escape it as `\\#076`
   * a near-duplicate paragraph -- a pipe-mangled copy of the prose next to
@@ -53,6 +56,30 @@ REPEAT_RE = re.compile(r'(?<!\S)("|[^\s*_#]*[A-Za-z0-9][^\s*_#]*[A-Za-z0-9][^\s*
 # Four or more bare numbers of 2+ digits, or ranges, in a row:
 # `801-815 815-824 825-841 841-842`.
 NUMRUN_RE = re.compile(r"(?<!\S)(?:\d{2,4}(?:-\d{1,4})?\s+){3,}\d{2,4}(?:-\d{1,4})?(?!\S)")
+
+
+# A number carrying graph-axis residue: a tick mark or an OCR'd tick glyph
+# before or after it (`1,70-`, `1520'`, `-1520'`, `»1560'`, `16^C3`,
+# `'1710`), or a two-place decimal comma (`1,50`, `0,90`) as continental
+# axes print it.
+TICK_TOK_RE = re.compile(r"^[-»«*'^\\]*\d[\d^]*(?:,\d\d)?[-'’^*\\]*[A-Z]?\d?$")
+
+
+def is_tick(tok):
+    if not TICK_TOK_RE.match(tok):
+        return False
+    core = re.sub(r"[^\d,]", "", tok)
+    return bool(re.fullmatch(r"\d,\d\d", core)) or bool(re.search(r"[-'’^*»\\]", tok))
+
+
+def axis_ticks(line, need=5, window=8):
+    """The first run of `need` tick-like tokens within `window` tokens, or None."""
+    toks = line.split()
+    flags = [is_tick(t) for t in toks]
+    for k in range(len(toks)):
+        if flags[k] and sum(flags[k:k + window]) >= need:
+            return " ".join(toks[k:k + window])
+    return None
 
 
 def shingles(text, n=6):
@@ -192,6 +219,19 @@ def lint(path):
         if m:
             add(i + 1, "WARN",
                 f"column dump (table read one column at a time?): {m.group(0).strip()[:50]!r}")
+
+    # --- graph-axis residue -----------------------------------------------
+    # A line graph on a scanned page has no vector drawing for anything to
+    # detect; pdfmd just OCRs its tick labels, legend and data labels into
+    # text. OP_015's four graphs came out as `... useful results.** **\[**
+    # --- 1,70- 1,60- 1,50 1,40' ...` and `1550' 1590' \*1670 '1710 '1850`.
+    for i, l in enumerate(lines):
+        if fence_state[i] or is_table_row(l) or l.lstrip().startswith("<!--"):
+            continue
+        m = axis_ticks(l)
+        if m:
+            add(i + 1, "WARN",
+                f"graph axis labels (a figure OCR'd as text?): {m[:50]!r}")
 
     # --- near-duplicate paragraphs --------------------------------------
     # Turning a spurious pdfmd table back into prose can leave the table's

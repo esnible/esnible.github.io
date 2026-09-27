@@ -210,7 +210,12 @@ npx cspell lint jons/<STEM>.md
 - `lint_structure.py` catches the mechanical defects a big rewrite introduces:
   a `#` heading with no blank line around it, a pipe table split by a stray blank
   line, an unbalanced ` ``` ` fence, a `*[figure]*` with no companion comment,
-  any `\|` left outside a table row, and a column dump (below).
+  any `\|` left outside a table row, and a column dump (below). It also flags a
+  line starting `#` with no space after it (`#076 and #077 ...`): kramdown renders
+  that as a heading, so escape it as `\#076`. And it flags a pipe-mangled
+  near-duplicate of a neighbouring paragraph -- the spurious table's copy of the
+  prose, left behind after the clean paragraphs were restored. Delete the copy
+  once the render confirms the clean paragraphs hold all of its text.
 - `detect-missing-tables screen` should now read `FLATTENED 0`, exit `0`.
 - Note the cspell delta (before vs. after). Greek legend words, correct book
   titles, and deliberately source-faithful typos are expected to remain flagged;

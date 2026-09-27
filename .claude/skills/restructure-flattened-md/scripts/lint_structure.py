@@ -17,6 +17,10 @@ mechanical defects that render wrong but are invisible in a diff:
   * a column dump -- a borderless table OCR'd one column at a time, so a
     line repeats one word (`Cairo Cairo Cairo`) or runs bare numbers
     (`841-842 842-857 857-865 865-872`)
+  * a line starting `#` with no space after it (`#076 and #077 ...`) --
+    kramdown renders it as a heading; escape it as `\\#076`
+  * a near-duplicate paragraph -- a pipe-mangled copy of the prose next to
+    it, left behind when a spurious table was turned back into paragraphs
 
 This does NOT check that the reconstruction is *correct* -- only that it is
 well-formed Markdown. Correctness is an eyeball-the-render job.
@@ -34,6 +38,7 @@ from pathlib import Path
 
 FENCE_RE = re.compile(r"^\s*```")
 HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
+BARE_HASH_RE = re.compile(r"^\s{0,3}#+[^#\s]")  # kramdown needs no space after `#`
 SEP_RE = re.compile(r"^\s*\|?\s*:?-{2,}")  # a pipe-table separator row
 FOREIGN_RE = re.compile(
     "[؀-ۿݐ-ݿऀ-ॿ"
@@ -48,6 +53,26 @@ REPEAT_RE = re.compile(r'(?<!\S)("|[^\s*_#]*[A-Za-z0-9][^\s*_#]*[A-Za-z0-9][^\s*
 # Four or more bare numbers of 2+ digits, or ranges, in a row:
 # `801-815 815-824 825-841 841-842`.
 NUMRUN_RE = re.compile(r"(?<!\S)(?:\d{2,4}(?:-\d{1,4})?\s+){3,}\d{2,4}(?:-\d{1,4})?(?!\S)")
+
+
+def shingles(text, n=6):
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {tuple(words[k:k + n]) for k in range(len(words) - n + 1)}
+
+
+def paragraphs(lines, skip):
+    """(first line index, text) for each run of non-blank lines, ignoring
+    comment-only lines and lines where skip[i] is set (fenced code)."""
+    out, start, buf = [], None, []
+    for i, l in enumerate(lines + [""]):
+        if l.strip() and not skip[i] and not l.lstrip().startswith("<!--"):
+            if start is None:
+                start = i
+            buf.append(l)
+        elif start is not None:
+            out.append((start, " ".join(buf)))
+            start, buf = None, []
+    return out
 
 
 def is_table_row(line):
@@ -122,6 +147,13 @@ def lint(path):
                     "blank line splits a pipe table (rows after it have no "
                     "separator of their own)")
 
+    # --- `#` with no space: kramdown still renders a heading --------------
+    for i, l in enumerate(lines):
+        if not fence_state[i] and BARE_HASH_RE.match(l):
+            add(i + 1, "ERROR",
+                f"line starts with `#` and no space -- kramdown renders it as a "
+                f"heading; escape as `\\#` or remove the garble: {l.strip()[:50]!r}")
+
     # --- figure placeholders ------------------------------------------
     for i, l in enumerate(lines):
         if "*[figure]*" in l and "<!-- figure" not in l:
@@ -160,6 +192,23 @@ def lint(path):
         if m:
             add(i + 1, "WARN",
                 f"column dump (table read one column at a time?): {m.group(0).strip()[:50]!r}")
+
+    # --- near-duplicate paragraphs --------------------------------------
+    # Turning a spurious pdfmd table back into prose can leave the table's
+    # text behind as a pipe-mangled copy next to the clean paragraphs (ONS_148
+    # kept one through two passes). Compare each paragraph with the next few.
+    # Exactly one of the pair carries pipes -- that is the mangled copy;
+    # without the pipe test, formulaic catalogue entries match each other.
+    paras = [(i, shingles(t), "|" in t) for i, t in paragraphs(lines, fence_state)]
+    for k, (i, a, pa) in enumerate(paras):
+        if len(a) < 30:
+            continue
+        for j, b, pb in paras[k + 1:k + 5]:
+            if pa != pb and len(b) >= 30 and len(a & b) >= 0.8 * min(len(a), len(b)):
+                add(i + 1, "WARN",
+                    f"near-duplicate of the paragraph at line {j + 1} -- "
+                    f"leftover copy from a rebuilt table?")
+                break
 
     return findings
 

@@ -9584,3 +9584,7 @@ Subhedar
 
 # ONS_111 — Newsletter 111: members' news place name
 Seoni
+
+# ONS_146 — Numismatic Digest article titles: places
+Gooty
+Thathari

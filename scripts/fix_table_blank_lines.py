@@ -32,7 +32,8 @@ def is_fence(line):
 
 
 def is_table_row(line):
-    return line.startswith("|")
+    # Indented too: a table inside a list item (ONS_076) breaks the same way.
+    return line.lstrip().startswith("|")
 
 
 def edges(lines):

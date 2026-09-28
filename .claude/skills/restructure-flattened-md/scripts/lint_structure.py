@@ -7,6 +7,9 @@ tables, and `*[figure]*` placeholders -- introduces a predictable set of
 mechanical defects that render wrong but are invisible in a diff:
 
   * a `#` heading with no blank line before or after it
+  * a pipe table touching a non-blank line -- a caption, paragraph or
+    `<!-- ... -->` comment directly above or below it -- which kramdown
+    swallows into that paragraph, so the table never renders
   * a pipe table split in two by a stray blank line, or with no `|:--- |`
     separator row at all
   * an unbalanced ``` fence (everything after it renders as code)
@@ -229,6 +232,24 @@ def lint(path):
         if "*[figure]*" in l and "<!-- figure" not in l:
             add(i + 1, "WARN",
                 "*[figure]* with no companion <!-- figure ... --> comment")
+
+    # --- tables touching text -------------------------------------------
+    # kramdown only starts a table after a blank line, and a comment or
+    # paragraph line directly below one ends it the same way: the whole
+    # block renders as `|`-separated text. GitHub's preview doesn't care,
+    # so it goes unnoticed there. ONS_146 (14 edges), ONS_043 and ONS_048
+    # regressed this way after #168 had cleared the corpus, because only
+    # scripts/check_tables.rb caught it. Fix: scripts/fix_table_blank_lines.py.
+    for i, l in enumerate(lines):
+        if fence_state[i] or i == 0 or not l.strip() or not lines[i - 1].strip():
+            continue
+        prev = lines[i - 1]
+        if fence_state[i - 1] or FENCE_RE.match(prev):
+            continue
+        if is_table_row(l) != is_table_row(prev):
+            add(i + 1, "ERROR",
+                "pipe table touches a non-blank line -- kramdown won't render it; "
+                "add a blank line (scripts/fix_table_blank_lines.py --fix)")
 
     # --- escaped pipes outside tables --------------------------------
     for i, l in enumerate(lines):

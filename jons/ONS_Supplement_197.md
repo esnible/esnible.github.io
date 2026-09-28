@@ -56,6 +56,7 @@ The conflicting instructions gave rise to a certain confusion. Moreover, it was 
 By repeatedly failing to fulfil its obligations to provide military support, the Russian Empire undeniably forfeited any legal right to demand KartlKakheti's continued adherence to the Treaty of Georgievsk. •\* It is noteworthy that, while in Egypt, Napoleon attempted to negotiate with Kartl-Kakheti - a French envoy had set out for Georgia, but was intercepted by the Pasha of Akhaltsikhe \[Lang, p. 229, footnote 6\].
 Georgia over the Greater Caucasus mountain range in winter time. These circumstances restrained the Russian officials in Georgia in charge of the Russian detachments already deployed there Prince Davit managed to achieve the effective status of prince regent of Kartl-Kakheti by 15 January and enjoyed it till May
 
+{: start="1801"}
 1801. Nevertheless, in September 1801, Alexander I, the new  Russian emperor published the manifesto confirming the annexation of Kartl-Kakheti to the Russian crown - the Georgian state of Kartl-Kakheti ceased to exist.
 
 A thorough analysis of the reasons behind the break-up of the Georgian statehood in Kartl-Kakheti is not an easy task. The general failure to modernise Georgian society rapidly enough as well as Georgians' touching but naive faith in the goodwill of the co-religionist Russians were of utmost importance. However, the relative lack of vitality of the Kartl-Kakheti economy against the background of military feebleness were of no lesser significance. *Pecunia nervus belli -* it definitely came true in Kartl-Kakheti: the national economy was breaking down as no commercial enterprise was militarily protected, and hence could provide no money for building up the national military machine - a closed vicious circle.
@@ -269,6 +270,7 @@ g n 8 o I V oi&oc^obo, 1973) \[Japandze G *Georgia* *and the* *Islamic World* *o
 
 1995 \] (In Georgian jcógifóodg j, b6jófSa)3gc:\>n so,;, B^^bc^roögc^o \<!\>u^3mbögc^goiob obcij-iO'^f^o bóSyófnro XIIXIII b-ob "ïotfiggcj 3gbó8gto3o oiioc^obo, 1995) \[Japaridze G 'Georgian Coins with Arabic Legends (Copper coins of Davit V)' In *Bulletin* *of* *the Academy of Sciences* *of* *the Georgian* *SSR,* History, Archeology, Ethnography and Art History series, #4 1989 Pp 89-94\] (In Georgian jcógófnodg j, JofSoD'gcjo BcnBgggöo ófnóö^c^o 8gcD^g(no!ï^göoai (c^ógocn V-ob b.^oc^gbdob 3m6ggg&o) "bi)Jt\>fnonggc:^nb 3g(j6ogCigöócnó ógi)cog3oob 3.S(j6g, obgmfnoob, i)(nJgmc::;n'i,oob, goriGnjijfnógoobi) co,i bgcijngBgöob obgmfóoob bgfnoö, *H'4,* 1989 j,g 89-94) \[Kapanadze D *Georgian Numismatics,* Moscow, 1955 \] (in Russian Kananaflae /f FpysHHCKaa HyMHSMaxHKa MocKBa,
 
+{: start="1955"}
 1955.  \[Kapanadze D *Georgian Numismatics* Tbilisi, 1969 \] (in Georgian ji)3o)6,bdg c; J^Cio) jc:>n G-gSoSSógojó ai&oc:>obo, 1969 ) \[Kapanadze D *Messengers* *of the* *Past* Tbilisi, 1965\] (in Georgian j,s3ó6.bdg to ^.stnb-^c^'ob 3.b(j6ggö() oibocjobo, 1965.  \[Kapanadze D 'The Cupel ot Georgian Coins' In *The* *Bulletin* *of* *the Academy* *of* *Sciences* *of* *the Georgian* *SSR,* V IV, #6, 1943 \] (In Georgian j.').'i.^b\>')dg i» Jófnm-gcqo o)^c:;ob boGj^ócsjnöi) bojofnmggcjnb bb(n 8g\[)6ogfngö.hai.b.bg6iog3oob 3mó3Ög, g IV, N 6, 1943 ) \[Kebuladze R 'The Duration of Sirma-silver's Circulation in Georgia' In *Bulletin* *of the* *Academy* *of* *Sciences* *of the* *Georgian* * * *SSR,* 53, #3, 1969\] (in Georgian bo(f)8o)- ggfnjjbdjob 3o8nj\](jggob bó6\*^fódc:^ogm?tó
 bój)0)f')O)ggc:;in3o bóJo)(ncnggc^r)b bbfn Sgybogfngöibcnó ój,biog3oob 3<T,,>,8&g, 53, ^ " 3, 1969) \[Kebuladze R 'The Pkhoveli Hoard' In *The* *Bulletin* *of* *the* *Tbilisi State Museum,* XXXI-B Tbilisi, 1975 \] (in Georgian jjgö^Cjidg * * *&i* ojbnggsjoob p,i)6do b.bjjófóonggcïjnb b.bbgtïï;3^ogrn 3^8g^8ob 3rnó86g, XXXI-B oiöocjobo, 1975.
 
@@ -415,6 +417,7 @@ plates 32 33, nos 652D, 652G\], nos 1131-1132\] **12.7-T(1?)A** \[2, pp 131 132,
 
 Album S *Sylloge of Islamic Coins in the Ashmolean* Volume 9 *Iran after ihe Mongol Imanon* Ashmolean Museum Oxford 2001 \[Mayer T (editor) *Sylloge of* *Coin\<:* *of Caucasui and Eastern* *Europe* Wiesbaden 2005 \] (In German Mayer T (bearbeitet von) *S\\lloge der Munzen des Kaukasw, und Osteuropas* Wiesbaden 2005 ) \[Pakhomov Ye *Coins of Georgia* Part I (Pre-Mongol period) Saint Petersburg 1910\] (In Russian flaxoMOB E A MoneTbi rpyiHH HacTb I (flOMOHrojibCKHH nepHOfl) C DeTepoyprb
 
+{: start="1910"}
 1910.  \[Pakhomov Ye *Coins of Georgia* Tbilisi 1970 \] (In Russian IlaxoMOB E A MoHCTbi rpy3HH TSHJIHCM 1970)
 
 *Tiflis in the 18" century * *(Image courtesy B Koblianidze)*
@@ -526,6 +529,7 @@ We would like to express our gratitude to Mr A Akopyan tor his assistance
 
 *Georgia from the Beginning of the 16"' C till the 30s of the 19''' C. * Tbilisi, 1973.J (In Georgian: ej-gfl&ódg 8.  fngcoö^gmfno, LóJófnoiggcnmU obgmCiools ''>'>f'^J3033'^"' gn8o IV, bóJóCio)3gc::\<n XVI bó'gj'gGob jo.^b.'^^yoUotDöB XIX Ló-gj-gBob 30-oi)6 ^c;;göó8cog. oiöoc^obo, 1973.)
 
+{: start="4"}
 4. \[Kutelia T. A *Catalogue of the Iranian Copper Money (in accordance*
 
 *with inventory of the State Museum of Georgia).* Tbilisi, 1990.\] (In Georgian: d3'"0'~?'''^ "'• ofnóB^cjo b3ocï>g6dob ^TJC^ob jóg\|.iiï;;r);i,o (b.!);\|ó(no);j;)c:;i'ib b.hbgc;\>8^oojii 3^8gg8ob gmbcjg&ob Siibgu^jjooi). oiöocqobo, 1990. Text in Georgian, Russian and English, the catalogue proper in Georgian). 5. \[Pakhomov E. *Coins of* *Georgia.* Tbilisi, 1970.\] (In Russian: HaxoMOB
@@ -785,10 +789,12 @@ All the above makes us incline to the idea that these items are probably modem f
 
 # T6HJTHCH, 1970).
 
+{: start="4"}
 4.  \[Kapanadze D. Georgian Numismatics, Moscow, 1955.\] (in Russian: Kananaase *JX.* FpysHHCKaa HyMHSMaTHKa. MocKBa, 1955.)
 
 5.  \[Kapanadze D. Georgian Numismatics. Tbilisi, 1969.\] (In Georgian: j,bJó6.idg ej. J.'ïfóorgc^o 6j8o88,')gojó. cnboc?(.l)C), 1969.) 6.  Lang D: *Studies in the Numismatic* *History of Georgia m* *Transcaucasia.* New-York, 1955. 7.  \[Mayer T. (editor) *Sylloge of Coins of Caucasus and Eastern* *Europe.* Wiesbaden, 2005.\] (In German: Mayer T. (bearbeitet von). Sylloge der Miinzen des Kaukasus und Osteuropas. Wiesbaden, 2005.) 8.  \[Pakhomov E.: *Coins of Georgia.* Tbilisi, 1970.\] (In Russian: HaxoMOB E.A. MoHexbi FpyjHH. T6HJIHCH, 1970). 9.  Turkia S., Paghava I., Kesmedzhi A.: "Coin imitating a Tiflis abbasi 1131 AH: West Georgian or Daghestani origin", in: *Journal of the Oriental Numismatic* *Socierv,* 194, Winter 2008.
 
+{: start="10"}
 10.  Zeno Oriental Coins Database, <http://www.zeno.ru/> *Giorgi XII*
 
 # THE START OF SIRMA COINAGE: THE SIRMA ABAZI OF AH "1166" AND ITS DATING
@@ -937,6 +943,7 @@ The minting of the sirma currency definitely started in AH 1179 (1765/6), and no
 
 ***References*** Albums *A Checklist of Islamic Coins* Santa Rosa, 1998 Album S *S\\lloge of Islamic Coins m the Ashmolean* Volume 9 *Iran after the Mongol Invasion* Ashmolean Museum Oxford, 2001 \[Dumbadze M (editor) *Studies in Georgian His tori,* V 4 Tbilisi, 1973 \] (In Georgian co-gaöód,-) (,8,i'i8ol) ('ig(o<iJ(e|m(f)i)) böj.sfnonggcnml) oli(P,cnfnoc)b Gófnjggyjjöo,,i!,m9o IV oiAoc^obo, 1973) \[Kapanadze D *Commentaries on* Pakhomov E *Coins of* *Georgia* Tbilisi, 1970\] (In Russian Kanana/ise *JXT* *KoMvenmapim K* *KHUZB* HaxoMOB E A MoHexbi FpyiHH T6HJ1HCH, 1970) \]Kapanadze D *Georgian Numismatics, Moscow* 1955\] (in Russian Kananaflse,11 FpysHHCKaa HyMHSMaxHKa MocKsa,
 
+{: start="1955"}
 1955.  10 IKapanadze D *Georgian Numismatics* Tbilisi, 1969\] (in
 
 Georgian ji3ó6ódg co J,bfnciTg(cio E-gaoSaógojó ai6oc;;;ol)o, 1969 ) 11 \[Koiava N *Money Circulation Credit and Finances in the*
@@ -1037,6 +1044,7 @@ SOJlOTblXt MOHBTb 3fli Cb Hi Tb, a CymeCTByiOTb cepe6paHbTH H *ui* aHtw" \["The 
 
 Different scholars have had varying opinions on these coins Many scientists, including Brosset, Dom, Langlois, de Morgan, Karst, Komarov, Pakhomov, Kapanadze (in his early works, up to
 
+{: start="1965"}
 1965. considered them to be regular, albeit rare gold coins of  Erekle II \[4, p 5, 9, p 213, no 34b, 7, p 420, 22, p 125, plate IX, no 7, 24, p 274, fig 43, 16, p 57, footnote 96, 19, pp 4, 10, 25, p 260, 13, pp 98-99, 12, p 128, 15, p 131\] Recently the same view was quoted in the Money ol Georgia catalogue \[23, pp 70, 72,92, no 254\]
 
 Lang, apparently agreeing with the idea that those coins were minted by Erekle II, thought that "they were not in general circulation, but were for presentation to the Russian court" \[21, p
@@ -1120,6 +1128,7 @@ Das Asiatische Museum der Kaiserlichen Akademie der Wissenschaften zu St Petersb
 
 \[Kolchinskiy E Academic Science in Saint Peteisburg and the World Culture ' In *Problems of the History of Natural Science and* *Technics* #1,1999\] (In Russian KOJIMHHCKHM 3 H AKa;ieMHHecKaji HayKa B CaHKT nexepSypre H MHpoBaa Kyjibxypa Bonpocu HcxopHH ecxecxB03HaiiHii H XeXHHKH, HoMcp I, 1999) \[Komarov A Were the Golden Coins Minted in Georgia'' In *Proceedings* *of the Caucasian Society for History and* *Archeology* Tiflis 1884 Vol 1 Issue 2 p 10\] (In Russian KoMapoB A McKaHHjiacb JIH B rpy3HH sojioxaa Monexa^ HsBecxHS KaBKa3CK0i o o5mecxBa HCXOPHH H apxeojioran ' TH(\|)JIHC, 1884 T I Bbin 2 cxp
 
+{: start="10"}
 10.  \[Kutelia T *Georgia* *and Safavid* *Iran (according* *to* *numismatic* *data)* Tbilisi 1979\] (In Russian KyxejiHa T rpy3na M CecjieBHacKHH HpaH (noaannbiM HyMHSMaxHKn) T5HJIHCH, 1979)
 
 Lang D * * *Studies* *in* *the Numismatic* *History* *of* *Georgia* *in* *Transcaucasia* New-York, 1955 \[Langlois V *An Attempt to Classify the Monetary Series of Georgia* *from Ancient* *Times till the Present Day* Pans 1860\] (In French Langlois V *Essai de Classification* *des Suites Monetaires* *de la* *Georgië depuis I Antiquitejusqu* *anos Jours* Paris 1860) Managadze I (Editor) *Money in Georgia* Tbilisi, 2003 \[Morgan J de *Scientific Mission to Caucasus* *Aicheological* *and* *Historical* *Essays* *Vol II Studies* *on the Oiigm* *of Peoples* *of* *Caucasus* Pans 1889\] (In French Morgan J de * * *Mission* *scientifique* *au Caiicase,* *Etudes* *Archeologiques* *&* *Histoiiques* *Tome Deuxieme. Recherches sur les origines des peuples* *du Caucase* Pans, 1889 ) \[Pakhomov Ye * * *Coins of Georgia* Tbilisi, 1970\] (In Russian naxoMOB E A Monexbi rpy3HM TSHJIMCH, 1970) Spasskiy I Novodels In * * *The Past* *of our* *Motherland* *m* *Numismatic* *Relics* Leningrad, 1977 Pp 105-125\] (In Russian CnaccKHH H f HoBoaejibi 'Tlpomnoe Hameii poannbi B naMflxHHKax HyMH3MaxMKH JleHHHrpazi 1977 Cxp 105-125) JUzdennikov V " Novodel Coins' In *The Coins of Russia of the 18'''* *- Beginning of the 19"'C* Moscow 1994 Pp 178 188\] (In Russian y3fleHHHK0B B HoBoaejibHbie MOHexbi 'MoHexbi POCCHH XVIll Haqajia XIX BCKa MocKBa, 1994 Cxp 178-188) \[Uzdennikov V * * *Russian* *Coins* Moscow, 1985\] (In Russian VsaeHHHKOB B Monexbi POCCHH MocKBa, 1985) \[VinklerP *I rom the History of Minting in Russia Minting Coins for* *Georgia* *(1804-1811)* Saint Petersburg 1898\] * * *(in* Russian BHHKaep n H3 HCxopHH MOHexHoro aeaa B POCCHH HeKaHKa MOHCX aJiü 1 pysHM (1804 1833 rr ) C n 5 1898 )
@@ -1377,12 +1386,15 @@ Karst J Precis de Numismatique georgienne avec 12 Planches et un Appendice sur l
 
 1946 \] (In Georgian;ji'iii,S;\|,S C bójófnoiggcjmb g^jcjoli 8o9njj(jj)3ó XVlll bó-3j^(>jjfl() "o b,e,óc^o6ob b,!>b cn6oc:;;obnb b,sbgi^>9^ogfn -gboggfribo^g^ob 9(^D9J)&O, ^ XXVIll ui?)tn^»i>bo,
 
+{: start="1946"}
 1946.  \[Kutelia T *Catalogue* *of the* *Iranian Copper Money* *(m* *accordance* *with Holdings* *of the* *State Museum* *of* *Georgia)* Tbilisi, 1990\] (Text in Georgian, Russian and English, the catalogue proper in Georgian JJTIÖ'OC^O,^ oi ofnóB'j^c^o b,3oc:iQ6dob ^j'^i^jnb,)''\>ft''\>i^t^oo (biSjjiSfnmggc^cnb b^)bj)c::;9^oo]n 9-383-g9ob ojcnbtogöob 9<)bQc>goGo oi?)t)Ci;obo, 1990 ) \[Kutelia T *Georgia* *and* *Safavid Iran (according* *to* *numismatic* *data\}* Tbilisi 1979\] (In Russian Kyrejina T FpysHa H Ce(j)eBHflCKHH HpaH (no aaHHbiM HyMHSMaxMKH) T6HJ\]HCH 1979) Lang D *Studies* *m the* *Numismatic History* *of* *Georgia* *in* *Transcaucasia* New York, 1955 \[Langlois V *An* *Attempt* *to* *Classify* *the* *Monetar\\ Series* *of* *Georgia* *from Ancient Time till* *the* *Present* *Day* Pans 1860\] (In French
 
 Langlois V Essai de Classification des Suites Monetaires de la Georgië depuis I'Antiquite jusqu'a nos Jours Pans 1860) Paghava I Turkia S, Lobzhanidze G 'Jalal al-Din Mangubarni s copper coin minted in the Kingdom of Georgia and without marginal legend' In *Journal* *of* *Oriental Numismatic Society,* #192, summer 2007 Pp 6-8 \[Pakhomov Ye *Coins* *of* *Georgia* Tbilisi, 1970\] (In Russian naxoMOB E A MoHCTbi fpysHH T6HJIHCH, 1970) \[Pakhomov Ye *Weight* *and* *Value* *of* *the* *Copper Coinage* *of* *Tiflis* *of* *the* *\]/''* *18"'* *c* Baku, 1928\] (In Russian HaxoMOB E A Bee M flocTOHHCTBO McaHOH MOHexbi TnitjjiHca XVn XVni B B BaKy,
 
+{: start="1928"}
 1928.  Rabino di Borgomale HL *Coins Medals* *and* *Seals* *of the* *Shahs of* *Iran,* 1500-1941 1945 \[Simtsina Ye 'Monetary Circulation in Azerbaijan (in Ganja, Qarabagh, Shamakhi Shaki, Baku, Darbcnd, Quba Khanates) in the Second Half of the 18\* - the First Quarter of the 19\* c ' Abstract ot a PhD thesis Baku, 1992\] (In Russian CuHuuHHa E ^eneMHoe o6pameHne AjepSauavKaHa (riiH/i\>KHHCKoro KapaöaxcKoro llIeMaxHHCKoro LUeKUHCKoro BaKiiHCKoro ^epGcHTCKoro, KyÖHHCKoro xaHCTB) BO BTopoft nojioBHHe XVIII - nepe HCTB XIX B ABTopeijiepaT KaHflHaarcKOH flHcceprauHH BaKy, 1992) \[Uzdennikov V *Russian Coins* *1700 1917* Moscow, 1985\] (In Russian ViAeHUHKOB B Monexbi POCCHH 1700 1917 MocKBa,
 
+{: start="1985"}
 1985.  Valentine WH *Modem Copper Coins* *of the* *Muhammadan States* London 1911 \[Winkler von P From the History of Monetary Affairs in Russia Minting coins for Georgia (1804-1833) Samt-Petersburg, 1898 \] (In Russian BuHKjiep (JJOH flH Hs HCTopuH MoueTHoro aejia B POCCHH HeKaHKaMOHeTjiJiarpysHH (1804-1833 ir) Cn5 1898) \[Winkler von P Taunda Coins (1783 1788) Saint Petersburg. 1899 Reprinted in y4Hï/!o/og\\ *of* *Russian* *Numismatics 2005* *Pp 93 138\]* (In Russian BuuKjiep (jioH Hfl TaspimecKafl MOHexa (1783 1788) Cn6 1899 PenpHHTHoe HsaaHue B *Aitmoioeuu* *POCCUÜCKOÜ* *HyMU3\\tamuKU* *2005* *Cmp 93 HS )*
 
 ## Table 2. The succession of copper coinage types in the kingdom of Kartl-Kakheti **Coinage type** **(by effigy)** *Lion left* *Falcon* *tearing* *pheasant* *Coat of arms* *Fish* *Double-* *headed eagle* *Single-* *headed eagle* **Issuer** Teimuraz II Teimuraz II & Erekle II Erekle II Erekle II Erekle II Erekle **II** **Introduction** **date^**

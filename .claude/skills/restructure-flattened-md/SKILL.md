@@ -221,6 +221,12 @@ npx cspell lint jons/<STEM>.md
   near-duplicate of a neighbouring paragraph -- the spurious table's copy of the
   prose, left behind after the clean paragraphs were restored. Delete the copy
   once the render confirms the clean paragraphs hold all of its text.
+  It also flags an ordered list whose first item is not 1 (`16.  Sel. ...`):
+  kramdown ignores that number and renders from 1, so put `{: start="16"}` on
+  the line after the list. A numbered note followed by an unindented
+  paragraph ends the list, so the next note (`2.`) starts a new list and
+  renders as 1 -- indent the paragraph to keep the list going, or add the
+  `{: start}` line. A bare number that is not a list item is escaped: `1898\.`.
 - `detect-missing-tables screen` should now read `FLATTENED 0`, exit `0`.
 - Note the cspell delta (before vs. after). Greek legend words, correct book
   titles, and deliberately source-faithful typos are expected to remain flagged;

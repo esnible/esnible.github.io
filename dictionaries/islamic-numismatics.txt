@@ -1191,7 +1191,6 @@ Buwayhids
 counterstamped
 Fars
 Fasli
-Glod
 Khwarizmshahs
 Oakes
 Organising
@@ -10131,3 +10130,6 @@ Tūrān
 # OP_012 / OP_020 — Zayyanid Tlemcen and Seljuq Rum: places
 Arij
 Qonya
+# ONS_045 — Iranian numismatic bibliography
+Khaliq
+tanqibat

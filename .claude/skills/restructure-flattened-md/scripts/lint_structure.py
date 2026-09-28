@@ -23,8 +23,8 @@ mechanical defects that render wrong but are invisible in a diff:
   * a line starting `#` with no space after it (`#076 and #077 ...`) --
     kramdown renders it as a heading; escape it as `\\#076`
   * an ordered list that starts at a number other than 1 (`16.  Sel. ...`)
-    with no `{: start="16"}` after it -- kramdown ignores the first item's
-    number and renders the list from 1
+    with no `{: start="16"}` before or after it -- kramdown ignores the first
+    item's number and renders the list from 1
   * a near-duplicate paragraph -- a pipe-mangled copy of the prose next to
     it, left behind when a spurious table was turned back into paragraphs
 
@@ -39,6 +39,8 @@ Exit status is 0 when nothing is found, 1 otherwise (sibling-skill convention).
 """
 
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -105,6 +107,42 @@ def paragraphs(lines, skip):
             out.append((start, " ".join(buf)))
             start, buf = None, []
     return out
+
+
+def kramdown_list_mismatches(path):
+    """[(line_no, printed)] for list items kramdown renders with another number."""
+    script = Path(__file__).resolve().parents[4] / "scripts" / "fix_list_starts.rb"
+    if not (shutil.which("ruby") and script.exists()):
+        return regex_list_starts(path)
+    out = subprocess.run(["ruby", str(script), str(path)], capture_output=True, text=True).stdout
+    found = []
+    for line in out.splitlines():
+        if " at line(s) " in line:
+            for m in re.finditer(r"(\d+) \((\d+)", line.split(" at line(s) ", 1)[1]):
+                found.append((int(m.group(1)), int(m.group(2))))
+    return found
+
+
+def regex_list_starts(path):
+    """Fallback without Ruby: a list whose first item isn't 1 and has no IAL."""
+    lines = path.read_text(encoding="utf-8").split("\n")
+    found, i = [], 0
+    while i < len(lines):
+        m = OL_ITEM_RE.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        start = last = i
+        for j in range(i + 1, len(lines)):
+            if OL_ITEM_RE.match(lines[j]) or lines[j].startswith((" ", "\t")):
+                last = j
+            elif lines[j].strip():
+                break
+        n = int(m.group(1))
+        if n != 1 and not (start and START_IAL_RE.match(lines[start - 1])):
+            found.append((start + 1, n))
+        i = last + 1
+    return found
 
 
 def is_table_row(line):
@@ -238,35 +276,19 @@ def lint(path):
             add(i + 1, "WARN",
                 f"graph axis labels (a figure OCR'd as text?): {m[:50]!r}")
 
-    # --- ordered lists that don't start at 1 -----------------------------
-    # kramdown ignores the number on a list's first item and always renders
-    # from 1, so IS_009's catalogue `16.  Sel. ...` came out as `1.`. The
-    # fix is a `{: start="16"}` line directly after the list (or `16\.` for
-    # a number that isn't a list at all). A list runs over blank lines and
-    # indented continuations until the next unindented non-item line.
-    i = 0
-    while i < len(lines):
-        m = OL_ITEM_RE.match(lines[i])
-        if fence_state[i] or not m:
-            i += 1
-            continue
-        start = i
-        last = i
-        j = i + 1
-        while j < len(lines):
-            l = lines[j]
-            if OL_ITEM_RE.match(l) or l.startswith((" ", "\t")):
-                last = j
-            elif l.strip():
-                break
-            j += 1
-        n = int(m.group(1))
-        nxt = next((k for k in range(last + 1, len(lines)) if lines[k].strip()), None)
-        if n != 1 and not (nxt is not None and START_IAL_RE.match(lines[nxt])):
-            add(start + 1, "WARN",
-                f"ordered list starts at {n} but kramdown renders it from 1 -- "
-                f"add `{{: start=\"{n}\"}}` after the list, or escape as `{n}\\.`")
-        i = last + 1
+    # --- ordered-list items kramdown renders with the wrong number -------
+    # kramdown ignores list numbers and counts from 1, so IS_009's catalogue
+    # `16.  Sel. ...` came out as `1.`, a note after an unindented paragraph
+    # restarts at 1, and a list that skips numbers carries on regardless.
+    # Where a list starts and ends is kramdown's call (lazy continuation
+    # lines, indented paragraphs), so ask kramdown: scripts/fix_list_starts.rb
+    # reports every item that renders with a number other than the printed
+    # one, and --fix repairs them. Without Ruby, fall back to a regex guess
+    # at list starts, which misreads some lists.
+    for line_no, n in kramdown_list_mismatches(path):
+        add(line_no, "WARN",
+            f"list item {n} renders with a different number in kramdown -- "
+            f"run scripts/fix_list_starts.rb --fix, or escape as `{n}\\.`")
 
     # --- near-duplicate paragraphs --------------------------------------
     # Turning a spurious pdfmd table back into prose can leave the table's

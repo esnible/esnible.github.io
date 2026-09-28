@@ -10128,3 +10128,6 @@ Tūrān
 ونصروه
 # OP_012 — Ziyanid legends (as hand-lettered; translation printed)
 بتلمسان
+# OP_012 / OP_020 — Zayyanid Tlemcen and Seljuq Rum: places
+Arij
+Qonya

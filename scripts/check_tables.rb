@@ -19,7 +19,8 @@ files = ARGV.empty? ? Dir['jons/*.md'].sort : ARGV
 bad = 0
 files.each do |f|
   src = File.read(f, encoding: 'utf-8')
-  written = src.lines.count { |l| l =~ /^\|\s*:?-{3,}/ }
+  # Indented too: a table inside a list item (ONS_076) is still a table.
+  written = src.lines.count { |l| l =~ /^\s*\|\s*:?-{3,}/ }
   rendered = Kramdown::Document.new(src, input: 'GFM').to_html.scan('<table').size
   next if written == rendered
   bad += 1

@@ -9986,6 +9986,22 @@ niṣf
 Romdhane
 Solaiman
 
+# ONS_080 — Gakkhar copper coinage (Deyell): rulers, places, Persian sources, legend transliteration
+ādam
+arwāl
+Duni
+Gulshah
+Kaigohar
+Parhālah
+Pharhālah
+Pharwālā
+Pharwālah
+Raezadeh
+Rohtas
+Sarang
+sulṭā
+Zahur
+
 # ONS_097 — Newsletter 97 masthead, Miscellany bibliography, Ottoman 'Square' Akces article (MacKenzie)
 Abtei
 Beverninghlaan

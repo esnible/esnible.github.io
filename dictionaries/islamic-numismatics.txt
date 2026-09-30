@@ -10149,3 +10149,22 @@ Qonya
 # ONS_045 — Iranian numismatic bibliography
 Khaliq
 tanqibat
+# ONS_092-093 — Arab-Sasanian dirhams (Timmermann, Warden): Pahlavi and Arabic legend transliterations, rulers, scholars
+apzw
+apzwt
+Ardeshīr
+Bisi'llah
+dādwar
+Fujā'a
+Haddad
+Hukma
+K̲harijite
+K̲hurra
+MHMD
+MHMT
+NVS̲H̲ST
+Quatarī
+Salemann
+twbl
+Zabulistan
+kunyat

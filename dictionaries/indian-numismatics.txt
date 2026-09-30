@@ -9719,3 +9719,20 @@ Nesbitt
 Rotzer
 Spinks
 unticketed
+
+# ONS_067 — Kashmir mint Moghul coins (Rhodes): catalogue abbreviations
+IMCS
+
+# ONS_067 — members news and recent publications: names
+Levon
+Naiks
+Wahal
+Wynants
+
+# ONS_096 — recent publications and Vienna mint engravers: names and titles
+Hellrigl
+Hofmann
+Mildenberg
+Neuberger
+Schweizerische
+späten

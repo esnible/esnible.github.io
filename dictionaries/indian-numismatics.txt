@@ -9736,3 +9736,12 @@ Mildenberg
 Neuberger
 Schweizerische
 späten
+
+# ONS_102 — Sher Shah Suri quarter rupee: Devanagari reverse margin
+श्री
+सेरसाही
+
+# ONS_105 — members' news and Tibetan patterns (Rhodes)
+Kbyte
+unphotogenic
+Warminster

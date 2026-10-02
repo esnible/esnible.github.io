@@ -11,7 +11,7 @@ mid-sentence instead of as a section break.
 This is not the flattened-table problem `detect_tables.py` screens for. No table
 is involved and the escaped-pipe fingerprint never fires on it.
 
-Three signals are combined, because no one of them decides on its own:
+Four signals are combined, because no one of them decides on its own:
 
   set apart   A line with clear space above AND below that stops short of the
               right margin. Necessary, never sufficient -- a short body line
@@ -23,9 +23,20 @@ Three signals are combined, because no one of them decides on its own:
               until you notice it does not stop where the text stops.
   capitals    An all-capitals line, which is how these typewriters mark a head
               when they do not underline it (`NOTE`, `BIBLIOGRAPHY`).
+  bold        A line whose OCR text layer is flagged bold end to end. Later
+              issues (ONS_131 on) print heads in a bold proportional face
+              instead of underlining them, which the pixel underline test
+              cannot see at all -- it only looks for ink under the line, and
+              bold text has none. Trusted only on a page where ordinary body
+              text is not *also* OCR'd bold -- some scans mis-tag a whole
+              page's text that way, the same failure mode the margin control
+              catches for underlines, so the fraction of long body lines that
+              come back bold is checked first and the signal is dropped for
+              that page if it is high.
 
-Being set apart makes a line a candidate; an underline or capitals makes it a
-head. A candidate that is neither wants a paragraph break but no marker.
+Being set apart makes a line a candidate; an underline, capitals, or bold mark
+makes it a head. A candidate that is none of these wants a paragraph break but
+no marker.
 
 The check runs in both directions, because each finds errors the other cannot:
 
@@ -78,10 +89,19 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   beat the margin control by MARGIN. On IS_001 real underlines score 0.51-0.97
 #   against a margin control near zero, plain body lines 0.05-0.19, and the
 #   page-wide smudge under `September 1971` scores 0.37 in both places.
+# BOLD: fraction of a line's characters the OCR text layer flags bold before it
+#   counts as a bold head. Real heads come back 1.00; nothing seen scoring
+#   under 0.75 was a real head, so 0.9 leaves margin either side.
+# BOLD_NOISE: fraction of a page's own long (>=10 char) body lines that may
+#   come back >50% bold before the page is judged unreliable for this signal
+#   and bold is ignored on it entirely. A clean page scores at or near 0; a
+#   page whose whole text layer was mis-tagged bold scores 1.0. 0.15 sits
+#   below the lowest "really is noisy" page seen (0.27) and above ordinary
+#   noise from a handful of genuine bold run-in labels.
 # RATIO: the PDF text layer and the Markdown were OCR'd separately and disagree
 #   ("ORIEOTAL" vs "ORIENTAL"), so matching is fuzzy.
 THRESH, SMEAR, DPI = 185, 2, 200
-GAP, WIDTH, UNDERLINE, MARGIN, RATIO = 1.4, 0.75, 0.45, 0.25, 0.72
+GAP, WIDTH, UNDERLINE, MARGIN, BOLD, BOLD_NOISE, RATIO = 1.4, 0.75, 0.45, 0.25, 0.9, 0.15, 0.72
 
 MARKER_RE = re.compile(r"^(#{1,6}\s+|\*\*|__)")
 # Longest a marked line may be and still be trusted as a real title rather than
@@ -92,6 +112,13 @@ DEFAULT_MARKER = "##"
 
 
 # --- PDF side -------------------------------------------------------------
+
+BOLD_FLAG = 2 ** 4  # PyMuPDF span flags bit 4
+
+
+def _span_bold(span):
+    return bool(span["flags"] & BOLD_FLAG) or "bold" in span.get("font", "").lower()
+
 
 def visual_lines(page, tol=2.0):
     """Text-layer fragments grouped into the lines a reader would see.
@@ -106,20 +133,28 @@ def visual_lines(page, tol=2.0):
             continue
         for line in block["lines"]:
             text = "".join(s["text"] for s in line["spans"]).strip()
-            if text:
-                frags.append((line["bbox"], text))
+            if not text:
+                continue
+            total = sum(len(s["text"]) for s in line["spans"])
+            bold = sum(len(s["text"]) for s in line["spans"] if _span_bold(s))
+            frags.append((line["bbox"], text, bold, total))
     frags.sort(key=lambda f: (f[0][1], f[0][0]))
 
     out = []
-    for bbox, text in frags:
+    for bbox, text, bold, total in frags:
         if out and abs(bbox[1] - out[-1]["y0"]) <= tol:
             cur = out[-1]
             cur["x0"], cur["x1"] = min(cur["x0"], bbox[0]), max(cur["x1"], bbox[2])
             cur["y1"] = max(cur["y1"], bbox[3])
             cur["text"] += " " + text
+            cur["_bold_chars"] += bold
+            cur["_total_chars"] += total
         else:
             out.append({"y0": bbox[1], "y1": bbox[3], "x0": bbox[0],
-                        "x1": bbox[2], "text": text})
+                        "x1": bbox[2], "text": text,
+                        "_bold_chars": bold, "_total_chars": total})
+    for ln in out:
+        ln["bold"] = ln["_bold_chars"] / ln["_total_chars"] if ln["_total_chars"] else 0.0
     return out
 
 
@@ -145,6 +180,41 @@ def mark_set_apart(lines, gap=GAP, width=WIDTH):
         ln["set_apart"] = (above >= leading * gap and below >= leading * gap
                            and (ln["x1"] - ln["x0"]) <= measure * width
                            and len(re.sub(r"[^A-Za-z0-9]", "", ln["text"])) >= 4)
+
+
+def score_bold_reliability(lines, noise=BOLD_NOISE):
+    """Zero out the bold signal on a page where body text is bold too.
+
+    Mirrors the underline/margin split: `bold` read straight off the OCR text
+    layer is usually trustworthy, because it comes from the scanner's own font
+    detection rather than a pixel measurement -- but some scans get it wrong
+    for the whole page (an unusual face, a heavy scan), and on those pages
+    ordinary body paragraphs come back bold too. A page is judged unreliable
+    when more than `noise` of its own long, full-measure lines score over 50%
+    bold; `bold` is then set to 0.0 for every line on it rather than left to
+    promote half the page to headings.
+
+    The body sample is picked by *width*, not `set_apart`: a short heading
+    line routinely fails `set_apart` (ONS_133's masthead and section heads
+    among them -- tight neighbouring spacing defeats the gap test even though
+    the line reads as a head to a human) and would otherwise count itself as
+    "noise", pushing a page's own genuine bold heads over the threshold and
+    switching the signal off for exactly the lines it exists to catch. A line
+    close to the page's own body measure is, almost without exception, a
+    wrapped paragraph line rather than a head, wrongly set apart or not.
+    """
+    _, measure = page_metrics(lines)
+    if not measure:
+        return
+    body = [ln for ln in lines
+            if (ln["x1"] - ln["x0"]) >= measure * 0.85
+            and len(re.sub(r"[^A-Za-z0-9]", "", ln["text"])) >= 10]
+    if not body:
+        return
+    noisy = sum(1 for ln in body if ln["bold"] > 0.5)
+    if noisy / len(body) > noise:
+        for ln in lines:
+            ln["bold"] = 0.0
 
 
 def _longest_run(row, smear=SMEAR):
@@ -192,14 +262,16 @@ def score_underlines(page, lines, dpi=DPI):
         ln["margin"] = margin / max(1, mx1 - mx0) if mx1 > mx0 else 0.0
 
 
-def is_head(line, underline=UNDERLINE, margin=MARGIN):
-    """A set-apart line the typewriter marked, by underlining or by capitals."""
+def is_head(line, underline=UNDERLINE, margin=MARGIN, bold=BOLD):
+    """A set-apart line the typewriter (or the printer) marked as a head."""
     if line.get("underline", 0.0) >= underline and \
             line["underline"] - line.get("margin", 0.0) >= margin:
         return "underlined"
     letters = [c for c in line["text"] if c.isalpha()]
     if len(letters) >= 4 and sum(c.isupper() for c in letters) / len(letters) >= 0.9:
         return "capitals"
+    if line.get("bold", 0.0) >= bold:
+        return "bold"
     return None
 
 
@@ -360,7 +432,7 @@ REVIEW = ("UNMATCHED",)
 
 
 def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
-            margin=MARGIN):
+            margin=MARGIN, bold=BOLD):
     # `seen` keeps a running head that repeats on every page of a long table
     # ("APPENDIX 1 (Continued)") from being reported once per page against the
     # single Markdown line it all collapsed into.
@@ -370,7 +442,7 @@ def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
     for ln in pdf_lines:
         if not ln.get("set_apart"):
             continue
-        head = is_head(ln, underline, margin)
+        head = is_head(ln, underline, margin, bold)
         hit = locate_in_md(md_lines, ln["text"], min_ratio, cursor)
         if hit is None:
             if head:
@@ -431,8 +503,8 @@ def analyse(pdf_lines, md_lines, min_ratio=RATIO, underline=UNDERLINE,
         # Deliberately not requiring `set_apart` here: a centred title is often
         # too wide for that test, yet it is plainly a head and its marker is
         # correct. What disqualifies a marker is the scan not marking the line
-        # at all -- no underline and no capitals.
-        head = is_head(ln, underline, margin)
+        # at all -- no underline, no capitals, and no bold.
+        head = is_head(ln, underline, margin, bold)
         if not head:
             found.append({"verdict": "OVERSET", "pdf": ln, "head": head,
                           "row": row, "col": 0, "ratio": ratio})
@@ -462,8 +534,8 @@ def report(stem, md_lines, found, verbose):
             continue
         print(f"  {f['verdict']:12s} p{ln['page']:<3d} "
               f"underline={ln.get('underline', 0.0):4.2f}"
-              f"-{ln.get('margin', 0.0):4.2f} {f['head'] or 'plain':10s} "
-              f"{ln['text'][:52]!r}")
+              f"-{ln.get('margin', 0.0):4.2f} bold={ln.get('bold', 0.0):4.2f} "
+              f"{f['head'] or 'plain':10s} {ln['text'][:52]!r}")
         if "row" in f:
             print(f"{'':18s}md line {f['row'] + 1}: "
                   f"{md_lines[f['row']].strip()[:70]!r}")
@@ -518,11 +590,12 @@ def run(stem, args):
             lines = visual_lines(page)
             mark_set_apart(lines, args.gap, args.width)
             score_underlines(page, lines, args.dpi)
+            score_bold_reliability(lines, args.bold_noise)
             for ln in lines:
                 ln["page"] = pno
             pdf_lines.extend(lines)
     found = analyse(pdf_lines, md_lines, args.min_ratio,
-                    args.min_underline, args.min_margin)
+                    args.min_underline, args.min_margin, args.min_bold)
     return (md, md_lines, found), None
 
 
@@ -557,6 +630,14 @@ def main():
                             f"(default {MARGIN})")
         p.add_argument("--dpi", type=int, default=DPI,
                        help=f"render DPI for the underline probe (default {DPI})")
+        p.add_argument("--min-bold", type=float, default=BOLD,
+                       help="fraction of a line's characters the OCR text "
+                            "layer must flag bold before it counts as a bold "
+                            f"head (default {BOLD})")
+        p.add_argument("--bold-noise", type=float, default=BOLD_NOISE,
+                       help="fraction of a page's own long body lines that "
+                            "may come back bold before the bold signal is "
+                            f"distrusted for that whole page (default {BOLD_NOISE})")
         if name == "fix":
             p.add_argument("--marker", default=DEFAULT_MARKER,
                            help=f"what to prefix a head with (default {DEFAULT_MARKER!r})")

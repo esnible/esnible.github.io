@@ -29,7 +29,7 @@ detect_headings.py fix  IS_001            # rewrite the Markdown
 
 `scan` exits non-zero when there is something to fix.
 
-## Why three signals
+## Why four signals
 
 No single measurement decides. Each of these is necessary and none is
 sufficient:
@@ -39,10 +39,11 @@ sufficient:
 | **set apart** | clear space above *and* below, and the line stops short of the right margin | a short body line between two figures looks identical |
 | **underline** | a long contiguous ink run under the line's own x-extent, **minus** the same measurement taken in the margin to its right | a scan streak running clear across the page scores as high as a real underline |
 | **capitals** | an all-capitals line | how these typewriters mark a head when they do not underline it (`NOTE`, `BIBLIOGRAPHY`) |
+| **bold** | the OCR text layer flags the line's characters bold, end to end | some scans mis-tag a whole page's body text bold too, so this is only trusted where that is not happening (see below) |
 
-Being set apart makes a line a *candidate*. An underline or capitals makes a
-candidate a *head*. A candidate that is neither wants the paragraph break but
-no marker.
+Being set apart makes a line a *candidate*. An underline, capitals, or bold
+makes a candidate a *head*. A candidate that is none of these wants the
+paragraph break but no marker.
 
 The pages carry no vector drawings (`get_drawings() == []`), so the underline is
 found in pixels, the same way `detect_tables.py` finds ruling lines.
@@ -52,6 +53,29 @@ On IS_001 page 12 the line `September 1971` sits over a page-wide scan streak
 and scores 0.37 under the text -- but 0.37 in the margin too. Real underlines
 stop where the text stops: they score 0.90+ under the text against ~0.00 beside
 it.
+
+Bold is read straight off the span flags PyMuPDF reports for the OCR text
+layer, not measured in pixels, so it needs no render and no DPI. Newsletters
+from `ONS_131` on print heads in a bold proportional face with no underline at
+all, which the underline test is structurally blind to -- it looks for ink
+under the line, and bold prints none. Discovered the hard way: an earlier pass
+ran `fix` across `ONS_130`-`139` without reading the report first, and because
+every one of those headings is `OVERSET` under underline/capitals alone, `fix`
+demoted nearly every section heading in all ten files to plain text before the
+diff was caught and reverted. Bold closes that hole for the files it is
+reliable on -- but see the reliability gate below; it is not reliable on
+every file, and the discipline of reading `scan` before trusting `fix` still
+applies.
+
+Bold is not treated as self-evidently reliable, because it fails the same way
+a scan streak fools the underline test: some pages' whole text layer comes
+back bold, not just the heads on it. Before bold is used at all on a page, the
+page's own long (10+ character), not-set-apart lines are checked -- if more
+than `--bold-noise` (default 0.15) of them score over 50% bold, the page's
+body text is bold too and the signal is switched off for every line on that
+page, heads included, falling back to underline and capitals alone. Checked
+across the first 40 PDFs in the archive, roughly a quarter of pages trip this
+gate.
 
 ## Both directions, because each finds what the other cannot
 
@@ -159,6 +183,13 @@ git diff <before> -- jons/ | awk '/^\+\+\+ b\// {f=substr($2,3)}
   body measure.
 - `--min-ratio` (default 0.72) -- similarity before two lines count as the same
   text.
+- `--min-bold` (default 0.9) -- fraction of a line's own characters the OCR
+  layer must flag bold before it counts as a bold head. Real heads come back
+  1.00; nothing seen scoring under 0.75 was a real head.
+- `--bold-noise` (default 0.15) -- fraction of a page's long body lines that
+  may score over 50% bold before the bold signal is distrusted for that whole
+  page. Lowering this makes more pages fall back to underline/capitals only;
+  raising it re-admits pages whose body text itself OCR'd bold.
 - `--marker` (default `##`) -- what `fix` prefixes a head with.
 
 ## Scope
@@ -177,6 +208,16 @@ two reasons worth knowing:
   `OVERSET`.
 
 Both are false positives to read past, not defects to fix blindly.
+
+The same discipline applies to bold. The noise gate catches a page whose
+*whole* text layer OCR'd bold, but not a page that is merely inconsistent --
+a masthead block of names and addresses, say, where some run-in labels are
+genuinely bold and most body text is not, scoring under the gate's threshold
+without every bold line on the page being a head. `ONS_072`'s page 1 (a
+regional-secretaries masthead) is like this. Read `scan`'s report, including
+the `bold=` column, before trusting an `OVERSET`-to-`OK` flip on a page like
+that -- the gate reduces false positives, it does not eliminate the need to
+read the report.
 
 ## Verification
 

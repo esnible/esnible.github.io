@@ -200,6 +200,18 @@ words:
   - TRANKEBARMØNTER
   - Vurderingspriser
 ignoreWords: []
+# Real-word OCR confusions: tokens that are valid English words on their own,
+# so the `words`/dictionary pass above never flags them, but that are never
+# the intended reading anywhere in this corpus. Each entry is `wrong->right`;
+# cspell reports `wrong` as a forbidden word with `right` as its fix-it
+# suggestion. Only add an entry here once you've grepped every occurrence in
+# jons/*.md and confirmed none of them is a legitimate use of `wrong` --
+# the same bar as a dictionary addition in fix-ocr's "Dictionary updates"
+# step, just inverted. See .claude/skills/fix-ocr/SKILL.md.
+flagWords:
+  # OCR misreads "rn" as "m" ("mode-rn" -> "mode-m"); the telecommunications
+  # device never otherwise appears in this corpus
+  - modem->modern
 import:
   - "@cspell/dict-ar/cspell-ext.json"
   - "@cspell/dict-fa-ir/cspell-ext.json"

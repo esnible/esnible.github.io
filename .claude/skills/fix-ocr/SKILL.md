@@ -42,6 +42,8 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
    The project dictionaries (`dictionaries/{chinese,islamic,indian}-numismatics.txt`) already cover most legitimate terms, so anything that surfaces is either an OCR error or a numismatic term that should be dictionary-added. Occurrence count is a useful signal: a token that appears several times spelled identically is probably a legitimate term; a one-off is more likely garble.
 
+   This same pass also surfaces `Forbidden word (<word>) fix: (<correction>)` hits from `cspell.config.yaml`'s `flagWords` list — real English words (so the ordinary dictionary pass can't catch them) that are nonetheless never the intended reading anywhere in this corpus, e.g. `modem` for `modern` (OCR's `rn`↔`m` confusion, applied to a real word). Apply the suggested fix directly; these have already been verified corpus-wide, so they don't need the per-occurrence judgment step 3 describes. See "Known real-word OCR confusions" below for how the list is maintained.
+
 3. **Classify each unknown word** by re-reading the line it appears on:
    - **OCR garble** — fix it via `Edit`. See "Common OCR error patterns" below.
    - **Legitimate numismatic term** — append to the appropriate dictionary (see "Dictionary updates").
@@ -132,6 +134,20 @@ Then re-read for the patterns grep can't pin down:
 - **`am` vs. `an`** when followed by a vowel — `am other` → `an other` or `another` per context.
 - **Comma (or semicolon) where a sentence plainly ends** — `…both obverse and reverse, The meaning of…`. Do **not** fix these from context. Collect them, then resolve each by rendering that page (see the render command in Hard constraints): a printed period → correct the `,` to `.`; a printed comma → it is the authors' own typo, leave it and note it in the report. A page render is the only reliable evidence here, and the swap is 1-for-1 so it does not disturb the line-count invariant.
 - **A spelling the engine normalised** — the OCR's English language model rewrites the typist's forms into commoner ones, in letters and in case alike, and cspell cannot flag the result because the result is a real word. `supereeded` comes back as `superseded`, `Ghengis` as `Genghis`, `Muhammaden` as `Muhammadan`, `Trans-oxine` as `Trans-Oxiana`, `Al Moravids` as `Almoravids`. Suspect it wherever a 1970s typescript reads *too* cleanly — a correctly-spelled modern form in an otherwise idiosyncratic document. Resolve exactly as above: render, and restore what the page prints, typos included. This is the pattern that makes the render worth reaching for on a file cspell calls clean.
+
+## Known real-word OCR confusions
+
+Some OCR errors land on a real English word, so no dictionary addition will ever make cspell flag them — the token spellchecks clean every time, in every file, forever. `modem` for `modern` is the corpus's clearest case: 100+ occurrences across three dozen files, always the `rn`↔`m` letter confusion (see "Common OCR error patterns" above), never the telecommunications device.
+
+`cspell.config.yaml`'s `flagWords` list is where these go, as `wrong->right` entries. cspell then reports every occurrence as `Forbidden word (wrong) fix: (right)` in the ordinary step-2 pass, case-insensitively and with the found token's own capitalization echoed in the suggestion (`Modem` → `Modern`). This is a corpus-wide, context-free correction — the opposite of the "Beyond spellcheck" grep list below, whose entries (`arid`, `tbe`, `am [aeiou]`, ...) are patterns that still need per-occurrence judgment because the matched string is sometimes correct as printed.
+
+Only add an entry here once you've checked every single occurrence in `jons/*.md` and confirmed none of them is a legitimate use of the word — the same bar as a dictionary addition below, just inverted (there it's "confident this spelling is always right"; here it's "confident this spelling is always wrong"):
+
+```
+grep -rhoE '.{30}\b<word>\b.{30}' jons/*.md | less     # read a sample of every hit in context
+```
+
+If even one occurrence turns out to be a genuine use, the word belongs in the "Beyond spellcheck" grep list instead (or nowhere), not here. After adding an entry, re-run cspell on an affected file to confirm it now reports as forbidden, then apply the fix the same way as any other confirmed batch (`replace_all` for a single file, or `apply_edits.py` — see step 5).
 
 ## Dictionary updates
 

@@ -4995,6 +4995,7 @@ Kanyakumari
 Kardamaka
 Kshaharatas
 Kulasekharan
+Kusuluka
 Kuzhithurai
 Lekshmanan
 Lilavati
@@ -5014,6 +5015,7 @@ Puntamalli
 Purnaiya
 Rahatgarh
 Rapar
+Sakastana
 Sangramadheera
 Sankhu
 Sankuchakra
@@ -5054,30 +5056,55 @@ Mihan
 Negapatnam
 Vimshatika
 
-# ONS_162 — Kadamba gold coins of Hangal; Kutch Rarity Guide review; Mughal Deccan campaign mints; Paliakate/Negapatnam VOC rupees
+# ONS_162 — Kadamba gold coins of Hangal; Kutch Rarity Guide review; Mughal Deccan campaign mints; Paliakate/Negapatnam VOC rupees; Sri Lanka Tissamaharama coin review
 Adilshahi
+Adilshahï
 Banavasi
+Barïdshahi
 Bartonischek
 Bharuch
+Damji
+Darur
+Dharür
 Dokdas
 Gahapati
 Goenka
 Hangal
 Hanumana
+Huruna
+Imadshahï
 Jadeja
+Jagdeo
+Jahangir
+Jamji
+Khengarji
+Lakhpatji
+Lodhï
+Madansinghji
 Mahabat
+Mapusa
+Morar
 Mukarrab
 Murtada
 Nizamshahi
+Nizamshahï
 Paliakate
+Pradeep
 Pragmalji
 Prakashe
+Qutbshah
 Qutbshahi
+Qutbshahï
+Rohit
+Ruhuna
+Shahajï
 Shantivarma
+Sinhala
 Tissamaharama
 Trambiyo
 Vijayarajji
 Wickremesinhe
+Yala
 Zafamagar
 
 # ONS_164 — Gupta gold dinars (Shivlee Collection); Cooch Behar coin of Nara Narayana; Gosaba rupee notes; Bangalore mint

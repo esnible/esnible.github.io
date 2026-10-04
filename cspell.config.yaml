@@ -212,6 +212,15 @@ flagWords:
   # OCR misreads "rn" as "m" ("mode-rn" -> "mode-m"); the telecommunications
   # device never otherwise appears in this corpus
   - modem->modern
+  - senes->series
+  - bom->born
+  - kidante->kidarite
+  - miinzen->münzen
+  - mansiir->mansūr
+  - hst->list
+  - vaned->varied
+  - comer->corner
+  - nagan->nagari
 import:
   - "@cspell/dict-ar/cspell-ext.json"
   - "@cspell/dict-fa-ir/cspell-ext.json"

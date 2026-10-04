@@ -10,3 +10,10 @@
 # is too often legitimate for a `flagWords` entry or a fix-ocr grep pattern. A
 # confusion that is always wrong goes in `flagWords` instead, and then drops
 # out of the report without being listed here.
+
+iii -> in
+board -> hoard
+arc -> are
+dash -> cash
+lie -> he
+trace -> trade

@@ -4955,6 +4955,7 @@ Zardarian
 
 # ONS_160 — Indian numismatics: Kshaharata/Western Kshatrapa, Chalukya/Kadamba gold, Mughal, Mysore, Bhilsa, Ananthasayanam, Nepalese Kumaon; places, rulers, scholars, terms
 Abhirakas
+Achittaraya
 Amjhera
 Anantha
 Ananthapadmanabha
@@ -4983,18 +4984,22 @@ Epander
 gadyana
 Gadyana
 Gajasimha
+Ghose
 Graman
 Hatekar
+Havalaiah
 Homayum
 Jagadekamalla
 Jagadeva
 Jamnagar
 Jayakesi
+Jiyo
 Kanarese
 Kanyakumari
 Kardamaka
 Kshaharatas
 Kulasekharan
+Kundanmal
 Kusuluka
 Kuzhithurai
 Lekshmanan
@@ -5004,6 +5009,7 @@ Mahakshatrap
 Mandvi
 Maravarman
 Mettukada
+Miran
 morchel
 Nagercoil
 Najibabad
@@ -5019,6 +5025,7 @@ Sakastana
 Sangramadheera
 Sankhu
 Sankuchakra
+Scutt
 Someshwara
 Surastrene
 Thiruvananthapuram

@@ -6369,6 +6369,7 @@ Abdullaev
 Akhsiket
 Aleksandr
 Ardashis
+Asfal
 Ayntab
 Ayupova
 Azimov
@@ -6389,12 +6390,15 @@ Djalalabad
 Fedorov
 Fergana
 Ferganian
+Furat
 Gence
 Golender
 Gumushhane
+Henning
 Ilaq
 Ilmenau
 Jand
+Jety
 Kamyshev
 Karavan
 Karlovitz
@@ -6416,9 +6420,11 @@ Khorazm
 Khuda
 Kosherov
 Kuch
+Lerch
 Marghinan
 Markov
 Marv
+Mawara'annahr
 Moskalev
 Murom
 Mushegian

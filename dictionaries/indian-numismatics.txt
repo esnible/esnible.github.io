@@ -9779,3 +9779,13 @@ späten
 Kbyte
 unphotogenic
 Warminster
+
+# ONS_161 — pseudo-Mughal coinage, Garhwal, Nadir Shah's invasion, Jagannathpur mint: names and terms
+Chenab
+Dalhousie
+daroghas
+faqirs
+parwanna
+parwannas
+Sahu
+Wandiwash

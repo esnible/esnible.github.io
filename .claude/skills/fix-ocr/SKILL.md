@@ -126,6 +126,14 @@ grep -nE ' amd | tbe | tne | arid | Mc\. [A-Z]| am [aeiou]| 1n | 0f ' "<path>"
 
 (`arid` for `and`, `Mc.` for `Mr.` before a surname, `1n`/`0f` for `in`/`of`.) Every hit needs judgment — `arid` is also a real word — so check each in context before editing. Extend this list when a new real-word confusion surfaces in the corpus.
 
+Also run this one on its own — it needs no judgment on whether the backslash itself is garble, only on what to do with it:
+
+```
+grep -nE '\\[a-z]+' "<path>"
+```
+
+A backslash immediately before a lowercase letter is never a valid Markdown escape (CommonMark only allows escaping punctuation, e.g. `\*`, `\_`, `\|`) and never occurs elsewhere in this corpus, so every hit is OCR noise — commonly a misread diacritic, broken italic/reference marker, or part of a longer garbled run of letters and punctuation. Delete the backslash itself outright. Judge the token(s) it's embedded in the same way as any other garble: fix what you can read, and if the surrounding run is garbled beyond repair, leave it and report it (subject to the 12-character deletion limit in Hard constraints) rather than inventing a reading.
+
 Then re-read for the patterns grep can't pin down:
 
 - **Doubled trailing letter** — `coinagee` → `coinage`, `dependenciese` → `dependencies`. Remove the spurious letter; don't replace it with a period because the sentence looks unfinished — only if a render shows the period.

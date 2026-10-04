@@ -1,0 +1,49 @@
+# Pairs reported by scripts/find_real_word_confusions.py that have been vetted
+# and set aside, so later runs skip them. One `suspect->variant` per line, in
+# the `wrong->right` notation of cspell.config.yaml's `flagWords`; `#` starts a
+# comment. Note why each pair was set aside:
+#
+#   board->hoard  # Currency Board, Board of Revenue: legitimate throughout
+#
+# A pair belongs here once its occurrences have been checked and either they
+# are all legitimate, or the few garbled ones have been fixed and the suspect
+# is too often legitimate for a `flagWords` entry or a fix-ocr grep pattern. A
+# confusion that is always wrong goes in `flagWords` instead, and then drops
+# out of the report without being listed here.
+
+iii -> in
+iia -> na
+board -> hoard
+arc -> are
+dash -> cash
+lie -> he
+trace -> trade
+dan -> can
+bad -> had
+bead -> head
+clay -> day
+band -> hand
+hon -> lion
+clue -> due
+hook -> book
+rid -> nd
+bis -> his
+sec -> see
+hearing -> bearing
+ease -> case
+tracing -> trading
+horn -> born
+boards -> hoards
+pride -> price
+prc -> pre
+trades -> traces
+hit -> bit
+dear -> clear
+cii -> cu
+bills -> hills
+hell -> bell
+dome -> come
+cone -> done
+hooks -> books
+drowned -> crowned
+car -> dar

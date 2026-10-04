@@ -199,6 +199,13 @@ words:
   - Estack
   - TRANKEBARMØNTER
   - Vurderingspriser
+  # ONS_160 — roman-numeral volume/plate numbers (see lxxxii above) and the
+  # repo's own pdfmd tool name, which recurs in restoration-comment prose
+  - CXLIV
+  - LVIII
+  - CVII
+  - Finno
+  - pdfmd
 ignoreWords: []
 # Real-word OCR confusions: tokens that are valid English words on their own,
 # so the `words`/dictionary pass above never flags them, but that are never

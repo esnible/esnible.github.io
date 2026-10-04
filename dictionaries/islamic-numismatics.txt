@@ -471,15 +471,20 @@ nasru
 offi
 
 # Ottoman Yemen mints and places
-Kawkaban
-Zabid
-Malhaz
+Dimeshq
+Ghiras
+Haleb
 Hudaydah
+Kawkaban
+Malhaz
+Maqhafi
+San'a
+Sirr
+Thula
 Tihama
 Tihamah
-Haleb
-Thula
-Dimeshq
+Zabid
+Zajjan
 
 # Ottoman historical persons and documents
 Sulayman
@@ -6364,6 +6369,7 @@ Abdullaev
 Akhsiket
 Aleksandr
 Ardashis
+Asfal
 Ayntab
 Ayupova
 Azimov
@@ -6384,12 +6390,15 @@ Djalalabad
 Fedorov
 Fergana
 Ferganian
+Furat
 Gence
 Golender
 Gumushhane
+Henning
 Ilaq
 Ilmenau
 Jand
+Jety
 Kamyshev
 Karavan
 Karlovitz
@@ -6411,9 +6420,11 @@ Khorazm
 Khuda
 Kosherov
 Kuch
+Lerch
 Marghinan
 Markov
 Marv
+Mawara'annahr
 Moskalev
 Murom
 Mushegian
@@ -6481,18 +6492,31 @@ Tunket
 Baysan
 Bellinger
 Boghra
+Bulgars
 Dihqan
 Dihqans
 Diospolis
 Duva
+Duwa
 Foss
+Ilchikdai
+KALON
+Kavala
+Khutlugh
 Marwanid
 Milstein
+nishans
 Qarakhaqan
 Qinnasrin
+Rosen
 Scythopolis
+Shchekin
+Sufyanid
 Tabariya
+Tabarïya
 Tabarlya
+Tarmashirin
+Tïmür
 Yunda
 
 # ONS_163 — Ildegizid coins of Armenia; Qarakhanid dirhams of Marghinan; Chokan Valikhanov on Central Asian monetary systems

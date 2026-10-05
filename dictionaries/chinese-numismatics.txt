@@ -2783,3 +2783,12 @@ Chinesisches
 drei
 Jahrtausenden
 Zhenqi
+# ONS_164 — Chinese Silver Ingot Stamped in Russia article
+Lixian
+overstamp
+Probirnoi
+Semipalatinskii
+Serebra
+SEREBRA
+Tamojnoi
+yaoding

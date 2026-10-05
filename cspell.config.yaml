@@ -205,6 +205,15 @@ words:
   - LVIII
   - CVII
   - Finno
+  # ONS_164 — generic English words/British spellings not specific to any
+  # numismatic dictionary
+  - socialised
+  - haemorrhage
+  - maximising
+  - macroanalysis
+  - electronmicroscopy
+  - expansionistic
+  - hillfort
   - pdfmd
 ignoreWords: []
 # Real-word OCR confusions: tokens that are valid English words on their own,

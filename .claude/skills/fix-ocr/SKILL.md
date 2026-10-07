@@ -1,6 +1,6 @@
 ---
 name: fix-ocr
-description: Find and correct OCR errors in a Markdown file from the `jons/` corpus (Oriental Numismatic Society publications — `IS_###` Information Sheets, `ONS_###` newsletters and journals, `OP_###` occasional papers, and a few bare-numbered files). The text is OCR'd from English-language PDFs that often contain rare Chinese, Islamic, or Indian numismatic terms and occasional stray Arabic glyphs. Use when the user asks to clean up, proofread, or fix OCR in a `.md` file.
+description: Find and correct OCR errors in a Markdown file from the `jons/` corpus (Oriental Numismatic Society publications — `IS_###` Information Sheets, `ONS_###` newsletters and journals, `OP_###` occasional papers, and a few bare-numbered files). The text is OCR'd from English-language PDFs that often contain rare Chinese, Islamic, or Indian numismatic terms and occasional stray Arabic glyphs. Covers letter-level garble, real-word confusions cspell cannot see, suspect glyphs (`¥` is usually `½`; `€` postdates most of the corpus), and passages pdfmd read mirrored so every word came out spelled backwards. Use when the user asks to clean up, proofread, or fix OCR in a `.md` file, or when a passage reads as unrecoverable noise and you want to know whether it is garbled or merely transformed.
 ---
 
 # fix-ocr
@@ -102,6 +102,54 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 - `—`, `~`, `--` runs left over from page breaks — delete the stray run. Don't replace it with an em dash or any other mark unless a render of that spot shows one printed there.
 - Sentence-initial garbage tokens like a lone `nem` at the top of a file — delete.
 - A backtick printed for *ʿayn* (`` Sa`id ``, `` `Ali ``) — write it as `'` (`Sa'id`, `'Ali`). A bare backtick in Markdown opens inline code and swallows the text up to the next one.
+
+### Mirrored text: every word spelled backwards
+
+```
+scripts/detect_mirrored_text.py scan ONS_100
+scripts/detect_mirrored_text.py scan jons/*.md
+```
+
+On a few pages pdfmd read the text layer mirrored. It still found the lines
+and still kept the words in their printed order, but transcribed each one
+letter-for-letter backwards:
+
+```
+dna \_ niJ taerg liated dna dehsilbup 5 ynaM tnereiffd
+-> and ... in great detail and published as many different
+```
+
+**Why this needs a script rather than an eye.** It does not look
+recoverable. `dehsilbup` reads as pure noise, so a pass sees it, correctly
+judges it un-guessable under the Hard constraints -- too long to delete,
+forbidden to invent -- reports it as residual garble, and ticks the file
+off. That is exactly how ONS_100 passed a full pass and stayed broken. The
+text was recoverable the whole time.
+
+cspell does not rescue you. It flags most of the run, which is how the pass
+knew the words were unknown, but it cannot say *why*, and a few reversed
+words are real tokens forwards -- `dna` matches DNA, and `ynaM` and `niJ`
+pass too -- so even a zero-unknowns gate leaves some behind.
+
+**Repairing it.** Word order is preserved, so the decode is per-token, not a
+reversal of the whole line. Punctuation travels with the word and has to be
+moved back by hand (`,gnitseretni` -> `interesting,`), and digits are not
+reversed at all (`th6` for `6th`, `6581` for `1856`), which is why the
+script reports rather than rewrites. Two further things to expect:
+
+- **pdfmd often lays the mirrored run out as a pipe table.** Rebuilding that
+  into prose changes the line count, so it falls outside this skill's
+  line-break invariant -- it is a `restructure-flattened-md` repair that
+  happens to be triggered here.
+- **Text next to the run may simply be missing.** Both ONS_029 and IS_029
+  lost their quotation's opening clause entirely, and ONS_053's fragment
+  lost its heading block. Restore from the render, and check the sentence
+  actually starts somewhere.
+
+Mark the repair with an `<!-- OCR: ... -->` note saying the passage was
+mirrored and naming the page it was restored from. Describe the garble
+rather than quoting it, or the quoted tokens become cspell unknowns of their
+own.
 
 ### Currency symbols that are not currency
 
@@ -234,7 +282,31 @@ After all edits and dictionary updates:
 
    Added lines must equal deleted lines. If they differ, a line break was merged or a line was deleted — find and undo that change before anything else. (Plain `git diff --numstat` is only equivalent when the file had no uncommitted changes before this pass.)
 
-2. **Run cspell once more** and confirm that the remaining unknown words are intentional (foreign-language glosses, proper nouns the user does not want dictionary-added, etc.). Report those in the final summary.
+2. **Run cspell once more** and account for every remaining unknown word
+   *individually*. For each one, say which it is:
+
+   - a foreign-language gloss, or a proper noun left out of the dictionary
+     deliberately — fine, name it in the summary;
+   - garble you could not read even from the render — fine, but it must
+     carry an `<!-- OCR: ... -->` marker at that spot saying so;
+   - anything else — not fine. Go back and fix it.
+
+   **Do not tick the file off while an unknown is merely "residual garble"
+   you looked at once and gave up on.** That judgment is what let ONS_100
+   through: its `dehsilbup`/`liated`/`taerg` run was flagged by cspell, read
+   as unrecoverable noise, reported, and the box ticked — when the passage
+   was mirrored text that reverses straight back into English. Before
+   writing a word off, run `detect_mirrored_text.py` over the file, and ask
+   whether the run is garbled *or* merely transformed. Transformed text is
+   recoverable; garble is not, and the two look identical until you test.
+
+3. **Run the mechanical screens** that catch what cspell structurally
+   cannot, and resolve or explain each hit:
+
+   ```
+   scripts/detect_mirrored_text.py scan "<path>"
+   grep -nE '[¥€]' "<path>" | grep -v '<!--'
+   ```
 
 ## Update the TODO tracker
 

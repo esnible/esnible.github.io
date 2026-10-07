@@ -4,9 +4,12 @@ Legends:
 
 ## olblud! sliasis Kalima and date (GL( 8 Outer circle 2
 
-| ehT | gnidaer | fo | eht | renni | ralucric | dnegel | sraeppa |.yrotcafsitas | hguohtlA | trap | fo ti | sah | neeb | denettalf | ybeht |
-|:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |:--- |
-| fforhs skram | no | eht | rehto | edis | fo eht | nioc | secart | fo eht | drow | dumhaM | nac | eb | edam |.tuo | ehT gnidaer foeht |
+<!-- OCR: pdfmd read this paragraph's text layer mirrored -- every word came out spelled backwards, letter for letter, in its printed order -- and laid the first half out as a spurious pipe table. The scan itself is clean; restored from ONS_053 PDF p.4, with the page's line breaks kept. Found with fix-ocr's detect_mirrored_text.py. The "Legends:" block above is still garbled; its Arabic was deliberately excluded from this fragment. -->
 
-retuo  ralucric dnegel  si  hcum  erom.tluciiffd  ubA  dihajuM-lA  smees,raelc tiebla  yledurc  nettirw ekil eht tser fo eht  noitpircsni  no  siht  edis  fo eht.nioc ehT txen drow dluoc eb lA niassuH hcihw srucco no rehto snioc fo htaF.hahS  gnihtoN  esle  si  elbarehpiced  hguohtla  eno  dluow tcepxe ot dnif eht  esarhp lalaJ la  aynud aw la nid if eht  dnegel  erew.etelpmoc  ehT tpircs no eht esrever fo eht nioc si hcum ssel.edurc  erehT si a drow neewteb
-eht  dne fo eht  amilaK dna eht  etad  tub ti si decafed  yb fforhs.skram  tI yam evah  neeb  a  tnim.eman
+The reading of the inner circular legend appears satisfactory. Although part of it has been flattened by the
+shroff marks on the other side of the coin traces of the word Mahmud can be made out. The reading of the
+outer circular legend is much more difficult. Abu Al-Mujahid seems clear, albeit crudely written like the rest
+of the inscription on this side of the coin. The next word could be Al Hussain which occurs on other coins of
+Fath Shah. Nothing else is decipherable although one would expect to find the phrase Jalal al dunya wa al din
+if the legend were complete. The script on the reverse of the coin is much less crude. There is a word between
+the end of the Kalima and the date but it is defaced by shroff marks. It may have been a mint name.

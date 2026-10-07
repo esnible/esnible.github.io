@@ -103,6 +103,37 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 - Sentence-initial garbage tokens like a lone `nem` at the top of a file — delete.
 - A backtick printed for *ʿayn* (`` Sa`id ``, `` `Ali ``) — write it as `'` (`Sa'id`, `'Ali`). A bare backtick in Markdown opens inline code and swallows the text up to the next one.
 
+### Currency symbols that are not currency
+
+A currency symbol in this corpus is far more often a misread glyph than a
+price, because the symbols the OCR engine reaches for are shapes the
+typewriter never had. Treat both of these as suspect on sight, then settle
+each one by rendering the page — the Hard constraints apply here as
+everywhere, so none of these is a from-context fix.
+
+- **`¥` is suspect everywhere.** Of 36 in the corpus, 2 were real. It stands
+  most often for **`½`**, the typewriter's half-fraction glyph: `¥%` →
+  `½` (ONS_052, confirmed against the scan), `AR ¥ unit` and `¥% unit` →
+  `½ unit` (ONS_078), `*¥2* abazi` → `½ abazi` (ONS_Supplement_197, where
+  half-abazi is a real Georgian denomination). It also stands in for a
+  letter: `Powys S¥22 5BX` → `SY22 5BX`, `Priissykkuria,¥Tünze` → `Frunze`.
+  The rest sit inside already-garbled plate, Chinese or Arabic runs, where
+  the `¥` is a symptom and the line belongs to another skill. It is genuine
+  only as a book price in a recent issue's publications notice — `¥ 1800`
+  (Bank of Japan, ONS_148), `CN¥ 368` (ONS_248).
+- **`€` cannot predate the currency.** The symbol dates from 1996 and the
+  euro itself from 1999, so it is certainly wrong in `IS_*`, `OP_*`,
+  `ONS_0*` and `ONS_1[0-3]*`, and worth a look anywhere before `ONS_14*`.
+  In ONS_124 it is a Greek lunate epsilon in a mint legend (`€MH CIC`), not
+  money at all. In issues after 1999 a euro price is ordinary — check the
+  issue date before touching one.
+
+**Never rewrite either symbol inside an HTML comment.** The OCR skills
+record their own evidence there, and that includes quoting the bad reading:
+`IS_021` carries `<!-- script-ok ... reason=... (OCR had €°3 and 6-3) -->`,
+where the `€` is the point of the sentence. A blanket sweep over the file
+destroys the note. The same goes for `<!-- OCR: ... -->` placeholders.
+
 ### Numbers that look like words
 - Long runs of digits in the middle of a sentence (e.g., `511868515 that the first two`) are OCR'd images or stamps. Replace with `[illegible]` only if the user has asked for that style; otherwise leave a HTML comment `<!-- OCR: 511868515 -->` near the spot and remove the noise from the prose.
 
@@ -125,6 +156,16 @@ grep -nE ' amd | tbe | tne | arid | Mc\. [A-Z]| am [aeiou]| 1n | 0f ' "<path>"
 ```
 
 (`arid` for `and`, `Mc.` for `Mr.` before a surname, `1n`/`0f` for `in`/`of`.) Every hit needs judgment — `arid` is also a real word — so check each in context before editing. Extend this list when a new real-word confusion surfaces in the corpus.
+
+Run the currency grep too, excluding the HTML comments that quote bad OCR on purpose:
+
+```
+grep -nE '[¥€]' "<path>" | grep -v '<!--'
+```
+
+Every `¥` hit needs checking and most resolve to `½`; a `€` hit in a
+pre-1999 issue is certainly wrong. See *Currency symbols that are not
+currency* above for what each one usually stands for.
 
 Also run this one on its own — it needs no judgment on whether the backslash itself is garble, only on what to do with it:
 

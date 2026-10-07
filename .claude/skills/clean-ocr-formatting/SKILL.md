@@ -1,6 +1,6 @@
 ---
 name: clean-ocr-formatting
-description: Strip OCR-introduced per-word asterisks (`*word *` or `**word **`) and rejoin words split with internal spaces (e.g., `Numi smat i c` → `Numismatic`, `re lat i vely` → `relatively`). Use when an OCR'd Markdown file has whole passages wrapped in per-word emphasis marks, or has letter-spaced words that the OCR engine read as separate tokens. Typically followed by the `fix-ocr` skill to clean up remaining single-word OCR errors.
+description: Repair three OCR layout artifacts in a `jons/` Markdown file -- per-word asterisks (`*word *` or `**word **`), words split with internal spaces (`Numi smat i c` → `Numismatic`), and paragraphs severed mid-sentence by a stray blank line where `pdfmd` read one physical line of the scan as its own block (including the case where the continuation begins with an OCR'd dash that Markdown then renders as a bullet). Use when an OCR'd file has passages wrapped in per-word emphasis marks, letter-spaced words, a sentence that breaks off mid-clause and resumes in the next paragraph, or a one-item bullet list that is really the middle of a sentence. Typically followed by the `fix-ocr` skill to clean up remaining single-word OCR errors.
 ---
 
 # clean-ocr-formatting
@@ -9,7 +9,7 @@ This skill handles three OCR artifacts that show up together when the source PDF
 
 1. **Per-word asterisks** — every word wrapped in `*word *` or `**word **` instead of one span enclosing the phrase.
 2. **Word-internal spaces** — `Numi smat i c` for `Numismatic`; `re lat i vely` for `relatively`.
-3. **Spurious blank lines mid-paragraph** — every physical line of the source PDF becomes its own Markdown "paragraph" with a `\n\n` between them, so what should read as one paragraph is broken into many one-line blocks where each ends mid-sentence and the next starts with a lowercase word.
+3. **Severed paragraphs** — a physical line of the source PDF becomes its own Markdown "paragraph" with a `\n\n` after it, so one paragraph breaks into blocks that stop mid-clause. The tell is the line *before* the break (it ends with no terminal punctuation), not the capitalisation of what follows.
 
 These usually appear together in the same passage; a heavy letter-spaced italic block produces all three at once.
 
@@ -39,29 +39,75 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
    If the range has mixed legitimate formatting (a real `*emphasis*` span you want to keep), use `Edit` line by line instead — never blanket-strip in that case.
 
-3. **Collapse spurious blank lines mid-paragraph.**
-
-   The conservative heuristic: collapse `prev\n\nnext` to `prev\nnext` (remove one of the two newlines) when `prev` ends with a lowercase letter or `,;:` AND `next` starts with a lowercase letter. This catches the bulk of breaks without merging real paragraph boundaries.
-
-   **Why only one newline?** In CommonMark/Markdown, `\n\n` is a paragraph break, but a single `\n` inside a paragraph is a soft line break that renders as a space in HTML. Removing only one newline preserves the source file's original line-by-line structure (useful for diffs and source readability) while letting the text reflow as one paragraph when rendered.
-
-   Preview the change first:
+3. **Collapse severed paragraphs.** Find them with the script, which reports
+   a line number and a label per break:
 
    ```
-   perl -0777 -pe 's/([a-z,;:])\n\n([a-z])/$1\n$2/g' "<path>" | diff "<path>" -
+   scripts/detect_severed_paragraphs.py scan ONS_049
+   scripts/detect_severed_paragraphs.py scan jons/*.md        # corpus sweep
+   scripts/detect_severed_paragraphs.py scan ONS_049 --loose  # add weak cases
+   scripts/detect_severed_paragraphs.py fix  ONS_050          # safe labels only
    ```
 
-   If the diff looks clean, apply with a backup:
+   `scan` exits non-zero when there is something to fix. It needs no PDF, so
+   it runs on the whole corpus in seconds.
 
-   ```
-   perl -i.bak -0777 -pe 's/([a-z,;:])\n\n([a-z])/$1\n$2/g' "<path>"
-   ```
+   **Why a script and not the old regex.** This step used to screen with
+   `perl -0777 -pe 's/([a-z,;:])\n\n([a-z])/$1\n$2/g'`, which only fires when
+   the text *after* the break starts lowercase. On ONS_047, ONS_049, ONS_050
+   and ONS_051 that matched none of the real breaks — the continuations began
+   with a capitalised proper noun (`Piastres`, `Maharajah`), a year (`1716`),
+   or an OCR'd dash (`- Hebert`). What those cases share is the line *before*
+   the break: it stops mid-clause with no terminal punctuation. That is what
+   the script tests, so the fix no longer depends on how the continuation
+   happens to be capitalised.
 
-   Diff against `<path>.bak` to verify; `rm` it when satisfied.
+   | Label | What it means | What the fix is |
+   |:--- |:--- |:--- |
+   | `severed` | the line ends on a function word (`of`, `in`, `and`, `the`) or a comma, or the continuation starts lowercase — none of which can end or begin a sentence | collapse one newline; `fix` does it |
+   | `fake-list` | the continuation starts `- `, so Markdown renders a bullet | collapse **and** restore the dash — see below |
+   | `hyphen-split` | the line ends on a hyphenated fragment (`Muzaf-`) | join into one word, no space; `fix` does it |
+   | `maybe-severed` | `--loose` only: no terminal punctuation but the continuation is capitalised or a bare number | read it and decide by hand |
 
-   Then make a second pass via `Edit` for trickier breaks the regex doesn't catch — e.g. continuations starting with a capital (`"the previous research,\n\nIn the Indo-Greek field..."`) or breaks after sentence-final punctuation that *aren't* real paragraph breaks. Read each candidate before editing; this is where over-merging happens. **In the manual pass too, prefer removing one newline (collapse the blank line) rather than joining both lines into one** — same reasoning as the regex pass.
+   **Why only one newline?** In CommonMark, `\n\n` is a paragraph break but a
+   single `\n` inside a paragraph is a soft break that renders as a space.
+   Removing one newline preserves the file's line-by-line structure (useful in
+   diffs) while letting the text reflow as one paragraph. `fix` does this;
+   when editing by hand, do the same rather than joining both lines into one.
 
-   **Never** apply this pass to fenced code blocks, tables, lists, headings, front matter, or poetry/verse where line breaks are semantic.
+   **`fake-list` needs the scan, so `fix` refuses it.** An unordered marker
+   interrupts a paragraph even without the blank line, so collapsing the break
+   alone leaves the bullet rendering. The dash is standing in for something
+   the OCR dropped, and only the page shows what:
+
+   - ONS_049: `...Bombay - 'The Sultans of Gujerat, 1935"` / `- are coins
+     struck in the name of...` — an **em dash** continuing the sentence.
+   - ONS_051: `...regarding Chinese coins. Raymond` / `- Hebert of 6305
+     Windermere Circle...` — the **initial** in `Raymond J. Hebert`.
+   - ONS_051's `Recent Publications` list: `- W. Wiggins` is the
+     `K. W. Wiggins` of the masthead, `- B. Coole` is `A. B. Coole`. A whole
+     bibliography of initials read as dashes.
+
+   Render the page (`detect-missing-figures`' or `transcribe-foreign-script`'s
+   render helper) and read it before choosing. An initial is worth
+   cross-checking against names elsewhere in the same file.
+
+   **Two findings that are not this bug.** Both look like severed paragraphs
+   and belong to other skills:
+
+   - a **glued heading** leaves the line above ending on a noun with no
+     punctuation (`...Spink's NC., May 1977, 201 Books` / `1977 Lists of
+     Books for sale...`). The paragraph break is real; the defect is `Books`
+     being stuck to the line above → `restore-headings`.
+   - a **flattened list or family tree** is full of ` - ` separators, where
+     the dashes are structure, not a cut sentence → `restructure-flattened-md`.
+     The script already skips lines with two or more ` - ` runs for this
+     reason; if one slips through, don't collapse it.
+
+   **Never** apply this pass to fenced code blocks, tables, real lists,
+   headings, front matter, or verse where line breaks are semantic. The
+   script skips all of these, which is the main reason to prefer it over a
+   regex over the whole file.
 
 4. **Rejoin word-internal spaces** one fragment at a time. No regex is safe across the board, because not every short token should be merged. For each broken phrase:
 
@@ -104,7 +150,7 @@ Capital-I-for-lowercase-l is endemic in these passages — assume any leading `I
 - **Number-letter splits** — `l 9 6 5` → `1965`, `2 9 0 p p` → `290 pp`
 - **Roman numeral splits** — `x v i i` → `xvii`, `p i s` → `pis`, `5 p l s` → `5 pls`
 - **Bibliographic abbreviations** — `R s . l O` → `Rs. 10` (digit confusion: `l` → `1`, `O` → `0`)
-- **Mid-sentence paragraph breaks** — physical line breaks in the source PDF become `\n\n` separators. A "paragraph" that's one line ending mid-clause followed by another that starts lowercase is almost always one paragraph.
+- **Mid-sentence paragraph breaks** — physical line breaks in the source PDF become `\n\n` separators. Screen for these with `scripts/detect_severed_paragraphs.py` rather than by eye; step 3 has the detail.
 
 ## What NOT to do
 
@@ -113,4 +159,5 @@ Capital-I-for-lowercase-l is endemic in these passages — assume any leading `I
 - Don't change British spellings or rare transliterations — defer those to the user or to the `fix-ocr` skill.
 - Don't touch fenced code blocks, inline code, URLs, image references, or front matter.
 - Don't run destructive `sed -i` without a `.bak` and a post-edit diff check — the changes are far-reaching and easy to over-apply.
-- Don't run the blank-line-collapse perl recipe without inspecting the diff — legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, headings followed by single-line bodies) get incorrectly merged with their predecessors otherwise.
+- Don't collapse a break the script labelled `fake-list` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in that category.
+- Don't widen the detection by matching on what follows the break. That was the old regex's mistake: it cost the skill every real instance in ONS_047, ONS_049, ONS_050 and ONS_051, because a severed line's continuation is capitalised about as often as not.

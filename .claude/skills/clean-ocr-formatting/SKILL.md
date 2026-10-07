@@ -78,19 +78,27 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    **`fake-list` needs the scan, so `fix` refuses it.** An unordered marker
    interrupts a paragraph even without the blank line, so collapsing the break
    alone leaves the bullet rendering. The dash is standing in for something
-   the OCR dropped, and only the page shows what:
+   the OCR dropped, and only the page shows what. Read it off the render, then
+   decide the break separately — the two questions are independent, and the
+   answer differs even within one file:
 
-   - ONS_049: `...Bombay - 'The Sultans of Gujerat, 1935"` / `- are coins
-     struck in the name of...` — an **em dash** continuing the sentence.
-   - ONS_051: `...regarding Chinese coins. Raymond` / `- Hebert of 6305
-     Windermere Circle...` — the **initial** in `Raymond J. Hebert`.
-   - ONS_051's `Recent Publications` list: `- W. Wiggins` is the
-     `K. W. Wiggins` of the masthead, `- B. Coole` is `A. B. Coole`. A whole
-     bibliography of initials read as dashes.
+   | On the scan | Then the blank line |
+   |:--- |:--- |
+   | ONS_049 `...Bombay - 'The Sultans of Gujerat, 1935"` / `- are coins struck in...` → an **em dash** mid-sentence | was a cut: collapse it |
+   | ONS_051 `...regarding Chinese coins. Raymond` / `- Hebert of 6305...` → the **initial** of `Raymond J. Hebert` | was a cut: collapse it |
+   | ONS_051 `Recent Publications`: `- W. Wiggins` → `K. W. Wiggins`, `- B. Coole` → `A. B. Coole`, `- H. Major` → `W. H. Major` | is a real entry boundary: **keep it**, fix only the marker |
 
+   A whole bibliography can be initials read as dashes, so expect runs of
+   these rather than one. Do **not** guess the initial from numismatic
+   general knowledge: of five guessed from context before the page was
+   rendered, `S. K. Bhatt`, `B. N. Mukherjee`, `K. W. Wiggins` and
+   `A. B. Coole` were right but `W. H. Major` was not, and ONS_049's
+   `K. Wiggins` is not the `K. W. Wiggins` of the same society's masthead.
    Render the page (`detect-missing-figures`' or `transcribe-foreign-script`'s
-   render helper) and read it before choosing. An initial is worth
-   cross-checking against names elsewhere in the same file.
+   render helper) and read it.
+
+   An em dash restored at the start of a line is safe to leave there — `—` is
+   not a Markdown bullet marker, so only `-`, `*` and `+` need moving.
 
    **Two findings that are not this bug.** Both look like severed paragraphs
    and belong to other skills:

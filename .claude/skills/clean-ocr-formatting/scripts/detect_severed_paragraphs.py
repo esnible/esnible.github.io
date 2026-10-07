@@ -31,11 +31,18 @@ rules below are the ways a line can prove it was cut rather than ended:
                       cannot begin a paragraph.
   * `fake-list`    -- the text after the break starts `- `, so Markdown
                       renders it as a bullet. Unordered markers interrupt a
-                      paragraph even without the blank line, so collapsing
-                      the break is not enough on its own: the dash is OCR
-                      residue standing in for something else (an em dash in
-                      ONS_049, the initial in `Raymond J. Hebert` in
-                      ONS_051) and has to be read off the scan.
+                      paragraph even without the blank line, so the dash is
+                      OCR residue standing in for something else and has to
+                      be read off the scan. Whether the blank line goes too
+                      depends on what the dash turns out to be, and it cuts
+                      both ways in practice: ONS_049's was an em dash mid
+                      sentence and ONS_051's the initial of
+                      `Raymond J. Hebert`, both of which need the break
+                      collapsed as well -- but every dash in ONS_051's
+                      `Recent Publications` was the initial of a new
+                      bibliography entry (`- W. Wiggins` for `K. W. Wiggins`,
+                      `- B. Coole` for `A. B. Coole`), where the blank line
+                      is a real entry boundary and only the marker was wrong.
   * `hyphen-split` -- the line ends on a hyphenated word fragment, so the
                       halves join into one word with no space.
 
@@ -257,8 +264,8 @@ def scan(path, loose=False):
                 gap_line, "ERROR", "fake-list",
                 f"`{marker} ` after the break renders as a bullet and "
                 f"interrupts the paragraph: {prev.strip()[-32:]!r} + "
-                f"{nxt.strip()[:40]!r} -- collapse the break AND read the "
-                f"dash off the scan (em dash? an initial?)"))
+                f"{nxt.strip()[:40]!r} -- read the marker off the scan, then "
+                f"see whether the break is a cut sentence or a real boundary"))
             continue
 
         if not terminal and tail in FUNCTION_TAILS:

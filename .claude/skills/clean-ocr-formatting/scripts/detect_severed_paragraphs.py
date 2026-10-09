@@ -221,6 +221,31 @@ def heading_like(line):
     return "," not in bare and not bare[-1] in TERMINAL
 
 
+def bold_title_continuation(nxt):
+    """True when the continuation opens on an emphasis-marked title rather
+    than on prose resuming -- `**Table 1. Obverse and Reverse Combinations**`
+    under a paragraph cut at `both from`. pdfmd marks these titles with `**`
+    instead of `#`, so `is_prose` lets them through and the function-word rule
+    above claims the gap. Only the *first* span is tested: a prose
+    continuation does not open on a bold heading.
+    """
+    m = re.match(r"\s*\*\*(.+?)\*\*(.*)$", nxt)
+    if not m or not heading_like(m.group(1)):
+        return False
+    span, rest = m.group(1), m.group(2).lstrip()
+    # A title opens on a capital or a number. `**period prior to the**
+    # Arakanese era` is emphasised prose, and the sentence above it really
+    # was cut.
+    if not (span[:1].isupper() or span[:1].isdigit()):
+        return False
+    # Prose resuming after an emphasised phrase carries on in lower case --
+    # `**The phases** of coin circulation`, `**1203** to **1215 / 1785**`.
+    # A title is followed by the next title, or by nothing.
+    if rest[:1].islower():
+        return False
+    return True
+
+
 def ends_terminally(text):
     """True when the line ends the way a paragraph legitimately ends."""
     core = strip_closers(text)
@@ -244,6 +269,18 @@ def last_word(text):
     # (`as in Variety A`, `{BN, series 6 A)`, `Tarzhima A`), never the article
     # `a` -- and `a` is the only one-letter member of FUNCTION_TAILS.
     if len(word) == 1 and word.isupper():
+        return ""
+    # An all-capitals token is a legend fragment, a mint name or an acronym,
+    # never the function word it lowercases to -- `**KRMAN-AN**` is not the
+    # article, and `*A spec IS*` is not the copula.
+    if len(word) > 1 and word.isupper():
+        return ""
+    # `May` with a capital is the month. Of the corpus's seven, four were an
+    # index column of month abbreviations or a date heading above a
+    # programme, where collapsing the break ran two unrelated rows together;
+    # the two genuine ones (`by the end of May` + `1739`) are the price of
+    # not making those four.
+    if word == "May":
         return ""
     # A letter a digit runs straight into is a type label, not a word at all:
     # `this one is Type 1a` ends on `1a`, and reading its `a` as the article
@@ -302,6 +339,8 @@ def is_entry_boundary(prev, nxt):
     if len(LABEL_RUN_RE.findall(prev)) >= 2 or len(LABEL_RUN_RE.findall(nxt)) >= 2:
         return True
     if CATALOGUE_FIELD_RE.match(nxt):
+        return True
+    if bold_title_continuation(nxt):
         return True
     return False
 
@@ -389,11 +428,33 @@ def scan(path, loose=False):
     return findings
 
 
-def fix(path):
+def sub_rule(label, msg):
+    """Which of the three `severed` tests fired, by the reason it reports.
+
+    They are one label in the report but three different claims, and a
+    corpus sweep measured them wildly apart: the function-word tail is
+    ~97% precise, the comma tail ~63%, the lower-case continuation ~29%.
+    `fix` takes only the first by default, so the weak two cannot ride
+    along with the strong one.
+    """
+    if label != "severed":
+        return label
+    if msg.startswith("line ends on"):
+        return "tail"
+    if msg.startswith("line ends mid-clause on a comma"):
+        return "comma"
+    return "lower"
+
+
+DEFAULT_FIX_RULES = ("tail", "hyphen-split")
+
+
+def fix(path, rules=DEFAULT_FIX_RULES):
     """Collapse the blank line for the mechanically-safe findings."""
     findings = scan(path, loose=False)
-    safe = {n for n, _, lab, _ in findings if lab in ("severed", "hyphen-split")}
-    refused = [(n, lab) for n, _, lab, _ in findings if lab == "fake-list"]
+    safe = {n for n, _, lab, msg in findings if sub_rule(lab, msg) in rules}
+    refused = [(n, sub_rule(lab, msg)) for n, _, lab, msg in findings
+               if sub_rule(lab, msg) not in rules]
     if not safe:
         print(f"{path}: nothing to collapse")
     else:
@@ -406,9 +467,17 @@ def fix(path):
         path.write_text("\n".join(lines), encoding="utf-8")
         print(f"{path}: collapsed {len(safe)} break(s) at "
               f"{', '.join(str(n) for n in sorted(safe))}")
+    why = {
+        "fake-list": "needs the dash read off the scan before the break can "
+                     "be collapsed",
+        "comma": "a comma tail is a real paragraph end about a third of the "
+                 "time (an OCR'd full stop) -- decide this one by eye",
+        "lower": "a lower-case continuation is usually a catalogue field, "
+                 "not prose resuming -- decide this one by eye",
+    }
     for n, lab in refused:
-        print(f"{path}:{n}: left for you -- {lab} needs the dash read off the "
-              f"scan before the break can be collapsed")
+        print(f"{path}:{n}: left for you -- {lab} "
+              f"{why.get(lab, 'is not in the requested rule set')}")
     return 1 if refused else 0
 
 
@@ -422,6 +491,10 @@ def resolve(arg):
 def main(argv):
     args = [a for a in argv[1:] if not a.startswith("-")]
     loose = "--loose" in argv
+    rules = DEFAULT_FIX_RULES
+    for a in argv[1:]:
+        if a.startswith("--rules="):
+            rules = tuple(x for x in a.split("=", 1)[1].split(",") if x)
     if len(args) < 2 or args[0] not in ("scan", "fix"):
         print(__doc__)
         return 2
@@ -436,7 +509,7 @@ def main(argv):
             continue
 
         if mode == "fix":
-            rc = max(rc, fix(path))
+            rc = max(rc, fix(path, rules))
             continue
 
         findings = scan(path, loose=loose)

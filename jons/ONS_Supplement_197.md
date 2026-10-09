@@ -124,7 +124,6 @@ But the power of the state created by Teimuraz II and his son in eastern Georgia
 100, 135-137, nos 46, 49-51, 63, 65, 65a, 80, 13, p 21, #9, 7, pp. 60-62, 66-68, nos 53, 55-56, 66-70; 8, pp. 71-73, 77-79, nos. 58, 60-62, 71-75, 6\] (possibly as a reaction to contemporary Islamic titles like "Sword of Religion" or "Sword of Allah" \[5, p 246\]) In the second half of the 18\* century, the Georgian authorities had to content themselves with developing a design, which was "acceptable to Muslim and Christian alike, bearing an unexceptionable Qur'anic formula, but without mention of either Muhammad's name or those of the Georgian princes" \[13, p 109,
 
 ' King Giorgi XI (also known as Gurgin Khan) had two reigns and hence was considered to be both Giorgi XI and **XII** - tor more information on this person see \[15\] Therefore, Giorgi XII was called both Giorgi XII and **XIII** " In violation of the Treaty of Georgievsk of 1783, which placed the Kingdom of Kartl Kakheti under the protection of the Russian Empire, the former was annexed by the latter in 1801 \[14, pp 245-253\] For the unfinished diplomatic negotiations of King Giorgi XII with the Russian Emperor (the so called *Petitionary Articles)* please refer to \[14, pp 235240\] '^ Lang gives a concise account of "international repercussions of the Georgians' feats of arms" \[14, pp 149-153\] France was "the first European power to make overtures to Erekle after his succession to the reunited throne of K'artlo-Kakhet'i" and made an "attempt to make Erekle into an anti-Russian catspaw of French foreign policy', this fact showing "the prestige" (or, as the authors consider, at least the *reputation)* "enjoyed by the Georgian king m Western Europe" \[14, pp 159-160\] In June,
-
 1766, at the time when sirma abazis were first minted in Tiflis, the Due de Choiseul, the French minister for foreign affairs, was even provided with false information that Erekle II had reportedly liberated Akhaltsikhe, a very important city in south-western Georgia, from the Ottoman yoke \[14, P 161\] " Meanwhile, south-western Georgia, including Lazona, the territory inhabited by the Lazs, a Georgian ethnic group, was still subject to Ottoman rule Western Georgia was divided into petty polities, the major ones being the Kingdom of Imereti and the princedoms of Samegrelo (Megrelia), Guria, and Abkhazia, all of which were under more or less effective and exacting Ottoman control " However, "the Lezghis of Daghestan remained, by their mobility and inaccessibility, a constant source of danger" \[14, p 157\] The state and the population suffered greatly from their continuous raids and even invasions \[14, pp 154, 188 189, 193\] '\* However, it is noteworthy that the Kingdom of Kartl-Kakheti did not manage to liberate the eastern Georgian lands which had been subdued by theDagestaniansinthecourseof the 17\*-18\* century \|4 pp 426-428\]
 
 " Pakhomov was not fully convinced that some of Demetre I s coins bore the Utle "Sword of the Messiah" \[19. p 79. no 47\] -" Japandze expressed quite a noteworthy hypothesis that the issue of Davit Vll Ulugh's coins with a proud expression 'King of Kings" and "Sword of the Messiah" dates back to 1260-1261. when he rebelled against the Mongols, who had earlier subdued eastern Georgia \[6, p 89, Footnote 3\]
@@ -226,7 +225,6 @@ This proves that Variety 1 and Variety 2 coins were minted at Tiflis mint, despi
 It is still unclear *when* these ' unusual" sirma abazis were minted The following observations may help us in specifying the time period when it could have happened - • The coins ol all 3 varieties have the double linear border with  a chain of dots between the two linear circles (and not a chain of 3-dot clusters), which was typical for sirma abazis in AH
 
 1193-1213, although with some exceptions \[19, p 239, footnote 1\], the coin diameter of the earlier issues is also usually bigger So, we can probably assume that these coins were struck some time during the period AH 1193-1213 (1779/80-1798/9) - • The acuminate, large cartouche is characteristic of coins of  all 3 varieties (on the coins of Variety 2 it is also rotated in addition to being acuminate) The acuminate large cartouche cannot be considered to be a decisive chronological marker as the more or less pronounced acumination ot the large cartouche is present on many sirma coins of different years (can It be considered the style of the same craftsman'' or an accidental result of copying the cartouches from the extant coins or dies created by different craftsmen'') However, it is noteworthy that the large cartouche is particularly acuminate on the coins dated AH 1201 1203 and 1207 (respectively Figs 7, 9, 11, cf other abazis of the same years - Figs 6, 8,
-
 10, 12) - • The shape of the Arabic digits 1 and 2 on the Variety 1 coins  are somewhat unusual, too bulky, in a sense The closest matches we managed to find in terms of digit calligraphy were the sirma abazi coins dated AH 1201 and 1203, having the acuminate large cartouche as well (Figs 7, 9, ct Figs 6, 8, 10) - • The coins of Varieties 1 and 2 are die-linked with sirma  abazis dated 1203, 1211 and "121", which may be either
 
 1201, or 1210 with the zero omitted The *terminus post quern* *non* for producing the reverse die used for minting some of both the Variety 1 and Variety 2 coins (the reverse of Figs
@@ -255,7 +253,6 @@ Album S *Sylloge of Islamic Coins* *in* *the Ashmolean* Volume 9 *Iran after* *t
 
 (ngto,ir\|ie,r)ff)o) bóJófncnggisjciU obgc^f'ioob Gófójggggèo,
 g n 8 o I V oi&oc^obo, 1973) \[Japandze G *Georgia* *and the* *Islamic World* *of the* *Near* *East* *in the 12"' c and the* *first third* *of the 13''' c* Tbilisi,
-
 1995 \] (In Georgian jcógifóodg j, b6jófSa)3gc:\>n so,;, B^^bc^roögc^o \<!\>u^3mbögc^goiob obcij-iO'^f^o bóSyófnro XIIXIII b-ob "ïotfiggcj 3gbó8gto3o oiioc^obo, 1995) \[Japaridze G 'Georgian Coins with Arabic Legends (Copper coins of Davit V)' In *Bulletin* *of* *the Academy of Sciences* *of* *the Georgian* *SSR,* History, Archeology, Ethnography and Art History series, #4 1989 Pp 89-94\] (In Georgian jcógófnodg j, JofSoD'gcjo BcnBgggöo ófnóö^c^o 8gcD^g(no!ï^göoai (c^ógocn V-ob b.^oc^gbdob 3m6ggg&o) "bi)Jt\>fnonggc:^nb 3g(j6ogCigöócnó ógi)cog3oob 3.S(j6g, obgmfnoob, i)(nJgmc::;n'i,oob, goriGnjijfnógoobi) co,i bgcijngBgöob obgmfóoob bgfnoö, *H'4,* 1989 j,g 89-94) \[Kapanadze D *Georgian Numismatics,* Moscow, 1955 \] (in Russian Kananaflae /f FpysHHCKaa HyMHSMaxHKa MocKBa,
 
 {: start="1955"}
@@ -507,7 +504,6 @@ We would like to express our gratitude to Mr A Akopyan tor his assistance
 1. Album S. *A Checklist of Islamic Coins,* 1998.  2. Album S. *Sylloge of Islamic Coins in the Ashmolean* Volume 9 *Iran*
 
 *after the Mongol Invasion.* Ashmolean Museum Oxford, 2001. 3. \[Dumbadze M., editor. *The Studies of Georgian Hi.story,* Volume 4,
-
 *Georgia from the Beginning of the 16"' C till the 30s of the 19''' C. * Tbilisi, 1973.J (In Georgian: ej-gfl&ódg 8.  fngcoö^gmfno, LóJófnoiggcnmU obgmCiools ''>'>f'^J3033'^"' gn8o IV, bóJóCio)3gc::\<n XVI bó'gj'gGob jo.^b.'^^yoUotDöB XIX Ló-gj-gBob 30-oi)6 ^c;;göó8cog. oiöoc^obo, 1973.)
 
 {: start="4"}
@@ -613,19 +609,16 @@ All the above makes us incline to the idea that these items are probably modern 
 *Fig. 14 Sirma type coin, dated* *AH* *1188; weight; NA, die axis;* *NA,* *size; NA*
 
 *Fig. 15 Sirma type coin, dated* *AH* *1189 (1186?); weight; 1.40 g,*
-
 *die axis; 1;45* *o'clock,* *size; 15.5-16.8 mm*
 
 *Fig. 16 Sirma type* *coin,* *dated* *AH* *1189 (1186?); weight; NA, die* *axis;* *NA, size; NA*
 
 *Fig. 17 Sirma type com, dated* *AH* *1190; weight; 1.44 g (holed),*
-
 *die axis; 10;00* *o'clock,* *size; 15.4-17.2 mm*
 
 *Fig. 18 Sirma type com, dated* *AH* *1190; weight: NA, die axis;* *NA,* *size; NA*
 
 *Fig. 19 Sirma type coin, dated* *AH* *1191;* *weight; 0.69* *g,* *die axis;*
-
 *11:30* *o'clock,* *size;* *13.6-14* *mm*
 
 *Fig. 20 Sirma type* *coin,* *dated* *AH* *1191; weight; NA, die axis:* *NA,* *size; NA*
@@ -639,7 +632,6 @@ All the above makes us incline to the idea that these items are probably modern 
 *Fig. 24 Sirma type coin, dated* *AH* *1193,* *Height:* *NA, die axis;* *NA,* *size;* *NA*
 
 *Fig. 25 Sirma type coin, dated32913-* *AH* *1195; weight; 0.75 g,*
-
 *die axis; 10:15* *o'clock,* *size: 13-15 mm*
 
 *Fig. 26 Sirma type* *coin,* *dated* *AH* *1198; weight; 1.40 g, die axis:* *11:45* *o'clock,* *size; 16-17.2 mm*
@@ -691,7 +683,6 @@ All the above makes us incline to the idea that these items are probably modern 
 *Fig. 49 Sirma type coin, dated* *AH* *1211; weight: 0.69 g, die axis:* *9:30* *o'clock,* *size: 14.1-14.5 mm*
 
 *Fig. 50 Sirma type coin, dated 11211* *(AH* *1211?); weight: 0.67 g,*
-
 *die axis: 3:00* *o'clock,* *size; 13.6-13.8 mm*
 
 *Fig. 51 Sirma type coin, dated* *AH* *1212; weight: 0.68 g, die axis:* *11:15* *o'clock,* *size: 13.2-13.9 mm*
@@ -798,7 +789,6 @@ published so far is 1179 * * *\{Fig* *1)* That, therefore, raises two questions 
 *Fig 7 Kingdom of Kaitl Kakheti Erekle II AR sirma abazi * *Tiflis, AH 1166* *Weight 3 08 g size 17 6 18 7 mm, die axis* *II 30 o clock*
 
 *Fig 8 Kingdom of Kartl-Kakheti, Erekle II AR sirma abazi, *
-
 *Tiflis AH '1166 * *Weight 3 02 g, size 19 mm die axis NA*
 
 *Fig 1 Kingdom of Kartl-Kakheti, Erekle II, AR, sirma abazi, * *Tiflis, AH 1179 Weight 3 06 g, size 21 9-22 1 mm, die axis 11 45* *o'clock*
@@ -924,7 +914,6 @@ Georgian ji3ó6ódg co J,bfnciTg(cio E-gaoSaógojó ai6oc;;;ol)o, 1969 ) 11 \[Ko
 (In French Langlois V *Essai de Classification* *des Suites* *Monetaires* *de la Georgië* *depun* *I Antiquite jiisqu'a* *nos* *Jours* Pans 1860 ) \[Orbeliani P * * *\{Critical* *edition,* *preface,* *vocabulary* *and* *indices b^ Tsagareishvili* *E)* Accounts of Kartli Tbilisi, 1981 \] (In Georgian mfnögi^joóGo.1 * * (jf'^<>é"JJ'^" *QódcnQQdó, B^liógóc^o,* *c:;;jjhnjoibo* t«J * * *hódoj6c:^Qbo* *ioö-^fiia»^ g* *fj.tQótngndgoc^'dó)*,b8öóg6o JófnmcnobóBo ODÖocnobo, 1981) IPakhomov Ye * * *Coins* *of Georgia* Tbilisi, 1970\] (In Russian FlaxoMOB E A MoHexbi FpyiHH TÖHHHCH, 1970) Perry J 'Kanm Khan Zand' In *Encyclopcedia Jranica* **(http** //www iranica com/)
 
 Perry J *Karim Khan Zand* Oxford, 2006 I Sharashenidze Z *Iran m the Second Half of the 18th C* *Tbilisi,* 1970 1 (In Georgian aó(f)6agGod;) 8 ofn.ibo XVIII bó-gjjboU Sgoipij) 6t5bggó(T)ao oiöocjolio, 1970) \[Shengelia L *Iran in the Tune of Karim Khan Zand* Tbilisi,
-
 1973\] (In Georgian 3;)6,'i,;)i::;n,s cj oCióGo;jg(f)o8-bó6 figbi^ob cjfnnl) on?)oc::>()bi(, 1973) *Standard Catalog of World Coins, Eighteenth Century 1701*
 
 *1800,* Third Edition (By Chester L Krause and Clifford Mishler)
@@ -993,11 +982,9 @@ change this practice and never put his own name on his silver (or golden) coinag
 
 \*•\* According to Pakhomov the AH 1201 date was produced by replacing the zero in AH 1210 (1795/6) \[25 pp 267 268\] In Fig 3 the date is represented as 2010
 Lazarev reported to Lieutenant General Knorring, another Russian appointee in 1801 (with regard to the previous years) the following "LJapb Hce sceraa, Korzta TOJibKo saöJiaropascyflHTb, npHKasbmaert * * *ai* Jiaxb MOHeru,
-
 SOJlOTblXt MOHBTb 3fli Cb Hi Tb, a CymeCTByiOTb cepe6paHbTH H *ui* aHtw" \["The king always, whenever he thinks it fit, orders the striking of coins, there are no gold coins here, but silver and copper ones exist"\] \[19, p 9\], prince Teimuraz, grandson of Erekle II and son of Giorgi XII, the last kings of Kartl-Kakheti, reported in his letter to M Brosset *"fi\>^(\}* n j f n n bó;\].iCimggs:5nli 3o\>ta6\[)f)oco,i8 3g8rncoocTno.S, * * *odöU* f'Oybo ^Qgygoo ófn
 
 '^3^03"''0'^'v''0'' * * *'H'H^^* ^'SnGcoó too jófójijO (Ti\[j(nm fonS oym, ^ó^fngöo dgofïSóCD «joco-gc^nJSiuGgG, 802,0 ggfnnJoob Sb.'ifógbó la,') 8m2,b ó8nob Sbófngb ógój^CSgiiubgB to.i aiomnG.'iy bi)fn,'\\,g6c5n6o 3\[J(')6co.lcn C00 ^OTJOOi"^ figgboió co."» 8ócnb b.^8o6.!)b •;\]ujfóm bófóji^göcnctiJ),'),3jjm6coóai 080010, go6g8 tntnS SnQ^fnóoD co,b obg ji,ógynco6óo)" \["Whatever gold arrived from Georgian mines, our kings did not have it minted as it was pure and good gold, merchants purchased it at a high price, traded some to European and some to Asian lands, and had profit themselves and our kings and their treasury also had more profit this way than they would have had by minting it and selling as such"\] \[17, p 30\] However, some "gold shduris" are mentioned in the 1783 document, while another 1789 document mentions their *minumi'^* \[17, p 31,
-
 14, p 1421 According to N Koiava's calculations, the weight of gold shaun was 0 739-0 777 g \[17, p 33\], l e quite different (roughly one tenth'^) from the coins we study in this paper (weight 7 14 and 7 64/5 g)
 
 - • Generally, gold coins played a very limited role in the  monetary circulation 57 vast documents with 5-6 thousand Items of expenditure dating back to 1742-1801 mention gold coins only a tew times, and those always involve a foreign currency \[17, p 32\], apparently, there is no mention of gold coins m the documents written after 1783 \[17, pp 31-32\] - • It seems to be significant that these coins are so rare, and that  both extant specimens are located in Russia, and were apparently there already in the first third of the 19"' century
@@ -1066,7 +1053,6 @@ Out of the multitude of Russian imperial mints \[28 pp 447452\] only Saint Peter
 the novodels could also have been minted outside the official Russian imperial mints \[27, p 180\] If Georgian dies went into the possession ot a private person, say some high-ranking official, as Kapanadze used to think \[14, p 155\], they might not show up at any mint at all For the moment there seems to be no opportunity to ascertain where exactly those dies could have been employed
 
 Another issue is what happened to the rest of the dies Were they also seized by Russians along with the sirma AH 1203 and 1796 copper coin ones'" Or were they simply mislaid and lost by the outset of the new,
-
 19\* century at the time of the dramatic end of national statehood in eastern Georgia'"''
 
 Does the existence of the novodel Georgian copper coin or coins of the 17\* century \[2, no 654, 5 plate 11 14, p 166\] mean that the earlier dies were also stored at Tiflis mint until seized by the Russians' Or was the Ashmolean 27 68 g coin produced from the dies engraved anew in accordance with the layout of genuine coins'\* This seems much less probable, particularly taking into account the decent calligraphy of the legends in Arabic, which would have been an obstacle for Russian moneyers, who had not coped very well with the job of engraving legends in Georgian and Arabic on the double-headed eagle coins mentioned above It looks as though there are grounds to conjecture that at least some
@@ -1172,7 +1158,6 @@ In contrast to that, all the countermarks of his father, Teimuraz II are always 
 Abramishvili wrote about the calligraphic variations among the countermarks of Teimuraz \[1, p 110\] Seemingly, there were many punches used for applying Teimuraz' countermark, differing in terms of size, calligraphy of the letter, etc (cf Figs 5-6), this fact points to a systematic and maybe even mass character ot the countermarking process
 
 *Fig 5 Kingdoms ofKartli and Kakheti Teimuraz II and Erekle II, *
-
 *c/m of* *Teimuraz* *II,* *AE, half-bisti. Falcon tearing pheasant type,* *Tiflis, Date obliterated by the c/m Weight 8 05 g, size 20 8-21 2* *mm,* *die axis 3h*
 
 *Fig 6 Kingdoms ofKartli and* *Kakheti,* *Teimuraz II and Erekle II*
@@ -1187,7 +1172,6 @@ We can report three more new coins a coin of Jalal ad-Din Mangubarni struck in t
 At the time of Jalal al Din Mangubarni's occupation of parts of the Kingdom of Georgia and of its capital, Tiflis, i e for the major part of the period AD 1226-1230, he overstruck (maybe also struck directly from metal) the plundered coins of Georgian kings transforming them into his own currency \|21, p 6\] The latter quite frequently bear some contemporary countermarks, including both those which had been applied to the host coins prior to overstriking, and the countermarks which were applied to the already overstruck planchets \[22, pp 114-115, 19, p 29\] In addition to that, Victor Langlois, the 19"' century French researcher of Georgian numismatics, also wrote already in 1860 that "on remarque sur beaucoup de surfrappes de Djelal-eddin des contre-marques qui ont ete impnmees après la restauration de Rousoudan et a differentes epoques" \["one may notice on many overstruck coins of Jalal ad Din countermarks which were imprinted after the restoration of Rusudan and in different epochs"\], by the countermark ot the "different epoch' the researcher meant "le chiffre d'Erekle, *^fit* \[er\]", i e Erekle II's monogram \[20 pp 74 75\] Unfortunately, Langlois did not substantiate his assertion by providing some more data or an image, which made the existence of coins like this somewhat dubious, due to the general inaccuracy and carelessness of this scholar \[22, pp 260-261, 257-258, 263, footnote 1\] But at least in this case, Langlois' assertion is verified"\* by the coin, preserved in a private collection in Georgia, which we would like to publish by means of this paper, it is the Jalal al Din Mangubarni's copper coin bearing the simple countermark of Erekle II (Fig 9)
 
 *Fig 9 Georgian kingdom occupied by Khwarazmiani Jalal al-* *Din Mangubarni, simple c/m of Erekle II, AE irregular copper,*
-
 *NM DM \[1226-1230\] Weight 4,7 g, size* *19* *mm die axis 4h*
 
 The other coin bearing the simple countermark of Erekle II is a CIVIC fulus The coin proper unfortunately is not available to us anymore, and we cannot provide its photo or scan, but one of the authors did have an opportunity to examine this coin in the early 2000s, to determine its metrological data and produce a rubbing, which we reproduce here (Fig 10)

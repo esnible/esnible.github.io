@@ -93,17 +93,21 @@ from pathlib import Path
 # Words that *can* close a sentence are deliberately absent: `that`, `this`,
 # `all`, `such`, `more`, `no`, `not`, `her`, `there`, `then`, `so` and friends
 # all end sentences in ordinary prose, and including them trades this rule's
-# precision for nothing.
+# precision for nothing. `above`, `below` and `each` were in this set and came
+# out for the same reason: the corpus ends sentences on them constantly -- `the
+# coins discussed above`, `their contents are listed below`, `at $30-35 each`
+# -- and across 84 corpus findings on those three tails all but two were a
+# paragraph ending exactly where it should.
 FUNCTION_TAILS = {
     # articles and determiners
-    "a", "an", "the", "its", "their", "our", "your", "my", "whose", "each",
+    "a", "an", "the", "its", "their", "our", "your", "my", "whose",
     "every", "both",
     # coordinators and subordinators
     "and", "or", "but", "nor", "because", "although", "though", "unless",
     "whereas", "while", "whilst", "whether", "if", "than", "as", "that's",
     # prepositions
     "of", "in", "on", "at", "to", "by", "for", "with", "from", "into",
-    "onto", "upon", "under", "over", "above", "below", "beneath", "beside",
+    "onto", "upon", "under", "over", "beneath", "beside",
     "besides", "between", "among", "amongst", "during", "about", "after",
     "before", "through", "throughout", "without", "within", "against",
     "across", "along", "around", "behind", "beyond", "despite", "except",
@@ -127,7 +131,11 @@ HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
 FENCE_RE = re.compile(r"^\s*```")
 IAL_RE = re.compile(r"^\s*\{:")
 BULLET_RE = re.compile(r"^\s{0,3}([-*+])\s+\S")
-OL_RE = re.compile(r"^\s{0,3}\d{1,9}[.)]\s")
+OL_RE = re.compile(r"^\s{0,3}\d{1,9}[.)](\s|$)")
+# `a) Flowered silver lumps` / `b) Arakan silver coins` -- a lettered list,
+# which pdfmd leaves unmarked so Markdown renders it as prose. The item starts
+# lowercase, which would otherwise read as a continuation.
+LETTER_OL_RE = re.compile(r"^\s{0,3}[a-z][.)]\s")
 # `* * *Fig. 17. ...` -- the marker is followed by more emphasis junk, so it
 # is leftover per-word asterisks (step 2's job), not a bullet.
 JUNK_MARKER_RE = re.compile(r"^\s{0,3}[-*+]\s+[-*+_]")
@@ -142,6 +150,41 @@ WORD_RE = re.compile(r"[A-Za-z][A-Za-z'’]*$")
 # A hyphenated fragment: `manu-`, `Muzaf-`. Not ` -` (a quote intro) and not
 # an em/en dash.
 HYPHEN_TAIL_RE = re.compile(r"[A-Za-z]{2}-$")
+
+# --- entry boundaries that imitate a cut sentence ----------------------------
+# A `\n\n` inside the footnote apparatus, the officers masthead or a numbered
+# bibliography is a real entry boundary. The tails that prove a cut -- a comma,
+# a preposition -- occur inside those entries as often as in prose, so the
+# strict rules fire on them anyway; these shapes are how the text itself shows
+# the gap is structural. Collapsing one runs two entries into one paragraph.
+
+# A footnote marker pdfmd read as punctuation -- `^`, `°`, `©`, a superscript
+# digit -- behind the quotes and asterisks it also invents around it:
+# `"^ Yet another document`, `*'^* Obverse figure`, `© Pakhomov: Coins of`.
+NOTE_MARKER_RE = re.compile(r"^[\s\"'*_\\\[({]{0,6}[\^°©¹²³⁰⁴⁵⁶⁷⁸⁹]")
+# A note number opening a block, followed by the capital that starts the
+# note's text: `8 For illustrations`, `52Album 1976`, `5 Bombay Consultations`.
+# The capital is what separates a note from a number that merely continues the
+# sentence above -- `100 pieces of "Borneo iron bullet money"` and `15 to 20
+# minutes duration` go on reading as prose, and a four-digit year (`1996 And,
+# finally`) is not a note number at all.
+NOTE_NUM_RE = re.compile(r"^\s*\d{1,3}(?:\s+|(?=[A-Z]))[A-Z]")
+# Two or more `Label:` groups in one line -- the officers masthead and the
+# subscription block, which pdfmd runs together (`Annual Subscription Ds:
+# £6.00 ... South Asia: Mr. P. P. Kulkarni,`). `restructure-flattened-md`
+# owns the shape; the blank lines inside it are entry boundaries.
+LABEL_RUN_RE = re.compile(r"[A-Z][A-Za-z.&'\- ]{2,24}:(?=\s)")
+# `*General*: Mr. R. Senior,` / `*Europe*: Mr. J. Lingen,` -- the masthead and
+# the hoard indexes run one entry per line, each closing on the comma that
+# would otherwise prove a cut.
+ENTRY_LABEL_RE = re.compile(r"^\s*[*_]{0,2}[A-Z][A-Za-z.&'\- ]{0,34}[*_]{0,2}\s*[*_]{0,2}:\s")
+# A coin-description field opening the continuation: `Rev. Temple containing
+# Sankh shell`, `*reverse -* the coins of type C`. The catalogue prints obverse
+# and reverse as separate lines, so the blank line between them is the layout,
+# not a cut -- and the field name is a noun, so the line above it ends on one.
+CATALOGUE_FIELD_RE = re.compile(
+    r"^\s*[*_]{0,2}(Obv|Rev|Obverse|Reverse|Margin|Exergue"
+    r"|Weight|Wt|Dia|Diameter|Metal)\b", re.I)
 
 
 def is_prose(line):
@@ -194,7 +237,20 @@ def ends_terminally(text):
 
 def last_word(text):
     m = WORD_RE.search(strip_closers(text))
-    return m.group(0).lower() if m else ""
+    if not m:
+        return ""
+    word = m.group(0)
+    # A lone capital ends a variety label, a series letter or an initial
+    # (`as in Variety A`, `{BN, series 6 A)`, `Tarzhima A`), never the article
+    # `a` -- and `a` is the only one-letter member of FUNCTION_TAILS.
+    if len(word) == 1 and word.isupper():
+        return ""
+    # A letter a digit runs straight into is a type label, not a word at all:
+    # `this one is Type 1a` ends on `1a`, and reading its `a` as the article
+    # claimed the paragraph had been cut.
+    if m.start() > 0 and strip_closers(text)[m.start() - 1].isdigit():
+        return ""
+    return word.lower()
 
 
 def blocks(lines):
@@ -230,6 +286,26 @@ def lone_bullet(lines, i, end):
     return True
 
 
+def is_entry_boundary(prev, nxt):
+    """True when the blank line separates two entries of the footnote
+    apparatus, the masthead or a numbered bibliography -- a real boundary that
+    the cut-sentence rules would otherwise claim."""
+    if NOTE_MARKER_RE.match(nxt):
+        return True
+    # The continuation opens a numbered note, so it is the apparatus starting
+    # rather than the sentence resuming -- wherever the real continuation went,
+    # it is not here, and collapsing would run prose into a footnote.
+    if NOTE_NUM_RE.match(nxt):
+        return True
+    if ENTRY_LABEL_RE.match(prev) and ENTRY_LABEL_RE.match(nxt):
+        return True
+    if len(LABEL_RUN_RE.findall(prev)) >= 2 or len(LABEL_RUN_RE.findall(nxt)) >= 2:
+        return True
+    if CATALOGUE_FIELD_RE.match(nxt):
+        return True
+    return False
+
+
 def scan(path, loose=False):
     lines = path.read_text(encoding="utf-8").split("\n")
     runs = blocks(lines)
@@ -241,8 +317,11 @@ def scan(path, loose=False):
         prev, nxt = lines[e1], lines[s2]
         gap_line = e1 + 2  # 1-based line number of the blank line itself
 
-        if OL_RE.match(nxt):
-            continue  # a numbered list or catalogue entry, not a continuation
+        if OL_RE.match(nxt) or LETTER_OL_RE.match(nxt):
+            continue  # a numbered or lettered list, not a continuation
+
+        if is_entry_boundary(prev, nxt):
+            continue
 
         tail = last_word(prev)
         terminal = ends_terminally(prev)

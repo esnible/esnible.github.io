@@ -112,6 +112,41 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
      The script already skips lines with two or more ` - ` runs for this
      reason; if one slips through, don't collapse it.
 
+   **The corpus sweep is a worklist, not a batch job.** `scan jons/*.md`
+   reports ~2800 `severed` findings. Hand-checking 126 of them in the files
+   with three or fewer (and three random samples of 30 before that) put the
+   rule's precision at **about 75-80%** -- so `fix` run across the whole
+   corpus would collapse several hundred breaks that were never cut. Do not
+   do it. Work file by file, read each finding, and collapse what you have
+   read. Precision also tracks the file: the light files are mostly running
+   prose and scan ~89% true, while the heaviest (ONS_210 with 201 findings,
+   ONS_171 with 137) are heavy *because* their footnote apparatus and
+   bibliographies are flattened, which is where the rule is weakest.
+
+   The false positives that remain are the ones no regex settles, and each
+   belongs to someone else:
+
+   - a comma OCR'd from a full stop at a real paragraph end (`weighing
+     approximately 1.0 grams,` / `The normal obverse consists of ...`) --
+     indistinguishable from a cut, because `However,` + a capital is a true
+     positive with the same shape. `fix-ocr` owns the comma.
+   - a footnote marker OCR'd as quotes, so the line reads as ending on a
+     preposition (`seems to be called for"'"`). The sentence did end.
+   - prose whose continuation is the *next* block but one, because the
+     apparatus got between them.
+   - a severed heading (`The coin shown in` / `The Reverse`) --
+     `restore-headings`.
+
+   `is_entry_boundary` already suppresses the classes that *are* mechanical,
+   all of them found by sweeping the corpus: a continuation that opens a
+   numbered note (`8 For illustrations`, `52Album 1976`) or a footnote-marker
+   glyph (`"^`, `©`, `*'^*`); a lettered list item (`a) Flowered silver
+   lumps`); a coin-description field (`Rev. Temple containing`, `Weight
+   3.31 g.`); and the officers masthead, where two `Label:` groups in a line
+   mark it as the flattened directory `restructure-flattened-md` owns. Two
+   tail words also came out of `FUNCTION_TAILS` -- see the note there on
+   `above`, `below` and `each`.
+
    **Never** apply this pass to fenced code blocks, tables, real lists,
    headings, front matter, or verse where line breaks are semantic. The
    script skips all of these, which is the main reason to prefer it over a

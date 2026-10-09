@@ -93,17 +93,21 @@ from pathlib import Path
 # Words that *can* close a sentence are deliberately absent: `that`, `this`,
 # `all`, `such`, `more`, `no`, `not`, `her`, `there`, `then`, `so` and friends
 # all end sentences in ordinary prose, and including them trades this rule's
-# precision for nothing.
+# precision for nothing. `above`, `below` and `each` were in this set and came
+# out for the same reason: the corpus ends sentences on them constantly -- `the
+# coins discussed above`, `their contents are listed below`, `at $30-35 each`
+# -- and across 84 corpus findings on those three tails all but two were a
+# paragraph ending exactly where it should.
 FUNCTION_TAILS = {
     # articles and determiners
-    "a", "an", "the", "its", "their", "our", "your", "my", "whose", "each",
+    "a", "an", "the", "its", "their", "our", "your", "my", "whose",
     "every", "both",
     # coordinators and subordinators
     "and", "or", "but", "nor", "because", "although", "though", "unless",
     "whereas", "while", "whilst", "whether", "if", "than", "as", "that's",
     # prepositions
     "of", "in", "on", "at", "to", "by", "for", "with", "from", "into",
-    "onto", "upon", "under", "over", "above", "below", "beneath", "beside",
+    "onto", "upon", "under", "over", "beneath", "beside",
     "besides", "between", "among", "amongst", "during", "about", "after",
     "before", "through", "throughout", "without", "within", "against",
     "across", "along", "around", "behind", "beyond", "despite", "except",
@@ -127,7 +131,11 @@ HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
 FENCE_RE = re.compile(r"^\s*```")
 IAL_RE = re.compile(r"^\s*\{:")
 BULLET_RE = re.compile(r"^\s{0,3}([-*+])\s+\S")
-OL_RE = re.compile(r"^\s{0,3}\d{1,9}[.)]\s")
+OL_RE = re.compile(r"^\s{0,3}\d{1,9}[.)](\s|$)")
+# `a) Flowered silver lumps` / `b) Arakan silver coins` -- a lettered list,
+# which pdfmd leaves unmarked so Markdown renders it as prose. The item starts
+# lowercase, which would otherwise read as a continuation.
+LETTER_OL_RE = re.compile(r"^\s{0,3}[a-z][.)]\s")
 # `* * *Fig. 17. ...` -- the marker is followed by more emphasis junk, so it
 # is leftover per-word asterisks (step 2's job), not a bullet.
 JUNK_MARKER_RE = re.compile(r"^\s{0,3}[-*+]\s+[-*+_]")
@@ -142,6 +150,41 @@ WORD_RE = re.compile(r"[A-Za-z][A-Za-z'’]*$")
 # A hyphenated fragment: `manu-`, `Muzaf-`. Not ` -` (a quote intro) and not
 # an em/en dash.
 HYPHEN_TAIL_RE = re.compile(r"[A-Za-z]{2}-$")
+
+# --- entry boundaries that imitate a cut sentence ----------------------------
+# A `\n\n` inside the footnote apparatus, the officers masthead or a numbered
+# bibliography is a real entry boundary. The tails that prove a cut -- a comma,
+# a preposition -- occur inside those entries as often as in prose, so the
+# strict rules fire on them anyway; these shapes are how the text itself shows
+# the gap is structural. Collapsing one runs two entries into one paragraph.
+
+# A footnote marker pdfmd read as punctuation -- `^`, `°`, `©`, a superscript
+# digit -- behind the quotes and asterisks it also invents around it:
+# `"^ Yet another document`, `*'^* Obverse figure`, `© Pakhomov: Coins of`.
+NOTE_MARKER_RE = re.compile(r"^[\s\"'*_\\\[({]{0,6}[\^°©¹²³⁰⁴⁵⁶⁷⁸⁹]")
+# A note number opening a block, followed by the capital that starts the
+# note's text: `8 For illustrations`, `52Album 1976`, `5 Bombay Consultations`.
+# The capital is what separates a note from a number that merely continues the
+# sentence above -- `100 pieces of "Borneo iron bullet money"` and `15 to 20
+# minutes duration` go on reading as prose, and a four-digit year (`1996 And,
+# finally`) is not a note number at all.
+NOTE_NUM_RE = re.compile(r"^\s*\d{1,3}(?:\s+|(?=[A-Z]))[A-Z]")
+# Two or more `Label:` groups in one line -- the officers masthead and the
+# subscription block, which pdfmd runs together (`Annual Subscription Ds:
+# £6.00 ... South Asia: Mr. P. P. Kulkarni,`). `restructure-flattened-md`
+# owns the shape; the blank lines inside it are entry boundaries.
+LABEL_RUN_RE = re.compile(r"[A-Z][A-Za-z.&'\- ]{2,24}:(?=\s)")
+# `*General*: Mr. R. Senior,` / `*Europe*: Mr. J. Lingen,` -- the masthead and
+# the hoard indexes run one entry per line, each closing on the comma that
+# would otherwise prove a cut.
+ENTRY_LABEL_RE = re.compile(r"^\s*[*_]{0,2}[A-Z][A-Za-z.&'\- ]{0,34}[*_]{0,2}\s*[*_]{0,2}:\s")
+# A coin-description field opening the continuation: `Rev. Temple containing
+# Sankh shell`, `*reverse -* the coins of type C`. The catalogue prints obverse
+# and reverse as separate lines, so the blank line between them is the layout,
+# not a cut -- and the field name is a noun, so the line above it ends on one.
+CATALOGUE_FIELD_RE = re.compile(
+    r"^\s*[*_]{0,2}(Obv|Rev|Obverse|Reverse|Margin|Exergue"
+    r"|Weight|Wt|Dia|Diameter|Metal)\b", re.I)
 
 
 def is_prose(line):
@@ -178,6 +221,31 @@ def heading_like(line):
     return "," not in bare and not bare[-1] in TERMINAL
 
 
+def bold_title_continuation(nxt):
+    """True when the continuation opens on an emphasis-marked title rather
+    than on prose resuming -- `**Table 1. Obverse and Reverse Combinations**`
+    under a paragraph cut at `both from`. pdfmd marks these titles with `**`
+    instead of `#`, so `is_prose` lets them through and the function-word rule
+    above claims the gap. Only the *first* span is tested: a prose
+    continuation does not open on a bold heading.
+    """
+    m = re.match(r"\s*\*\*(.+?)\*\*(.*)$", nxt)
+    if not m or not heading_like(m.group(1)):
+        return False
+    span, rest = m.group(1), m.group(2).lstrip()
+    # A title opens on a capital or a number. `**period prior to the**
+    # Arakanese era` is emphasised prose, and the sentence above it really
+    # was cut.
+    if not (span[:1].isupper() or span[:1].isdigit()):
+        return False
+    # Prose resuming after an emphasised phrase carries on in lower case --
+    # `**The phases** of coin circulation`, `**1203** to **1215 / 1785**`.
+    # A title is followed by the next title, or by nothing.
+    if rest[:1].islower():
+        return False
+    return True
+
+
 def ends_terminally(text):
     """True when the line ends the way a paragraph legitimately ends."""
     core = strip_closers(text)
@@ -194,7 +262,32 @@ def ends_terminally(text):
 
 def last_word(text):
     m = WORD_RE.search(strip_closers(text))
-    return m.group(0).lower() if m else ""
+    if not m:
+        return ""
+    word = m.group(0)
+    # A lone capital ends a variety label, a series letter or an initial
+    # (`as in Variety A`, `{BN, series 6 A)`, `Tarzhima A`), never the article
+    # `a` -- and `a` is the only one-letter member of FUNCTION_TAILS.
+    if len(word) == 1 and word.isupper():
+        return ""
+    # An all-capitals token is a legend fragment, a mint name or an acronym,
+    # never the function word it lowercases to -- `**KRMAN-AN**` is not the
+    # article, and `*A spec IS*` is not the copula.
+    if len(word) > 1 and word.isupper():
+        return ""
+    # `May` with a capital is the month. Of the corpus's seven, four were an
+    # index column of month abbreviations or a date heading above a
+    # programme, where collapsing the break ran two unrelated rows together;
+    # the two genuine ones (`by the end of May` + `1739`) are the price of
+    # not making those four.
+    if word == "May":
+        return ""
+    # A letter a digit runs straight into is a type label, not a word at all:
+    # `this one is Type 1a` ends on `1a`, and reading its `a` as the article
+    # claimed the paragraph had been cut.
+    if m.start() > 0 and strip_closers(text)[m.start() - 1].isdigit():
+        return ""
+    return word.lower()
 
 
 def blocks(lines):
@@ -230,6 +323,28 @@ def lone_bullet(lines, i, end):
     return True
 
 
+def is_entry_boundary(prev, nxt):
+    """True when the blank line separates two entries of the footnote
+    apparatus, the masthead or a numbered bibliography -- a real boundary that
+    the cut-sentence rules would otherwise claim."""
+    if NOTE_MARKER_RE.match(nxt):
+        return True
+    # The continuation opens a numbered note, so it is the apparatus starting
+    # rather than the sentence resuming -- wherever the real continuation went,
+    # it is not here, and collapsing would run prose into a footnote.
+    if NOTE_NUM_RE.match(nxt):
+        return True
+    if ENTRY_LABEL_RE.match(prev) and ENTRY_LABEL_RE.match(nxt):
+        return True
+    if len(LABEL_RUN_RE.findall(prev)) >= 2 or len(LABEL_RUN_RE.findall(nxt)) >= 2:
+        return True
+    if CATALOGUE_FIELD_RE.match(nxt):
+        return True
+    if bold_title_continuation(nxt):
+        return True
+    return False
+
+
 def scan(path, loose=False):
     lines = path.read_text(encoding="utf-8").split("\n")
     runs = blocks(lines)
@@ -241,8 +356,11 @@ def scan(path, loose=False):
         prev, nxt = lines[e1], lines[s2]
         gap_line = e1 + 2  # 1-based line number of the blank line itself
 
-        if OL_RE.match(nxt):
-            continue  # a numbered list or catalogue entry, not a continuation
+        if OL_RE.match(nxt) or LETTER_OL_RE.match(nxt):
+            continue  # a numbered or lettered list, not a continuation
+
+        if is_entry_boundary(prev, nxt):
+            continue
 
         tail = last_word(prev)
         terminal = ends_terminally(prev)
@@ -310,11 +428,33 @@ def scan(path, loose=False):
     return findings
 
 
-def fix(path):
+def sub_rule(label, msg):
+    """Which of the three `severed` tests fired, by the reason it reports.
+
+    They are one label in the report but three different claims, and a
+    corpus sweep measured them wildly apart: the function-word tail is
+    ~97% precise, the comma tail ~63%, the lower-case continuation ~29%.
+    `fix` takes only the first by default, so the weak two cannot ride
+    along with the strong one.
+    """
+    if label != "severed":
+        return label
+    if msg.startswith("line ends on"):
+        return "tail"
+    if msg.startswith("line ends mid-clause on a comma"):
+        return "comma"
+    return "lower"
+
+
+DEFAULT_FIX_RULES = ("tail", "hyphen-split")
+
+
+def fix(path, rules=DEFAULT_FIX_RULES):
     """Collapse the blank line for the mechanically-safe findings."""
     findings = scan(path, loose=False)
-    safe = {n for n, _, lab, _ in findings if lab in ("severed", "hyphen-split")}
-    refused = [(n, lab) for n, _, lab, _ in findings if lab == "fake-list"]
+    safe = {n for n, _, lab, msg in findings if sub_rule(lab, msg) in rules}
+    refused = [(n, sub_rule(lab, msg)) for n, _, lab, msg in findings
+               if sub_rule(lab, msg) not in rules]
     if not safe:
         print(f"{path}: nothing to collapse")
     else:
@@ -327,9 +467,17 @@ def fix(path):
         path.write_text("\n".join(lines), encoding="utf-8")
         print(f"{path}: collapsed {len(safe)} break(s) at "
               f"{', '.join(str(n) for n in sorted(safe))}")
+    why = {
+        "fake-list": "needs the dash read off the scan before the break can "
+                     "be collapsed",
+        "comma": "a comma tail is a real paragraph end about a third of the "
+                 "time (an OCR'd full stop) -- decide this one by eye",
+        "lower": "a lower-case continuation is usually a catalogue field, "
+                 "not prose resuming -- decide this one by eye",
+    }
     for n, lab in refused:
-        print(f"{path}:{n}: left for you -- {lab} needs the dash read off the "
-              f"scan before the break can be collapsed")
+        print(f"{path}:{n}: left for you -- {lab} "
+              f"{why.get(lab, 'is not in the requested rule set')}")
     return 1 if refused else 0
 
 
@@ -343,6 +491,10 @@ def resolve(arg):
 def main(argv):
     args = [a for a in argv[1:] if not a.startswith("-")]
     loose = "--loose" in argv
+    rules = DEFAULT_FIX_RULES
+    for a in argv[1:]:
+        if a.startswith("--rules="):
+            rules = tuple(x for x in a.split("=", 1)[1].split(",") if x)
     if len(args) < 2 or args[0] not in ("scan", "fix"):
         print(__doc__)
         return 2
@@ -357,7 +509,7 @@ def main(argv):
             continue
 
         if mode == "fix":
-            rc = max(rc, fix(path))
+            rc = max(rc, fix(path, rules))
             continue
 
         findings = scan(path, loose=loose)

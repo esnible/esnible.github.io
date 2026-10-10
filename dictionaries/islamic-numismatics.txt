@@ -9989,6 +9989,10 @@ veke
 فروردی
 كيربان
 
+# ONS_109 — Perso-Arabic legend vocabulary (Farrukhsiyar 1/8 and 1/16 rupee,
+# Macchlipatan mint)
+مچھلی
+
 # OP_009 — Modern gold coins of Ottoman Egypt (Lachman): foreign-coin names as spelled in the paper
 Bounduki
 Dabloun

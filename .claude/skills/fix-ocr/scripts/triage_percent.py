@@ -25,7 +25,9 @@ and marks anything it cannot decode for a human to render.
     python3 triage_percent.py --edits out.txt       # apply_edits.py batch
 
 Verdicts:
-    PERCENTAGE  the text layer shows a percent sign too -- leave alone
+    PERCENTAGE  the text layer shows a percent sign too -- leave alone.
+                A coin name after the sign (`% rupee`) overrides that: both
+                OCR passes can misread one fraction glyph the same way.
     URL         the `%` is percent-encoding inside a URL -- never edit
     GARBLE      the line is wrecked foreign-script debris, not prose --
                 belongs to transcribe-foreign-script, not to this pass
@@ -59,20 +61,23 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
 MD_DIR = REPO_ROOT / "jons"
 
 # How the originals' OCR pass renders each fraction glyph. Keys are matched
-# case-sensitively against the token standing where the markdown has `%`.
-# Only unambiguous forms belong here -- anything else should fall to UNSURE
-# and get a render rather than a guess.
-# How the originals' OCR pass renders each fraction glyph. Keys are matched
-# against the token standing where the Markdown has `%`.
+# case-sensitively against the token standing where the Markdown has `%`.
 #
 # DECODE holds readings that are legible on their face: the glyph survived
 # intact, or the substitution is unambiguous (`V2` has no other reading).
+# Only such forms belong here -- anything else should fall to UNSURE and get
+# a render rather than a guess. A single-letter key is never unambiguous:
+# ONS_042's `'A` for ½ and ONS_061's `'^` for ¼ were confirmed on the page
+# and still stay out, because `A` and `^` turn up in any garbled slot.
 DECODE = {
     "½": "½", "V2": "½", "Vi": "½", "Vz": "½", "'/2": "½", "1/2": "½",
     "l/2": "½", "y2": "½", "Yi": "½", "V-2": "½", "»/2": "½", "V&": "½",
     "¼": "¼", "1/4": "¼", "V4": "¼", "'/4": "¼", "l/4": "¼", "Va": "¼",
+    "VA": "¼",
     "¾": "¾", "3/4": "¾", "%4": "¼",
     "⅓": "⅓", "1/3": "⅓", "⅔": "⅔", "2/3": "⅔", "⅛": "⅛", "1/8": "⅛",
+    # ⅕'s small 5 reads as an s, and no word in the corpus is `/s`
+    "⅕": "⅕", "1/5": "⅕", "/s": "⅕",
 }
 
 # DECODE_WEAK holds readings that rest on an inference rather than a glyph:
@@ -111,7 +116,63 @@ UNIT_RX = re.compile(r"[A-Za-z]{3,}\s*%\s*(?:\||$)")
 def is_unit_header(line, pos):
     if not line.lstrip().startswith("|"):
         return False
-    return any(m.start() <= pos < m.end() for m in UNIT_RX.finditer(line))
+    if any(m.start() <= pos < m.end() for m in UNIT_RX.finditer(line)):
+        return True
+    # A cell holding nothing but `%` heads a percentage column -- but only in
+    # a row that reads as a header, because a lone `%` in a *data* cell could
+    # be a fraction glyph. Two or more purely alphabetic cells is the test:
+    # `| | Qty | % | Diam (mm) | ... |`, `| % | SN | PB | CU | FE |`.
+    cells, at = [], None
+    start = 0
+    for m in re.finditer(r"\|", line):
+        cell = line[start:m.start()]
+        if start <= pos < m.start():
+            at = cell.strip()
+        cells.append(cell.strip())
+        start = m.end()
+    if at != "%":
+        return False
+    # A header cell may be a phrase with a parenthesised unit (`Diam (mm)`), so
+    # the test is an alphabetic run, not a whole-cell match. What rules out a
+    # data row is a bare number: catalogue rows carry them, header rows do not.
+    words = sum(1 for c in cells if re.search(r"[A-Za-z]{2,}", c))
+    if any(re.fullmatch(r"[\d.,]+", c) for c in cells if c):
+        return False
+    return words >= 2
+
+
+# `%3A`, `%28`, `%2F` -- percent-encoding. pdfmd splits long URLs, so the tail
+# of one lands outside any span URL_RX can match (`...utm_campaig>` then
+# ` n=Feed%3A+asian-and-african+%28Asia+and+Africa%29`). The escape itself is
+# the evidence: a fraction glyph never produces `%` followed by two hex
+# digits inside a token that also carries URL punctuation.
+PCT_ESCAPE_RX = re.compile(r"%[0-9A-Fa-f]{2}")
+URLISH_RX = re.compile(r"[/=&?+]|\.html?\b")
+
+
+def is_percent_encoding(line, pos):
+    if not PCT_ESCAPE_RX.match(line, pos):
+        return False
+    lo = line.rfind(" ", 0, pos) + 1
+    hi = line.find(" ", pos)
+    token = line[lo:hi if hi != -1 else len(line)]
+    if URLISH_RX.search(token):
+        return True
+    # The severed tail need not keep any URL punctuation of its own
+    # (`...%3D3%2>` then ` 6work%3D001`). Sitting immediately after a URL,
+    # with only whitespace between, is evidence enough.
+    return any(not line[e:lo].strip() for _, e in url_spans(line) if e <= lo)
+
+
+# `%age` is the corpus's abbreviation for "percentage" (`the %age silver
+# content`), and `%Ag` / `%Cu` label an alloy-analysis column. Neither is a
+# fraction: no fraction glyph is followed by a word or an element symbol.
+PCT_WORD_RX = re.compile(r"%age\b")
+PCT_ELEMENT_RX = re.compile(r"%\s*(?:Ag|Au|Cu|Sn|Pb|Fe|Zn|Ni|As|Sb|Bi)\b")
+
+
+def is_percent_abbrev(line, pos):
+    return bool(PCT_WORD_RX.match(line, pos) or PCT_ELEMENT_RX.match(line, pos))
 
 
 def is_garble(line):
@@ -132,6 +193,42 @@ def is_garble(line):
 def url_spans(line):
     """Character ranges covered by URLs -- `%` there is percent-encoding."""
     return [(m.start(), m.end()) for m in URL_RX.finditer(line)]
+
+
+FRACTION_GLYPHS = "½¼¾⅓⅔⅛⅕"
+
+# Denominations. `% rupee`, `% tola`, `% att` is a fraction OF something --
+# a percent sign is never followed by a coin name. This matters because the
+# two OCR passes can agree on `%` and still both be wrong: ONS_110's
+# `1/16 song-pei = % att = 25 pa` reads `¼` on the page, and the layer's own
+# `%` was waving it through. A match here keeps the slot out of every
+# percentage shortcut, so it ends up UNSURE and gets a render.
+DENOMINATIONS = r"""
+abazi anna annas att baht dam dinar dinars dirham dirhams dirhem dirhems
+drachm drachms falus fals fanam fuang jital jitals karshapana karshapanas
+kori kran larin mahmudi miskal mithqal mohur obol paisa pana pice pie pul
+rupee rupees salung satamana satamanas shahi stater staters tanga tangas
+tanka tankah tankas tetradrachm tical tola tolas toman
+"""
+DENOM_RX = re.compile(
+    r"%\s*[*_'’]*(?:" + "|".join(DENOMINATIONS.split()) + r")\b",
+    re.IGNORECASE)
+
+
+def before_denomination(line, pos):
+    """A coin name stands right after this `%`, so it is not a percentage."""
+    return bool(DENOM_RX.match(line, pos))
+
+
+def is_after_fraction(line, pos):
+    """A fraction glyph already stands in front of this `%`.
+
+    `91 ⅔ %` is ninety-one and two thirds PER CENT: pdfmd read that glyph
+    correctly, so the sign after it is the real thing. Unlike the digit
+    rule below this one is safe on its own -- the `%` cannot be the same
+    glyph that is already printed beside it.
+    """
+    return bool(re.search(r"[" + FRACTION_GLYPHS + r"]\s?$", line[:pos]))
 
 
 def is_percentage(line, pos):
@@ -241,9 +338,11 @@ def triage(stems):
             garbled = is_garble(line)
             slots = []
             for m in re.finditer("%", line):
-                if in_url(m.start()):
+                if in_url(m.start()) or is_percent_encoding(line, m.start()):
                     rows.append((stem, n, "URL", "", "", line, None, m.start()))
-                elif is_unit_header(line, m.start()):
+                elif (is_unit_header(line, m.start())
+                      or is_percent_abbrev(line, m.start())
+                      or is_after_fraction(line, m.start())):
                     rows.append((stem, n, "PERCENTAGE", "", "", line, None, m.start()))
                 elif garbled:
                     rows.append((stem, n, "GARBLE", "", "", line, None, m.start()))
@@ -296,7 +395,8 @@ def triage(stems):
                 # `7½%` is seven and a half PER CENT: the ½ is already in the
                 # Markdown and the `%` is genuine, so firing here would
                 # overwrite a real percent sign with a second fraction.
-                glyph = re.fullmatch(r"[^\w]*([\d.,]*)([½¼¾⅓⅔⅛])[^\w]*", clean)
+                glyph = re.fullmatch(
+                    r"[^\w]*([\d.,]*)([" + FRACTION_GLYPHS + r"])[^\w]*", clean)
                 if glyph and "%" not in clean:
                     rows.append((stem, n, "FRACTION", clean, glyph.group(2),
                                  line, page, pos))
@@ -304,15 +404,18 @@ def triage(stems):
                     rows.append((stem, n, "FRACTION", clean, DECODE[clean], line, page, pos))
                 elif clean in DECODE_WEAK:
                     rows.append((stem, n, "WEAK", clean, DECODE_WEAK[clean], line, page, pos))
-                elif "%" in clean and not re.search(r"[A-Za-z]", clean):
+                elif ("%" in clean and not re.search(r"[A-Za-z]", clean)
+                      and not before_denomination(line, pos)):
                     # Both OCR passes put a percent sign in this slot and the
                     # token carries no letters to suggest a misalignment
                     # (`%Ag`, `ha%e` do, and stay UNSURE). That agreement is
                     # the evidence; `7½%` lands here.
                     rows.append((stem, n, "PERCENTAGE", clean, "", line, page, pos))
-                elif clean in PERCENT_TOKENS:
+                elif clean in PERCENT_TOKENS and not before_denomination(line, pos):
                     rows.append((stem, n, "PERCENTAGE", clean, "", line, page, pos))
-                elif is_percentage(line, pos) and not re.search(r"[½¼¾⅓⅔⅛]", clean):
+                elif (is_percentage(line, pos)
+                      and not before_denomination(line, pos)
+                      and not re.search(r"[" + FRACTION_GLYPHS + r"]", clean)):
                     # digit in front and the layer shows no fraction glyph
                     rows.append((stem, n, "PERCENTAGE", clean, "", line, page, pos))
                 else:

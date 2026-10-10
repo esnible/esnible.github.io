@@ -292,15 +292,25 @@ def triage(stems):
                 clean = tok.strip(".,;:()[]'\"")
                 # `7½ Skar`, `(8½ x 11` -- the layer kept the glyph with its
                 # leading digits attached. The Markdown `%` is that glyph.
+                # ... but only when the layer shows NO percent sign beside it.
+                # `7½%` is seven and a half PER CENT: the ½ is already in the
+                # Markdown and the `%` is genuine, so firing here would
+                # overwrite a real percent sign with a second fraction.
                 glyph = re.fullmatch(r"[^\w]*([\d.,]*)([½¼¾⅓⅔⅛])[^\w]*", clean)
-                if glyph:
+                if glyph and "%" not in clean:
                     rows.append((stem, n, "FRACTION", clean, glyph.group(2),
                                  line, page, pos))
                 elif clean in DECODE:
                     rows.append((stem, n, "FRACTION", clean, DECODE[clean], line, page, pos))
                 elif clean in DECODE_WEAK:
                     rows.append((stem, n, "WEAK", clean, DECODE_WEAK[clean], line, page, pos))
-                elif clean in PERCENT_TOKENS or re.fullmatch(r"[\d.,]*%[\d.,]*", clean):
+                elif "%" in clean and not re.search(r"[A-Za-z]", clean):
+                    # Both OCR passes put a percent sign in this slot and the
+                    # token carries no letters to suggest a misalignment
+                    # (`%Ag`, `ha%e` do, and stay UNSURE). That agreement is
+                    # the evidence; `7½%` lands here.
+                    rows.append((stem, n, "PERCENTAGE", clean, "", line, page, pos))
+                elif clean in PERCENT_TOKENS:
                     rows.append((stem, n, "PERCENTAGE", clean, "", line, page, pos))
                 elif is_percentage(line, pos) and not re.search(r"[½¼¾⅓⅔⅛]", clean):
                     # digit in front and the layer shows no fraction glyph

@@ -9883,3 +9883,8 @@ Zemindar
 # ONS_101 — Numismatic Society of India conference, Charles Masson of Afghanistan
 Chandhury
 Whitteridge
+
+# ONS_109 — Jahangir thousand-mohur coin, Arkat double rupee: traveller,
+# Nawab's title
+Dowlah
+Manucci

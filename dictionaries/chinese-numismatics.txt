@@ -2817,3 +2817,23 @@ prakab
 Tseng
 Winamac
 Yongbunkoed
+
+# ONS_109 — Japanese coins in southern Vietnam (VOC ledgers) and the
+# Javanese/Chinese talisman workshop: Japanese places, VOC archival coin-type
+# spellings, Indonesian places, scholars
+Ancol
+Arkeologi
+Atmodjo
+Chambert
+Erack
+Gresik
+Guillot
+Ierack
+Majalah
+Mito
+mujarabat
+Nume
+Saccamotta
+Sakamoto
+Sukarto
+Tammary

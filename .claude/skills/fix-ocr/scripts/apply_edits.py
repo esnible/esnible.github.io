@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """Apply a batch of in-line OCR fixes to a Markdown file, all or nothing.
 
-Edits file format, one per line (blank lines and lines starting with `#` are
-skipped):
+Edits file format, one per line:
 
     old text => new text
     old text => new text => 3        # optional expected match count
+
+Blank lines are ignored, and so is a line starting with `#` that carries no
+` => ` separator -- that is a comment. A line that starts with `#` AND has a
+separator is an edit, not a comment: Markdown headings begin with `#`, and
+silently dropping `## Arab- Byzantine => ## Arab-Byzantine` is how a heading
+fix goes missing from a batch without a word (it happened on ONS_109). The
+trade is that a comment containing ` => ` is now read as an edit and fails
+the match check -- loudly, which is the point.
 
 Every `old` must match the file exactly the expected number of times (default
 1); an `old` that matches 0 or 2+ times is usually a sign it needs more
@@ -21,10 +28,15 @@ import difflib
 import sys
 
 
+def is_comment(raw):
+    """A `#` line is a comment only when it holds no edit separator."""
+    return raw.startswith("#") and " => " not in raw
+
+
 def parse(path):
     edits = []
     for n, raw in enumerate(open(path, encoding="utf-8").read().split("\n"), 1):
-        if not raw.strip() or raw.startswith("#"):
+        if not raw.strip() or is_comment(raw):
             continue
         parts = raw.split(" => ")
         if len(parts) == 3 and parts[2].strip().isdigit():
@@ -55,10 +67,13 @@ def main():
     text = open(args.md, encoding="utf-8").read()
     nlines = text.count("\n")
     bad = 0
-    for n, old, new, want in parse(args.edits):
+    parsed = parse(args.edits)
+    for n, old, new, want in parsed:
         got = text.count(old)
         if got != want:
-            print(f"SKIP {args.edits}:{n}: {got} match(es), expected {want}: {old!r}")
+            hint = ("  (this `#` line was read as an edit, not a comment)"
+                    if old.startswith("#") else "")
+            print(f"SKIP {args.edits}:{n}: {got} match(es), expected {want}: {old!r}{hint}")
             bad += 1
             continue
         if old == new:
@@ -72,11 +87,13 @@ def main():
         sys.exit("ABORT: line count changed; nothing written")
     if bad:
         sys.exit(f"ABORT: {bad} edit(s) failed; nothing written")
+    # Print the count so a line the parser dropped is visible: compare it
+    # against the number of edits you wrote.
     if args.write:
         open(args.md, "w", encoding="utf-8").write(text)
-        print("written")
+        print(f"written; {len(parsed)} edit(s) applied")
     else:
-        print("dry run; re-run with --write to apply")
+        print(f"dry run; {len(parsed)} edit(s) ready, re-run with --write to apply")
 
 
 if __name__ == "__main__":

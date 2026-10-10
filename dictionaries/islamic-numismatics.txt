@@ -10668,3 +10668,10 @@ Retowski
 Sarakhan
 Zandor
 Zoalio
+
+# ONS_109 — Ottoman countermark publications, Afghan medal: German title
+# terms, Macedonian countermark places, Afghan tribe
+Gegenstempels
+Nigrita
+Shenwaris
+Sirpa

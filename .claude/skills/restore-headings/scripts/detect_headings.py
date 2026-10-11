@@ -100,8 +100,21 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   noise from a handful of genuine bold run-in labels.
 # RATIO: the PDF text layer and the Markdown were OCR'd separately and disagree
 #   ("ORIEOTAL" vs "ORIENTAL"), so matching is fuzzy.
+# SHAPE_*: the second way a line can read as set apart, for a head the
+#   typesetter put flush in the text block with no extra leading either side.
+#   ONS_109's `ONS News` and `Notes` score 9.1-11.5pt of leading against the
+#   13.8pt the gap test wants, and come back bold=0.00 from a text layer that
+#   tagged nothing on the page -- heading, body line and article title all
+#   Times-Roman 9.0. Neither existing signal exists there. What is left is the
+#   shape a reader uses: a short line sitting between a paragraph's last line
+#   (short, because it is the last) and the full-measure line that opens the
+#   next block. Measured against ONS_109's own 23 headings, the three
+#   conditions together score 12 hits / 11 real; dropping SHAPE_NEXT alone
+#   drops that to 23 / 13, because "short line after a short line" also
+#   describes every list item and run-in label.
 THRESH, SMEAR, DPI = 185, 2, 200
 GAP, WIDTH, UNDERLINE, MARGIN, BOLD, BOLD_NOISE, RATIO = 1.4, 0.75, 0.45, 0.25, 0.9, 0.15, 0.72
+SHAPE_WIDTH, SHAPE_PREV, SHAPE_NEXT = 0.35, 0.95, 0.90
 
 MARKER_RE = re.compile(r"^(#{1,6}\s+|\*\*|__)")
 # Longest a marked line may be and still be trusted as a real title rather than
@@ -168,18 +181,38 @@ def page_metrics(lines):
     return float(np.median(deltas)), widths[int(len(widths) * 0.9)]
 
 
-def mark_set_apart(lines, gap=GAP, width=WIDTH):
-    """Flag lines with clear space above and below that stop short of the margin."""
+def mark_set_apart(lines, gap=GAP, width=WIDTH, shape=True):
+    """Flag lines that read as set apart, by leading or by shape.
+
+    Two independent routes, recorded in `apart_by` so a reviewer can weigh
+    them differently:
+
+    `gap`   -- clear space above and below, stopping short of the margin.
+               The original test, and the stronger evidence.
+    `shape` -- no extra leading at all, but the three-line shape of a head:
+               short line, a paragraph's last line above it, a full-measure
+               line below. See SHAPE_* above. Finds heads the gap test cannot
+               see at any threshold, because there is no gap to find.
+    """
     leading, measure = page_metrics(lines)
     for i, ln in enumerate(lines):
-        ln["set_apart"] = False
+        ln["set_apart"], ln["apart_by"] = False, None
         if not leading or not measure:
             continue
+        if len(re.sub(r"[^A-Za-z0-9]", "", ln["text"])) < 4:
+            continue
+        w = ln["x1"] - ln["x0"]
         above = ln["y0"] - lines[i - 1]["y0"] if i else 1e9
         below = lines[i + 1]["y0"] - ln["y0"] if i + 1 < len(lines) else 1e9
-        ln["set_apart"] = (above >= leading * gap and below >= leading * gap
-                           and (ln["x1"] - ln["x0"]) <= measure * width
-                           and len(re.sub(r"[^A-Za-z0-9]", "", ln["text"])) >= 4)
+        if (above >= leading * gap and below >= leading * gap
+                and w <= measure * width):
+            ln["set_apart"], ln["apart_by"] = True, "gap"
+        elif (shape and 0 < i < len(lines) - 1
+                and w <= measure * SHAPE_WIDTH
+                and lines[i - 1]["x1"] - lines[i - 1]["x0"] < measure * SHAPE_PREV
+                and lines[i + 1]["x1"] - lines[i + 1]["x0"] >= measure * SHAPE_NEXT
+                and mostly_words(ln["text"])):
+            ln["set_apart"], ln["apart_by"] = True, "shape"
 
 
 def score_bold_reliability(lines, noise=BOLD_NOISE):
@@ -535,17 +568,28 @@ def report(stem, md_lines, found, verbose):
         print(f"  {f['verdict']:12s} p{ln['page']:<3d} "
               f"underline={ln.get('underline', 0.0):4.2f}"
               f"-{ln.get('margin', 0.0):4.2f} bold={ln.get('bold', 0.0):4.2f} "
-              f"{f['head'] or 'plain':10s} {ln['text'][:52]!r}")
+              f"{f['head'] or 'plain':10s} [{ln.get('apart_by') or '-':5s}] "
+              f"{ln['text'][:52]!r}")
         if "row" in f:
             print(f"{'':18s}md line {f['row'] + 1}: "
                   f"{md_lines[f['row']].strip()[:70]!r}")
     return open_n
 
 
-def apply(md_lines, found, marker, include_plain):
+def apply(md_lines, found, marker, include_plain, include_shape=False):
     """Rewrite the Markdown. Returns (new lines, count applied)."""
     edits = {}
     for f in found:
+        # A candidate the gap test could not see, surfaced by shape alone, is
+        # reported but not applied without `--include-shape`. Measured over
+        # six files, the heads it adds beyond the gap test are about half
+        # real -- ONS_130's `Corrigendum` is a head, `Illustrations are x
+        # 1.5.` on the same page is the last line of a paragraph -- and
+        # `fix` writes FOLDED/FLAT/OVERSET without asking. Good enough to put
+        # in front of a reader with the page open, not good enough to write.
+        if f["pdf"] is not None and f["pdf"].get("apart_by") == "shape" \
+                and not include_shape:
+            continue
         if f["verdict"] == "FOLDED-PLAIN":
             if not include_plain:
                 continue
@@ -588,7 +632,7 @@ def run(stem, args):
     with fitz.open(pdf) as doc:
         for pno, page in enumerate(doc, start=1):
             lines = visual_lines(page)
-            mark_set_apart(lines, args.gap, args.width)
+            mark_set_apart(lines, args.gap, args.width, not args.no_shape)
             score_underlines(page, lines, args.dpi)
             score_bold_reliability(lines, args.bold_noise)
             for ln in lines:
@@ -615,6 +659,11 @@ def main():
         p.add_argument("--width", type=float, default=WIDTH,
                        help="longest a head may be, as a fraction of the page's "
                             f"body measure (default {WIDTH})")
+        p.add_argument("--no-shape", action="store_true",
+                       help="only treat a line as set apart when it has clear "
+                            "leading above and below, disabling the three-line "
+                            "shape test (short line, paragraph-final line "
+                            "above, full-measure line below)")
         p.add_argument("--min-ratio", type=float, default=RATIO,
                        help="similarity a PDF line and a Markdown line need "
                             f"before they count as the same text (default {RATIO})")
@@ -641,6 +690,11 @@ def main():
         if name == "fix":
             p.add_argument("--marker", default=DEFAULT_MARKER,
                            help=f"what to prefix a head with (default {DEFAULT_MARKER!r})")
+            p.add_argument("--include-shape", action="store_true",
+                           help="also apply candidates found only by the "
+                                "three-line shape test. Off by default: these "
+                                "are roughly half real, so confirm each "
+                                "against a render first")
             p.add_argument("--include-plain", action="store_true",
                            help="also break FOLDED-PLAIN lines: they get the "
                                 "paragraph break but no marker")
@@ -656,7 +710,8 @@ def main():
         md, md_lines, found = data
         open_n = report(stem, md_lines, found, args.verbose)
         if args.cmd == "fix" and (open_n or args.include_plain):
-            new, applied = apply(md_lines, found, args.marker, args.include_plain)
+            new, applied = apply(md_lines, found, args.marker,
+                                 args.include_plain, args.include_shape)
             if applied:
                 md.write_text("\n".join(new), encoding="utf-8")
                 print(f"  wrote {md} ({applied} line(s) changed)")

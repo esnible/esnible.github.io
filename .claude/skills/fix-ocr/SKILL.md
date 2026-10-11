@@ -176,7 +176,31 @@ everywhere, so none of these is a from-context fix.
   money at all. In issues after 1999 a euro price is ordinary — check the
   issue date before touching one.
 
-**Never rewrite either symbol inside an HTML comment.** The OCR skills
+### A registered sign is a footnote digit
+
+`®` is never the registered trademark sign in this corpus. 218 occurrences
+across 47 files, and not one of them is genuine -- the recent issues, where a
+product trademark could legitimately appear, carry it only inside mojibake
+Arabic runs. What it stands for depends on where it sits:
+
+- **A superscript footnote marker, after a word or a full stop** (~93, the
+  common prose case): `an agreement®`, `...the Sichuan Rupee.®`, `points
+  out®`. The corpus already writes these as Unicode superscripts -- 1788 of
+  them, `¹` alone 398 times -- so the restoration is `agreement⁶`, not `6`.
+  **The digit is not fixed, so there is no blanket substitution.** ONS_109
+  alone reads `®` as ⁶ three times and ⁸ once, two of them on facing pages:
+  `Japanese⁶ private castings` but `0.75 tael string⁸`. Render each one. The
+  same file's other markers are garbled in their own ways (`!` for ¹, `?` for
+  ², `\>` for ⁵), so the footnote list on the page is a useful cross-check
+  once the render gives you the digit.
+- **Debris inside a wrecked foreign-script or figure run** (~70): `ÚD®Ïv`,
+  `# DESIGN **®** **® ®**`. The `®` is a symptom of the wreck, not a defect of
+  its own -- that line belongs to `transcribe-foreign-script` or to
+  `detect-missing-figures`, and fixing the symbol alone achieves nothing.
+- **A misread `@` in an e-mail address** (8): `e-mail album®sonic net`,
+  `E-mail: ®home.com`.
+
+**Never rewrite any of these symbols inside an HTML comment.** The OCR skills
 record their own evidence there, and that includes quoting the bad reading:
 `IS_021` carries `<!-- script-ok ... reason=... (OCR had €°3 and 6-3) -->`,
 where the `€` is the point of the sentence. A blanket sweep over the file
@@ -208,12 +232,17 @@ grep -nE ' amd | tbe | tne | arid | Mc\. [A-Z]| am [aeiou]| 1n | 0f ' "<path>"
 Run the currency grep too, excluding the HTML comments that quote bad OCR on purpose:
 
 ```
-grep -nE '[¥€]' "<path>" | grep -v '<!--'
+grep -nE '¥|€|®' "<path>" | grep -v '<!--'
 ```
 
+Write the alternation, not a bracket class: `grep -nE '[¥€]'` matches these
+multi-byte glyphs a byte at a time and reports every line holding a `£`,
+which gave 14 false hits on a file carrying neither symbol.
+
 Every `¥` hit needs checking and most resolve to `½`; a `€` hit in a
-pre-1999 issue is certainly wrong. See *Currency symbols that are not
-currency* above for what each one usually stands for.
+pre-1999 issue is certainly wrong; every `®` is wrong, but what replaces it
+varies. See *Currency symbols that are not currency* and *A registered sign
+is a footnote digit* above for what each one usually stands for.
 
 Also run this one on its own — it needs no judgment on whether the backslash itself is garble, only on what to do with it:
 
@@ -305,7 +334,7 @@ After all edits and dictionary updates:
 
    ```
    scripts/detect_mirrored_text.py scan "<path>"
-   grep -nE '[¥€]' "<path>" | grep -v '<!--'
+   grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
 
 ## Update the TODO tracker

@@ -22,6 +22,7 @@ python3 .claude/skills/detect-missing-figures/scripts/detect_figures.py screen O
 |---|---|
 | `MISSING` | figure-like ink, and no `figure` / `script-*` / `table-*` marker names this page |
 | `COVERED` | a marker names this page (shown with `-v`) |
+| `UNCOVERED` | a region of a `COVERED` page that no marker's `rect=` overlaps — always shown, never counted into `MISSING` or the exit status |
 | `RULED` | unmarked, but the ink is mostly thin straight rules — a bordered table or frame, `detect-missing-tables`' job (shown with `-v`, not counted) |
 
 Each region prints a `rect=x0,y0,x1,y1` in PDF points, ready for `detect_script_garble.py render <STEM> --page N --clip x0 y0 x1 y1` (write the four numbers out; zsh does not split a variable). Exit status is 1 when anything is `MISSING`. Pages are 0-based, as in every `page=N` marker. The script needs PyMuPDF and numpy, and reads PDFs from `$ONS_ARCHIVE_DIR`. A full `--all` run takes about 2.5 minutes.
@@ -35,11 +36,43 @@ Calibrated on the files that already have `figure` markers: it finds about 90% o
 - **The masthead logo** is skipped only when it is small and in the top fifth of page 0. Other logos and ornaments will show up.
 
 It misses:
-- A second, unmarked figure on a page that already has any marker — the page counts as covered.
+- A second, unmarked figure on a page whose markers do not all carry a `rect=` — the page counts as covered. Give every marker on a page its `rect=` and the screen will report the regions none of them covers (see below).
 - Small or faint drawings: symbol rows, pale photos, very thin line art.
 - Drawings with OCR junk words on top of them. The script erases those word boxes too, and loses the ink.
 
 A `MISSING` is therefore a page to look at, not a finding. **Always render the page before acting.**
+
+## Second figures on a covered page
+
+A page's markers cover the whole page unless every one of them carries a
+`rect=`. When they all do, the screen compares each figure region against
+them and reports any the rects miss as `UNCOVERED`.
+
+This is a lead, not a verdict, and it does not touch the exit status. The ink
+it reports is unexplained, which on a scan means a figure *or* a line of text
+the OCR layer missed — and nothing here separates the two, because the text
+the layer missed has no word boxes either, so counting words inside a region
+tells you nothing.
+
+Corpus-wide it reports **61 regions on 27 pages across 18 files**, 31 of them
+at the page-scale threshold the `MISSING` verdict uses. Four of those pages
+were rendered:
+
+| page | what it was |
+|:--- |:--- |
+| `ONS_097` p3 | **real** — the Siamese amulet photographed obverse and reverse, unmarked; the page's one marker covers the Jalnapur rupee lower down |
+| `ONS_109` p3 | **real** — the Farrukhsiyar 1/8 and 1/16 enlargements, unmarked beside the Arkat double rupee |
+| `ONS_109` p5 | **real** — three Hims folles drawn under their heading, unmarked above the Eiraku-tsuho rubbings |
+| `OP_014` p4 | false — a handwritten page; the "figure" is the handwriting |
+| `ONS_096` p3 | false — a typed paragraph the OCR layer skipped |
+
+About the same hit rate as `MISSING` itself, in other words, and for the same
+reason. `ONS_109`'s two were invisible until that file's markers were given
+rects.
+
+So: adding `rect=` to a marker buys recall on its page and costs some noise
+there. Worth doing on a file you are working through; not worth a corpus-wide
+campaign. 44% of the corpus's 2,378 markers carry one today.
 
 ## Acting on a MISSING page
 
@@ -61,4 +94,5 @@ A marker whose page shows no figure at all (ONS_136 `page=3`, whose photograph i
 
 - Don't add a marker without rendering the page — the screen is a lead, not evidence.
 - Don't mark logos, printers' ornaments, decorative rules, or scan dirt as figures.
-- Don't treat `COVERED` as proof that every figure on the page is marked.
+- Don't treat `COVERED` as proof that every figure on the page is marked — it only ever meant "something on this page is marked". Give the page's markers rects if you want the rest of it checked.
+- Don't act on an `UNCOVERED` region without rendering it. Two of the five rendered so far were text the OCR layer missed, not artwork.

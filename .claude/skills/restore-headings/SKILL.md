@@ -36,7 +36,8 @@ sufficient:
 
 | Signal | What it means | Why it is not enough alone |
 |:--- |:--- |:--- |
-| **set apart** | clear space above *and* below, and the line stops short of the right margin | a short body line between two figures looks identical |
+| **set apart (gap)** | clear space above *and* below, and the line stops short of the right margin | a short body line between two figures looks identical |
+| **set apart (shape)** | no extra leading at all, but the three-line shape of a head: a short line, a paragraph's last line above it, a full-measure line below | about half of what it adds beyond the gap test is a head; the rest are run-in labels and closing notes |
 | **underline** | a long contiguous ink run under the line's own x-extent, **minus** the same measurement taken in the margin to its right | a scan streak running clear across the page scores as high as a real underline |
 | **capitals** | an all-capitals line | how these typewriters mark a head when they do not underline it (`NOTE`, `BIBLIOGRAPHY`) |
 | **bold** | the OCR text layer flags the line's characters bold, end to end | some scans mis-tag a whole page's body text bold too, so this is only trusted where that is not happening (see below) |
@@ -44,6 +45,26 @@ sufficient:
 Being set apart makes a line a *candidate*. An underline, capitals, or bold
 makes a candidate a *head*. A candidate that is none of these wants the
 paragraph break but no marker.
+
+A line reaches candidacy by **either** route. The gap test is the stronger
+evidence and is what `fix` acts on; the shape test exists because some heads
+have no gap to find. ONS_109's `ONS News` and `Notes` sit flush in the text
+block -- 9.1-11.5pt of leading against the 13.8pt the gap test wants -- on a
+page whose text layer tagged nothing, so heading, body line and article title
+all come back Times-Roman 9.0 with `bold=0.00`. Neither of the other signals
+exists there; the shape is all that is left, and it is what a reader uses.
+
+Because that evidence is weaker, **a candidate found only by shape is reported
+but never written** without `--include-shape`. The report tags each finding
+`[gap]` or `[shape]` so the difference is visible. Confirm a `[shape]` finding
+against a render before applying it.
+
+Its other effect is defensive, and is the reason to leave it on. A head the
+gap test cannot see never reaches the PDF->Markdown pass, so a correct `##` in
+the Markdown falls through to the Markdown->PDF pass, finds no head evidence,
+and is reported `OVERSET` -- marker to be *removed*. Over six files the shape
+test stopped two such removals, both verified on the page: ONS_130's
+`More ONS News` (bold) and OP_017's `Class C` (underlined).
 
 The pages carry no vector drawings (`get_drawings() == []`), so the underline is
 found in pixels, the same way `detect_tables.py` finds ruling lines.
@@ -181,6 +202,9 @@ git diff <before> -- jons/ | awk '/^\+\+\+ b\// {f=substr($2,3)}
   interline spacing.
 - `--width` (default 0.75) -- longest a head may be, as a fraction of the page's
   body measure.
+- `--no-shape` -- require the gap test, disabling the shape route entirely.
+- `--include-shape` (`fix` only) -- also apply what only the shape test found.
+  Off by default; see above.
 - `--min-ratio` (default 0.72) -- similarity before two lines count as the same
   text.
 - `--min-bold` (default 0.9) -- fraction of a line's own characters the OCR

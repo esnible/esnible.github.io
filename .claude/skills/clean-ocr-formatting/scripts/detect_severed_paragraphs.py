@@ -45,8 +45,30 @@ rules below are the ways a line can prove it was cut rather than ended:
                       is a real entry boundary and only the marker was wrong.
   * `hyphen-split` -- the line ends on a hyphenated word fragment, so the
                       halves join into one word with no space.
+  * `paren-split`  -- the line leaves a bracket open and the continuation
+                      opens with the matching closer: `... of the same date
+                      (AH` + `1200/Ry.4). The coin shows ...` (ONS_109).
+                      Alone among these rules the proof is mechanical rather
+                      than a judgement about English -- a paragraph cannot
+                      end inside a parenthesis, and a continuation cannot
+                      begin by closing one that was never opened. The two
+                      halves have to agree, which is what keeps a dropped
+                      `)` elsewhere in the file out of it. `fake-list` keeps
+                      precedence over this rule: a `- ` continuation renders
+                      as a bullet whether or not the blank line goes, so the
+                      bracket evidence must not route it to `fix`.
+  * `paren-far`    -- the same shape, but the bracket closes more than
+                      `PAREN_SPAN` characters from where it opened. Corpus-
+                      wide, 363 of the 370 are under that and read as one
+                      citation or gloss; the seven above it are a stray `)`
+                      closing a `(` the OCR dropped half a page earlier, and
+                      four of those seven are two unrelated paragraphs.
+                      Reported, never fixed.
 
-A line ending in `.`, `!`, `?` or `:` is never flagged. A paragraph may well
+A line ending in `.`, `!`, `?` or `:` is never flagged (`paren-split`
+included: an open bracket is strong evidence, but a line that both closes its
+sentence and leaves a bracket hanging has lost a `)` to the OCR, which is
+`fix-ocr`'s business, not a severed paragraph). A paragraph may well
 end there, and nothing in the text can tell a real boundary from a cut one,
 so those stay invisible to this script by design.
 
@@ -150,6 +172,16 @@ WORD_RE = re.compile(r"[A-Za-z][A-Za-z'’]*$")
 # A hyphenated fragment: `manu-`, `Muzaf-`. Not ` -` (a quote intro) and not
 # an em/en dash.
 HYPHEN_TAIL_RE = re.compile(r"[A-Za-z]{2}-$")
+BRACKETS = {"(": ")", "[": "]", "{": "}"}
+BRACKET_CHARS = set(BRACKETS) | set(BRACKETS.values())
+# How long a parenthesis may run, opener to closer, and still read as one.
+# What this corpus brackets across a line break is a citation (`(Kochnev` +
+# `1997, 279-281)`), a date, or a legend's translation -- 368 of the 376
+# corpus findings measure under 250 characters end to end. Above it the
+# pattern is a stray `)` well down the page closing a `(` the OCR dropped
+# half a paragraph earlier, so the two halves have nothing to do with
+# each other.
+PAREN_SPAN = 250
 
 # --- entry boundaries that imitate a cut sentence ----------------------------
 # A `\n\n` inside the footnote apparatus, the officers masthead or a numbered
@@ -228,11 +260,18 @@ def bold_title_continuation(nxt):
     instead of `#`, so `is_prose` lets them through and the function-word rule
     above claims the gap. Only the *first* span is tested: a prose
     continuation does not open on a bold heading.
+
+    Three asterisks count as well. pdfmd marks a run-in head `***Reviews***`
+    as readily as `**Reviews**`, and reading the inner pair as the emphasis
+    left the span starting on a `*`, which failed the capital test below and
+    let the title through as prose (ONS_163).
     """
-    m = re.match(r"\s*\*\*(.+?)\*\*(.*)$", nxt)
-    if not m or not heading_like(m.group(1)):
+    m = re.match(r"\s*(\*{2,3})(.+?)\1(.*)$", nxt)
+    if not m or not heading_like(m.group(2)):
         return False
-    span, rest = m.group(1), m.group(2).lstrip()
+    span, rest = m.group(2).strip("*_ "), m.group(3).lstrip()
+    if not span:
+        return False
     # A title opens on a capital or a number. `**period prior to the**
     # Arakanese era` is emphasised prose, and the sentence above it really
     # was cut.
@@ -288,6 +327,47 @@ def last_word(text):
     if m.start() > 0 and strip_closers(text)[m.start() - 1].isdigit():
         return ""
     return word.lower()
+
+
+def unclosed_bracket(text):
+    """The bracket this line leaves open, or `''`.
+
+    A closer with nothing to match is OCR debris -- a dropped opener, or a
+    `)` standing in for a footnote marker -- and makes the whole line's
+    bracket count untrustworthy, so the rule stands down rather than guess.
+    """
+    stack = []
+    for ch in text:
+        if ch in BRACKETS:
+            stack.append(ch)
+        elif ch in BRACKETS.values():
+            if not stack or BRACKETS[stack[-1]] != ch:
+                return ""
+            stack.pop()
+    return stack[-1] if stack else ""
+
+
+def opener_distance(text):
+    """How far back from the end of the line the unclosed bracket sits."""
+    stack = []
+    for i, ch in enumerate(text):
+        if ch in BRACKETS:
+            stack.append(i)
+        elif ch in BRACKETS.values() and stack:
+            stack.pop()
+    return len(text) - stack[-1] if stack else 0
+
+
+def closes_bracket(nxt, closer):
+    """True when the continuation's first bracket is the one `prev` left open.
+
+    Requiring it to come *first* is what separates a cut sentence from a
+    paragraph that merely happens to contain brackets of its own.
+    """
+    for ch in nxt:
+        if ch in BRACKET_CHARS:
+            return ch == closer
+    return False
 
 
 def blocks(lines):
@@ -386,6 +466,17 @@ def scan(path, loose=False):
                 f"see whether the break is a cut sentence or a real boundary"))
             continue
 
+        opener = unclosed_bracket(prev) if not terminal else ""
+        if opener and closes_bracket(nxt, BRACKETS[opener]):
+            span = opener_distance(prev) + nxt.index(BRACKETS[opener])
+            near = span <= PAREN_SPAN
+            findings.append((
+                gap_line, "ERROR", "paren-split" if near else "paren-far",
+                f"{opener!r} is left open and the continuation closes it"
+                + ("" if near else f", {span} characters away") + ": "
+                f"{prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
+            continue
+
         if not terminal and tail in FUNCTION_TAILS:
             findings.append((
                 gap_line, "ERROR", "severed",
@@ -446,7 +537,7 @@ def sub_rule(label, msg):
     return "lower"
 
 
-DEFAULT_FIX_RULES = ("tail", "hyphen-split")
+DEFAULT_FIX_RULES = ("tail", "hyphen-split", "paren-split")
 
 
 def fix(path, rules=DEFAULT_FIX_RULES):
@@ -474,6 +565,9 @@ def fix(path, rules=DEFAULT_FIX_RULES):
                  "time (an OCR'd full stop) -- decide this one by eye",
         "lower": "a lower-case continuation is usually a catalogue field, "
                  "not prose resuming -- decide this one by eye",
+        "paren-far": "the bracket closes so far down that the two halves are "
+                     "probably unrelated -- check the opener really belongs "
+                     "to this sentence before collapsing",
     }
     for n, lab in refused:
         print(f"{path}:{n}: left for you -- {lab} "

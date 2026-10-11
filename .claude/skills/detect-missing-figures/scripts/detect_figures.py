@@ -18,16 +18,29 @@ page in the Markdown is reported as MISSING.
 Verdicts per page with figure-like ink:
     MISSING   no marker for this page -- render it and look
     COVERED   a figure / script-* / table-* marker names this page
+    UNCOVERED a region of a COVERED page that no marker's `rect=` overlaps --
+              only computed when every marker on the page carries one, and
+              never counted into MISSING or the exit status
     RULED     unmarked, and the ink is mostly thin straight rules: a bordered
               table or frame, which detect-missing-tables owns -- not counted
 
 The `rect=` is in PDF points, ready for `detect_script_garble.py render
 --clip`. Exit status 1 when anything is MISSING.
 
-Blind spots: a figure on a page that already has any marker counts as
-covered (a second, unmarked figure there is not detected); pale photos can
-fall under the ink threshold; a page whose text layer is missing entirely
-reads as all-figure.
+Blind spots: a figure on a page that already has a marker with no `rect=`
+counts as covered (a second, unmarked figure there is not detected); pale
+photos can fall under the ink threshold; a page whose text layer is missing
+entirely reads as all-figure.
+
+UNCOVERED is a lead and deliberately not a verdict. The ink it reports is
+unexplained, which on these scans means a figure *or* a line of text the OCR
+layer missed, and the two are not separable here -- the text the OCR missed
+has no word boxes either, so counting words inside a region does not tell
+them apart. Corpus-wide: 61 regions on 27 pages across 18 files. Five were
+rendered -- ONS_097 p3, ONS_109 p3 and ONS_109 p5 held real unmarked figures;
+OP_014 p4 is a handwritten page and ONS_096 p3 a typed paragraph the OCR
+layer skipped. About MISSING's own hit rate, so the page verdict stays as it
+is and this rides alongside it.
 """
 import argparse
 import os
@@ -60,8 +73,9 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
 MD_DIR = REPO_ROOT / "jons"
 
 MARKER_RE = re.compile(
-    r"<!--\s*(figure|script-ok|script-guess|script-deferred|table-ok|table-deferred)"
-    r"\s+page=(\d+)")
+    r"<!--\s*(figure|script-ok|script-guess|script-deferred|script-removed"
+    r"|table-ok|table-deferred)"
+    r"\s+page=(\d+)(?:\s+rect=([0-9.,+-]+))?")
 
 DPI = 50            # 1 px ~ 1.4 pt: plenty for finding blobs, fast
 INK = 110           # gray level below which a pixel is ink
@@ -176,7 +190,33 @@ def ruled_ink(regs):
 
 
 def marked_pages(md_text):
-    return {int(m.group(2)) for m in MARKER_RE.finditer(md_text)}
+    """page -> list of marker rects, `None` for a marker that gives none.
+
+    A page holding any `None` is covered whole, as it always was; only a page
+    whose markers all carry a `rect=` can say which of its regions are spoken
+    for."""
+    out = {}
+    for m in MARKER_RE.finditer(md_text):
+        rect = None
+        if m.group(3):
+            try:
+                v = [float(x) for x in m.group(3).split(",")]
+            except ValueError:
+                v = []
+            if len(v) == 4:
+                rect = tuple(v)
+        out.setdefault(int(m.group(2)), []).append(rect)
+    return out
+
+
+def uncovered(figs, rects):
+    """FIGURE regions no marker rect overlaps, or [] if any marker gave none."""
+    if not rects or any(r is None for r in rects):
+        return []
+    return [f for f in figs
+            if not any(not (f[0][2] <= r[0] or r[2] <= f[0][0]
+                            or f[0][3] <= r[1] or r[3] <= f[0][1])
+                       for r in rects)]
 
 
 def screen(stem, verbose, md_override=None):
@@ -190,12 +230,14 @@ def screen(stem, verbose, md_override=None):
         return False
     marked = marked_pages(md_path.read_text(encoding="utf-8"))
     doc = fitz.open(pdf_path)
-    rows, counts = [], {"MISSING": 0, "COVERED": 0, "RULED": 0}
+    rows, counts = [], {"MISSING": 0, "COVERED": 0, "UNCOVERED": 0, "RULED": 0}
     for pno in range(len(doc)):
         regs = figure_regions(doc[pno], pno)
         figs, ruled = figure_ink(regs), ruled_ink(regs)
+        loose = []
         if (figs or ruled) and pno in marked:
             verdict, show = "COVERED", figs + ruled
+            loose = uncovered(figs, marked[pno])
         elif figs:
             verdict, show = "MISSING", figs
         elif ruled:
@@ -203,12 +245,21 @@ def screen(stem, verbose, md_override=None):
         else:
             continue
         counts[verdict] += 1
+        counts["UNCOVERED"] += len(loose)
         if verdict == "MISSING" or verbose:
             for (x0, y0, x1, y1), _, n in show:
-                rows.append(f"  {verdict:8} p{pno}  rect={x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}  cells={n}")
-    status = "nothing outstanding" if not counts["MISSING"] else f"{counts['MISSING']} page(s) to review"
+                rows.append(f"  {verdict:9} p{pno}  rect={x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}  cells={n}")
+        for (x0, y0, x1, y1), _, n in loose:
+            rows.append(f"  {'UNCOVERED':9} p{pno}  rect={x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}  cells={n}"
+                        "  -- no marker rect covers this; render it")
+    if counts["MISSING"]:
+        status = f"{counts['MISSING']} page(s) to review"
+    elif counts["UNCOVERED"]:
+        status = f"{counts['UNCOVERED']} region(s) to look at"
+    else:
+        status = "nothing outstanding"
     print(f"{stem}: {len(doc)} page(s) | MISSING {counts['MISSING']}  COVERED {counts['COVERED']}  "
-          f"RULED {counts['RULED']} -- {status}")
+          f"UNCOVERED {counts['UNCOVERED']}  RULED {counts['RULED']} -- {status}")
     for r in rows:
         print(r)
     return counts["MISSING"] > 0

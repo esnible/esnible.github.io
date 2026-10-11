@@ -1,6 +1,6 @@
 ---
 name: clean-ocr-formatting
-description: Repair three OCR layout artifacts in a `jons/` Markdown file -- per-word asterisks (`*word *` or `**word **`), words split with internal spaces (`Numi smat i c` → `Numismatic`), and paragraphs severed mid-sentence by a stray blank line where `pdfmd` read one physical line of the scan as its own block (including the case where the continuation begins with an OCR'd dash that Markdown then renders as a bullet). Use when an OCR'd file has passages wrapped in per-word emphasis marks, letter-spaced words, a sentence that breaks off mid-clause and resumes in the next paragraph, or a one-item bullet list that is really the middle of a sentence. Typically followed by the `fix-ocr` skill to clean up remaining single-word OCR errors.
+description: Repair three OCR layout artifacts in a `jons/` Markdown file -- per-word asterisks (`*word *` or `**word **`), words split with internal spaces (`Numi smat i c` → `Numismatic`), and paragraphs severed mid-sentence by a stray blank line where `pdfmd` read one physical line of the scan as its own block (including the case where the continuation begins with an OCR'd dash that Markdown then renders as a bullet). Use when an OCR'd file has passages wrapped in per-word emphasis marks, letter-spaced words, a sentence that breaks off mid-clause and resumes in the next paragraph (including across an unclosed bracket), or a one-item bullet list that is really the middle of a sentence. Typically followed by the `fix-ocr` skill to clean up remaining single-word OCR errors.
 ---
 
 # clean-ocr-formatting
@@ -67,6 +67,8 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    | `severed` | the line ends on a function word (`of`, `in`, `and`, `the`) or a comma, or the continuation starts lowercase — none of which can end or begin a sentence | collapse one newline; `fix` does it |
    | `fake-list` | the continuation starts `- `, so Markdown renders a bullet | collapse **and** restore the dash — see below |
    | `hyphen-split` | the line ends on a hyphenated fragment (`Muzaf-`) | join into one word, no space; `fix` does it |
+   | `paren-split` | the line leaves a bracket open and the continuation closes it (`...of the same date (AH` / `1200/Ry.4). The coin...`) | collapse one newline; `fix` does it |
+   | `paren-far` | the same, but the bracket closes more than 250 characters from where it opened | read it — usually two unrelated paragraphs |
    | `maybe-severed` | `--loose` only: no terminal punctuation but the continuation is capitalised or a bare number | read it and decide by hand |
 
    **Why only one newline?** In CommonMark, `\n\n` is a paragraph break but a
@@ -74,6 +76,32 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    Removing one newline preserves the file's line-by-line structure (useful in
    diffs) while letting the text reflow as one paragraph. `fix` does this;
    when editing by hand, do the same rather than joining both lines into one.
+
+   **An unclosed bracket is the one mechanical proof here.** Every other rule
+   is a judgement about English and carries the error rate of one. A line that
+   leaves a `(` open is not a line that ended, and a continuation that opens by
+   closing it is not a paragraph that began — the two halves have to agree
+   before the rule fires, which is what keeps a `)` the OCR dropped elsewhere
+   out of it. Corpus-wide it finds **370 breaks in 83 files**, not one of which
+   any other rule reported; a sample of 18 read against the page came back
+   17 right, and the one wrong was `***Reviews***` run on to a members-news
+   list, which is now suppressed as a bold title (the guard had only ever
+   matched two asterisks). This was the defect ONS_109's
+   `...of the same date (AH` / `1200/Ry.4). The coin shows...` sat on through
+   four passes: the all-capitals `AH` is deliberately not read as a word, so
+   the function-word rule could not see it, and the continuation opens on a
+   digit, which is `--loose` only and off by default.
+
+   **`paren-far` is where it stops being mechanical.** Beyond ~250 characters
+   the opener and the closer are usually unrelated — a stray `)` down the page
+   meeting a `(` the OCR dropped half a paragraph earlier (ONS_174, ONS_201,
+   ONS_202). Seven of the 370 land there and `fix` refuses them.
+
+   **`fake-list` keeps precedence over `paren-split`.** Five breaks match both
+   — `(M. 287` / `- 298)`, `(November 1991` / `- January 1992)` — and the
+   bracket does not change what has to happen: a `- ` renders as a bullet
+   whether or not the blank line goes, so they stay in the label that sends
+   you to the scan.
 
    **`fake-list` needs the scan, so `fix` refuses it.** An unordered marker
    interrupts a paragraph even without the blank line, so collapsing the break
@@ -202,5 +230,5 @@ Capital-I-for-lowercase-l is endemic in these passages — assume any leading `I
 - Don't change British spellings or rare transliterations — defer those to the user or to the `fix-ocr` skill.
 - Don't touch fenced code blocks, inline code, URLs, image references, or front matter.
 - Don't run destructive `sed -i` without a `.bak` and a post-edit diff check — the changes are far-reaching and easy to over-apply.
-- Don't collapse a break the script labelled `fake-list` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in that category.
+- Don't collapse a break the script labelled `fake-list`, `paren-far` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in that category.
 - Don't widen the detection by matching on what follows the break. That was the old regex's mistake: it cost the skill every real instance in ONS_047, ONS_049, ONS_050 and ONS_051, because a severed line's continuation is capitalised about as often as not.

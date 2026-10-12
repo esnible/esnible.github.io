@@ -63,6 +63,7 @@ where the embedded layer reads Arabic as Latin mojibake and `pdfmd` does not.
 | `PARTIAL` | emphasis already overlaps part of the span, or an emphasis run is open across it. |
 | `AMBIGUOUS` | two lines match about as well, or one line repeats the run's own words. `song-pei` occurs 14 times in ONS_111 line 187 and the span cannot say which one is italic. |
 | `UNSAFE` | located, but the span cannot be wrapped -- it lands inside a comment, a table cell, or an existing marker. |
+| `OVERLONG` | a run the length of a paragraph. What this corpus italicises is a title or a phrase, so a run this long means a page mis-tagged below the noise gate -- ONS_064 p4's quotation in French is the honest kind, and it is still not written. |
 | `LOST` | no match in the Markdown. Usually the passage is garbled past matching; occasionally `pdfmd` dropped it. |
 | `NOISE` | the run is not words. Counted, never matched. |
 
@@ -89,9 +90,14 @@ the evidence for each number.
   by default, because the counts agreeing is evidence and not proof -- one bad
   match, or one citation the Markdown lost, shifts the whole assignment by one
   and writes every marker in the wrong place.
-- `--italic-noise` (0.5) -- fraction of a page's own characters that may be
-  italic before the page is judged mis-tagged and dropped whole. The same gate
-  `detect_headings.py` applies to bold, for the same failure.
+- `--italic-noise` (0.9) -- fraction of a page's own characters that may be
+  italic before the page is dropped whole, the gate `detect_headings.py`
+  applies to bold. Across the 5206 pages of the archive that carry text, 4005
+  score under 0.1 and 17 over 0.9, and that high end holds two different
+  things the share cannot separate: OP_001 p1 is an upright letter-spaced
+  typescript ABBYY tagged italic to the last character, ONS_191 p23 is a plate
+  whose captions genuinely are all italic. The default catches the first and
+  accepts losing the second.
 - `DENSITY` (0.80, in the script) -- the matched letters over the span of
   Markdown they are spread across. This is what stops a match from annexing a
   neighbouring word: ONS_125's garbled `The World oflslanr` matches
@@ -110,8 +116,21 @@ title that legitimately continues past a full stop is common in this corpus
 "trim the tail after the last stop" rule would break more than it fixed. Read
 the diff.
 
+**A caption set wholly in italic comes back in pieces.** The text layer
+reports it one line of the scan at a time, and `fix` fuses the pieces that sit
+together on a Markdown line (ONS_210 line 64 becomes one italic caption, as
+printed). What it cannot fuse is a piece that never matched -- ONS_210 line 66
+ends up `*Turko-Hephthalite, Prince of Bukhara*, c. AD 585-700, with legend in
+Sogdian` where the whole caption is italic on the page. The result is a
+partial restoration, not a wrong one, but on a plate-catalogue file expect to
+finish the captions by hand.
+
 Measured on ONS_111 against the rendered pages: 14 of 14 proposed spans are
-genuinely italic in print, and 13 of 14 have the right boundary.
+genuinely italic in print, and 13 of 14 have the right boundary. A further 8
+spans were drawn at random from 8 other files; the 3 rendered and read (ONS_125's
+`Mazandaran and Astarabad`, ONS_129's `Standard Catalog of World Coins`,
+ONS_064's `Regional Secretaries`) were right, and the other 5 were masthead
+labels of the kind already checked on ONS_111.
 
 ## What NOT to do
 

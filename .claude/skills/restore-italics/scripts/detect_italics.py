@@ -42,6 +42,7 @@ Verdicts:
   AMBIGUOUS  two or more comparable matches; which one is meant is a guess
   UNSAFE     located, but the span cannot be wrapped (lands mid-word, crosses
              a comment, a table cell or an existing marker)
+  OVERLONG   a run the length of a paragraph; see MAX_LEN
   LOST       no match in the Markdown at all -- usually the passage is garbled
              past matching, sometimes `pdfmd` dropped it
   NOISE      the run is not words; never matched, counted only
@@ -105,6 +106,9 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   Indo-Scythic Coinage` aligned its leading `i` to the `i` of the preceding
 #   word `his` (the Markdown's own OCR having dropped the `I` from `Indo`),
 #   which put `his` inside the italics.
+# TRIGRAM: share of a run's three-letter sequences a Markdown line must carry
+#   before it is worth the fuzzy match. Purely a speed filter, set well below
+#   anything a real match loses to OCR garble.
 # CASE_WEIGHT: how much the capitalisation agreement may move a match's score,
 #   either way. At 0.08 it separates two matches that are otherwise tied --
 #   `Annual Subscription` from `annual subscription: within USA $12` -- by
@@ -116,9 +120,19 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 # MIN_WORDS: a run needs this many Latin-script words of 3+ letters to be read
 #   as text rather than as a tagged scrap of garble.
 # ITALIC_NOISE: fraction of a page's own characters that may come back italic
-#   before the page is judged mis-tagged and dropped whole. A normal page
-#   scores 0.00-0.08; a page ABBYY set in an italic face throughout scores
-#   near 1.0, and would otherwise propose italicising its entire text.
+#   before the page is dropped whole. Measured over the 5206 pages of the
+#   archive that carry text: 4005 score under 0.1, 53 over 0.5, 17 over 0.9.
+#   The high end holds both kinds of page, and the share cannot tell them
+#   apart -- OP_001 p1 is a letter-spaced typescript, upright on the page,
+#   that ABBYY tagged italic to the last character; ONS_191 p23 is a plate
+#   whose captions really are all italic. 0.9 is set to catch the first: it
+#   also drops the second, whose captions the Markdown mostly carries as
+#   figure markers anyway, and it keeps a page like ONS_064 p4 (0.53, a long
+#   quotation in French, genuinely italic) where most of the value is.
+# MAX_LEN: longest a run may be, in alphanumerics, and still be written. What
+#   this corpus italicises is a title or a phrase; a run the length of a
+#   paragraph means a page that was mis-tagged below the gate, and wrapping it
+#   would italicise the paragraph. Reported as OVERLONG.
 # PAGE_CHARS: a page with less text than this is not worth the noise test --
 #   a page that is one caption can legitimately be 100% italic.
 # ASTERISK_NOISE: per-word emphasis spans (`*word *`) in the Markdown before
@@ -127,8 +141,9 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   hundreds (ONS_Supplement_205 has 1253). 20 sits in the empty middle.
 RATIO, MARGIN = 0.85, 0.10
 CASE_WEIGHT, DENSITY, MIN_EDGE = 0.08, 0.80, 2
-MIN_LEN, MIN_WORDS = 12, 2
-ITALIC_NOISE, PAGE_CHARS = 0.5, 200
+TRIGRAM = 0.35
+MIN_LEN, MIN_WORDS, MAX_LEN = 12, 2, 200
+ITALIC_NOISE, PAGE_CHARS = 0.9, 200
 ASTERISK_NOISE = 20
 
 ITALIC_FLAG = 2 ** 1  # PyMuPDF span flags bit 1
@@ -252,11 +267,18 @@ def italic_share(page):
 # --- matching -------------------------------------------------------------
 
 def normalize(text):
-    """Lowercase alphanumerics, plus a map back to columns in the original."""
+    """Lowercase alphanumerics, plus a map back to columns in the original.
+
+    One character in, one character out -- `cols[i]` has to be the column
+    `chars[i]` came from, and `str.lower()` does not promise that: Turkish
+    `İ.lower()` is two characters, `i` plus a combining dot. ONS_219 line 1432
+    has one, and the extra character shifted every column after it and then
+    ran the map off its end.
+    """
     chars, cols = [], []
     for i, ch in enumerate(text):
         if ch.isalnum():
-            chars.append(ch.lower())
+            chars.append(ch.lower()[:1])
             cols.append(i)
     return "".join(chars), cols
 
@@ -348,28 +370,58 @@ def case_agreement(run_text, segment):
     return sum(x.isupper() == y.isupper() for x, y in pairs) / len(pairs)
 
 
-def candidates(md_lines, run_text, needle_norm, min_ratio=RATIO):
-    """Every Markdown line that plausibly carries this run, best first.
+def trigrams(text):
+    return {text[i:i + 3] for i in range(len(text) - 2)}
 
-    Each hit is (adjusted score, row, start, end, repeats, raw ratio). The adjustment is
-    the capitalisation agreement, worth up to +/-CASE_WEIGHT -- enough to
-    separate two otherwise identical matches, not enough to promote a poor one.
 
-    The character-overlap prefilter is only for speed: these Markdown lines are
-    whole paragraphs, often 2000 characters, and SequenceMatcher against every
-    one of them for every run is the slowest thing this script does.
+def md_index(md_lines):
+    """Normalise each Markdown line once, not once per run.
+
+    The matcher asks the same question of the same lines for every italic run
+    in the file -- 477 runs against 400 paragraphs on ONS_230 -- and
+    normalising a 2000-character paragraph is not free. Lines the matcher will
+    never look at are entered as None so they stay cheap to skip.
     """
-    want = set(needle_norm)
-    hits = []
-    for row, line in enumerate(md_lines):
+    index = []
+    for line in md_lines:
         stripped = line.strip()
         if not stripped or stripped.startswith(SKIP_MD):
+            index.append(None)
             continue
         hay, cols = normalize(line)
+        index.append((hay, cols, trigrams(hay)) if hay else None)
+    return index
+
+
+def candidates(index, md_lines, run_text, needle_norm, min_ratio=RATIO):
+    """Every Markdown line that plausibly carries this run, best first.
+
+    Each hit is (adjusted score, row, start, end, repeats, raw ratio). The
+    adjustment is the capitalisation agreement, worth up to +/-CASE_WEIGHT --
+    enough to separate two otherwise identical matches, never enough to
+    promote one that failed on its letters.
+
+    The trigram prefilter is only for speed, and it is most of the file's
+    running time saved: these Markdown lines are whole paragraphs, often 2000
+    characters, and the fuzzy match is not cheap enough to run against every
+    one of them for every run.
+    """
+    want = trigrams(needle_norm)
+    hits = []
+    for row, entry in enumerate(index):
+        if entry is None:
+            continue
+        hay, cols, grams = entry
         if len(hay) < len(needle_norm) * 0.5:
             continue
-        if len(want & set(hay)) < len(want) * 0.6:
+        # Three-letter sequences shared with the line. Single letters are too
+        # common to filter anything out of a 2000-character paragraph, and the
+        # fuzzy match that follows is what this file spends its time on.
+        # Garble costs a true match a few of these, never most: `Munzen` and
+        # `Münzen` share 15 of 18.
+        if want and len(want & grams) < len(want) * TRIGRAM:
             continue
+        line = md_lines[row]
         score, first, last, repeats = find_in_line(hay, needle_norm)
         if score < min_ratio:
             continue
@@ -390,8 +442,9 @@ def candidates(md_lines, run_text, needle_norm, min_ratio=RATIO):
 # --- verdicts -------------------------------------------------------------
 
 FIXABLE = ("MISSING",)
-REVIEW = ("PARTIAL", "AMBIGUOUS", "UNSAFE")
-ORDER = ("MISSING", "PARTIAL", "AMBIGUOUS", "UNSAFE", "LOST", "PRESENT", "NOISE")
+REVIEW = ("PARTIAL", "AMBIGUOUS", "UNSAFE", "OVERLONG")
+ORDER = ("MISSING", "PARTIAL", "AMBIGUOUS", "UNSAFE", "OVERLONG", "LOST",
+         "PRESENT", "NOISE")
 QUIET = ("PRESENT", "NOISE")  # only shown with -v
 
 
@@ -437,7 +490,7 @@ def classify(line, start, end):
     return "MISSING"
 
 
-def pair_repeats(runs, md_lines, min_ratio=RATIO):
+def pair_repeats(runs, index, md_lines, min_ratio=RATIO):
     """Match a title cited k times in the scan to its k places in the Markdown.
 
     A journal cited on four pages produces four identical runs and four
@@ -462,7 +515,7 @@ def pair_repeats(runs, md_lines, min_ratio=RATIO):
     for needle, group in groups.items():
         if len(group) < 2:
             continue
-        hits = candidates(md_lines, group[0]["text"], needle, min_ratio)
+        hits = candidates(index, md_lines, group[0]["text"], needle, min_ratio)
         # One hit per Markdown line, in document order, and none of them a
         # line that repeats the words itself -- that ambiguity is not the kind
         # counting can resolve.
@@ -473,7 +526,7 @@ def pair_repeats(runs, md_lines, min_ratio=RATIO):
     return paired
 
 
-def analyse(runs, md_lines, min_ratio=RATIO, margin=MARGIN, pairing=None):
+def analyse(runs, index, md_lines, min_ratio=RATIO, margin=MARGIN, pairing=None):
     found, taken = [], []
     pairing = pairing or {}
     for run in runs:
@@ -491,7 +544,7 @@ def analyse(runs, md_lines, min_ratio=RATIO, margin=MARGIN, pairing=None):
             if len(needle) < MIN_LEN:
                 continue
             hits = [pairing[id(run)]] if id(run) in pairing \
-                else candidates(md_lines, text, needle, min_ratio)
+                else candidates(index, md_lines, text, needle, min_ratio)
             if not hits:
                 if n < len(attempts) - 1:
                     continue
@@ -506,6 +559,11 @@ def analyse(runs, md_lines, min_ratio=RATIO, margin=MARGIN, pairing=None):
                 rec["verdict"] = "AMBIGUOUS"
                 rec["start"], rec["end"] = start, end
                 rec["others"] = (len(hits) - 1) if rival else repeats - 1
+                found.append(rec)
+                break
+            if len(needle) > MAX_LEN:
+                rec["verdict"] = "OVERLONG"
+                rec["start"], rec["end"] = start, end
                 found.append(rec)
                 break
             trimmed = trim_span(md_lines[row], start, end)
@@ -565,6 +623,29 @@ def report(stem, md_lines, found, verbose, artifacts):
     return open_n
 
 
+# What may sit between two spans of one italic passage and still be part of
+# it: nothing, or the punctuation a line break was wrapped around.
+JOIN_RE = re.compile(r"^[\s,;:.\u2013-]{0,3}$")
+
+
+def merge_spans(line, spans):
+    """Fuse spans of one passage that the text layer reported line by line.
+
+    A caption set entirely in italics comes back as one run per line of the
+    scan -- ONS_210 p2 gives `Turko-Hephthalite ... Khusru`, `II and legends
+    in`, `cursive Greek, Brahmi and Pahlevi` for one caption that `pdfmd` put
+    on a single Markdown line. Wrapped separately they render as three italic
+    phrases with roman joints; wrapped together they render as the caption.
+    """
+    merged = []
+    for start, end in sorted(spans):
+        if merged and JOIN_RE.match(line[merged[-1][1]:start]):
+            merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
+        else:
+            merged.append((start, end))
+    return merged
+
+
 def apply(md_lines, found):
     """Wrap every MISSING span in `*...*`. Returns (new lines, count)."""
     edits = {}
@@ -573,8 +654,8 @@ def apply(md_lines, found):
             edits.setdefault(f["row"], []).append((f["start"], f["end"]))
     out, applied = [], 0
     for row, line in enumerate(md_lines):
-        spans = sorted(edits.get(row, []), reverse=True)  # right to left
-        for start, end in spans:
+        spans = merge_spans(line, edits.get(row, []))
+        for start, end in sorted(spans, reverse=True):  # right to left
             line = f"{line[:start]}*{line[start:end]}*{line[end:]}"
             applied += 1
         out.append(line)
@@ -597,9 +678,10 @@ def run_file(stem, args):
                 dropped += 1
                 continue
             runs.extend(italic_runs(page, pno))
-    pairing = pair_repeats(runs, md_lines, args.min_ratio) \
+    index = md_index(md_lines)
+    pairing = pair_repeats(runs, index, md_lines, args.min_ratio) \
         if args.pair_repeats else {}
-    found = analyse(runs, md_lines, args.min_ratio, args.margin, pairing)
+    found = analyse(runs, index, md_lines, args.min_ratio, args.margin, pairing)
     return (md, md_lines, found, artifact_count(md_text), dropped), None
 
 

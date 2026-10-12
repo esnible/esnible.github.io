@@ -29,6 +29,52 @@ detect_italics.py fix  ONS_111            # wrap the MISSING spans
 second; the worst in the corpus (ONS_230, 477 runs against 400 paragraphs)
 takes 45, all of it in the fuzzy match.
 
+## Where the text layer came from, and why the report says so
+
+The archive holds two kinds of file, and a verdict means something different
+in each. Every report opens by saying which one it is reading:
+
+```
+ONS_111: 35 italic run(s) | MISSING 14  NOISE 21  -- 14 to fix
+  text layer: OCR'd layer -- ABBYY in the file's metadata
+  a machine's reading of the page: the words in a run are approximate and its
+  ends are too, so a span can take in the word after the italics stop. Read
+  the render before trusting fix.
+  NOISE 21 is ordinary here -- the engine flags garble italic as readily as
+  prose.
+```
+
+```
+ONS_210: 979 italic run(s) | MISSING 1  ...  NOISE 599  -- 1 to fix
+  text layer: drawn layer -- no page scan behind the text on 6 pages, and the
+  text is drawn visibly
+  the typesetter's own text: the words in a run are exact and so are its ends,
+  so what the Markdown disagrees with is the Markdown.
+  1 of them matched under 0.95, which on this layer means the Markdown's own
+  OCR is wrong there, not the run. Worth reading.
+  NOISE 599 is not garble here, the words being exact: it is runs too short to
+  place -- a single italic letter, or a fragment of a transliterated legend.
+```
+
+On an **OCR'd layer** both sides of the match are machine readings, so a low
+ratio is ordinary, a large NOISE count is ordinary, and the boundary is the
+thing to distrust. On a **drawn layer** the run is the typesetter's own text:
+the words and the boundaries are right, every remaining disagreement belongs
+to the Markdown, and the matches under 0.95 are called out because they point
+at `pdfmd`'s own errors rather than at the run.
+
+Across the archive: 201 OCR'd (175 by metadata, 26 by the pages), 63 drawn --
+the later issues, from ONS_186 on -- and ONS_177, which carries no text at all
+and is reported as such instead of as an empty result.
+
+How it decides, in order: an OCR engine named in the file's metadata; then,
+over the first six pages **that carry text**, whether an image covers most of
+the page behind that text, or the text is drawn hidden (render mode 3) under
+the page it was read from. Only text-bearing pages count, and that is the
+whole of the difficulty: ONS_206 and ONS_232 set their plates as full-page
+images between pages of drawn text, so sampling the first four pages of either
+finds three plates and calls a born-digital journal a scan.
+
 ## This is not the mangled-emphasis problem
 
 On 114 of the 268 files `pdfmd` *did* carry emphasis across -- as per-word
@@ -127,11 +173,11 @@ ONS_210 ends up with 17 of these, among them `*Shomin no ayunda*` followed by
 `kin'yushi, Fukutoku Ginko, 1991` on the line below. A partial restoration,
 not a wrong one, but on a file like that expect to finish some by hand.
 
-ONS_210 is also the corpus's odd one out, and worth knowing about before
-reading its numbers: its text is drawn, not OCR'd over a scan -- no producer
-metadata, embedded Times subsets, visible text, and its photographs sliced
-into images one pixel high (13,930 of them on page 2, against 59 text
-blocks). That is why its italics are both plentiful and clean.
+ONS_210 is one of the 63 drawn files, which `scan` now says in its opening
+lines, and an extreme one: no producer metadata, embedded Times subsets,
+visible text, and its photographs sliced into images one pixel high (13,930
+of them on page 2, against 59 text blocks). That is why its italics are both
+plentiful and clean.
 
 Measured on ONS_111 against the rendered pages: 14 of 14 proposed spans are
 genuinely italic in print, and 13 of 14 have the right boundary. A further 8

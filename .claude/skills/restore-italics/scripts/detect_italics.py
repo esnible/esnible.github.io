@@ -403,6 +403,90 @@ def italic_share(page):
     return (ital / total if total else 0.0), total
 
 
+# --- provenance -----------------------------------------------------------
+#
+# Two kinds of file wear the same clothes here, and what a verdict is worth
+# depends on which one it came from.
+#
+# An OCR layer is a machine's reading of a scan. Its words are approximate
+# (`Umayad`, `Numisniatische`, `oflslanr`), its italic flags come from the
+# engine's guess at a face, and its runs can stop a word past where the
+# italics stop -- ONS_111 p7's `Siamese porcelain and other tokens. Ramsden`
+# takes the author's name into the title. Garble runs are flagged italic as
+# readily as prose, so a large NOISE count is normal.
+#
+# A drawn layer is the typesetter's own text. The words are exact and so are
+# the boundaries, so a match that comes back under 0.95 is not the usual
+# two-sided OCR disagreement -- only the Markdown can be wrong, and that is
+# worth a look. Its NOISE is not garble either: ONS_210's 599 are single
+# italic letters and fragments of transliterated legends, too short to place.
+OCR_ENGINES = ("abbyy", "finereader", "omnipage", "tesseract", "readiris")
+# Fraction of a page the one image must cover to read as a scan of it, and the
+# fraction of sampled pages that must carry one.
+SCAN_COVER, SCAN_PAGES = 0.6, 0.6
+# A match this good needs no explanation on a drawn layer.
+EXACT = 0.95
+
+
+def provenance(doc, sample=6):
+    """How this file's text layer was made, and the evidence for it.
+
+    Metadata settles it when it is there: 175 of the archive's 265 PDFs name
+    ABBYY. The rest are settled on the pages, by two signals that disagree
+    only for a file that is both:
+
+      a scan under the text   an image covering most of the page, on the pages
+                              that carry text. ONS_161 and IS_029 come through
+                              Quartz naming no OCR engine and are scans all
+                              the same.
+      hidden text             text drawn in render mode 3, under the image it
+                              was read from. Not necessary -- ONS_111's ABBYY
+                              layer is drawn visibly -- but nothing else
+                              explains it.
+
+    Only pages carrying text are looked at, and that is the whole of the
+    difficulty. ONS_206 and ONS_232 set their plates as full-page images
+    between pages of drawn text; sampling the first four pages of either finds
+    three plates, and calls a born-digital journal a scan.
+    """
+    meta = " ".join(filter(None, (doc.metadata.get("producer"),
+                                  doc.metadata.get("creator")))).lower()
+    engine = next((e for e in OCR_ENGINES if e in meta), None)
+    if engine:
+        return {"layer": "ocr", "why": f"{engine.upper()} in the file's metadata"}
+
+    hidden = shown = scans = pages = 0
+    for page in doc:
+        if pages >= sample:
+            break
+        trace = page.get_texttrace()
+        if not any(span.get("chars") for span in trace):
+            continue  # a plate, or a blank: it says nothing about the text
+        pages += 1
+        for span in trace:
+            n = len(span.get("chars", ())) or 1
+            if span.get("type") == 3:
+                hidden += n
+            else:
+                shown += n
+        area = abs(page.rect)
+        if any(b["type"] == 1 and abs(fitz.Rect(b["bbox"])) > area * SCAN_COVER
+               for b in page.get_text("dict")["blocks"]):
+            scans += 1
+    if not pages:
+        return {"layer": "none", "why": "the file carries no text at all"}
+    if scans / pages >= SCAN_PAGES:
+        return {"layer": "ocr",
+                "why": f"a full-page image behind the text on {scans} of "
+                       f"{pages} pages"
+                       + (", drawn hidden under it" if hidden > shown else "")}
+    if hidden > shown:
+        return {"layer": "ocr", "why": "the text is drawn hidden, as a layer "
+                                       "under the page it was read from"}
+    return {"layer": "drawn", "why": f"no page scan behind the text on {pages} "
+                                     "pages, and the text is drawn visibly"}
+
+
 # --- matching -------------------------------------------------------------
 
 def normalize(text):
@@ -736,7 +820,46 @@ def artifact_count(md_text):
     return len(ARTIFACT_RE.findall(md_text))
 
 
-def report(stem, md_lines, found, verbose, artifacts):
+LAYER_NAME = {"ocr": "OCR'd layer", "drawn": "drawn layer",
+              "none": "no text layer"}
+
+
+def layer_notes(found, counts, source):
+    """What this file's verdicts are worth, given where its text came from."""
+    layer = source["layer"]
+    notes = [f"  text layer: {LAYER_NAME[layer]} -- {source['why']}"]
+    noise = counts.get("NOISE", 0)
+    if layer == "ocr":
+        notes.append("  a machine's reading of the page: the words in a run "
+                     "are approximate and its ends are too, so a span can "
+                     "take in the word after the italics stop. Read the "
+                     "render before trusting fix.")
+        if noise:
+            notes.append(f"  NOISE {noise} is ordinary here -- the engine "
+                         "flags garble italic as readily as prose.")
+    elif layer == "drawn":
+        notes.append("  the typesetter's own text: the words in a run are "
+                     "exact and so are its ends, so what the Markdown "
+                     "disagrees with is the Markdown.")
+        loose = sum(1 for f in found
+                    if f["verdict"] in FIXABLE and f.get("ratio", 1.0) < EXACT)
+        if loose:
+            notes.append(f"  {loose} of them matched under {EXACT:.2f}, which "
+                         "on this layer means the Markdown's own OCR is wrong "
+                         "there, not the run. Worth reading.")
+        if noise:
+            notes.append(f"  NOISE {noise} is not garble here, the words being "
+                         "exact: it is runs too short to place -- a single "
+                         "italic letter, or a fragment of a transliterated "
+                         "legend (`sikk`, `rak b`). Nothing to do with them.")
+    elif layer == "none":
+        notes.append("  nothing to read: the pages are images and no OCR has "
+                     "been run over them, so this screen has no evidence "
+                     "either way.")
+    return notes
+
+
+def report(stem, md_lines, found, verbose, artifacts, source):
     counts = {}
     for f in found:
         counts[f["verdict"]] = counts.get(f["verdict"], 0) + 1
@@ -745,6 +868,8 @@ def report(stem, md_lines, found, verbose, artifacts):
     tail = "  ".join(f"{v} {counts[v]}" for v in ORDER if v in counts)
     print(f"{stem}: {len(found)} italic run(s) | {tail or 'none'}"
           f"  -- {open_n} to fix" + (f", {review_n} to review" if review_n else ""))
+    for note in layer_notes(found, counts, source):
+        print(note)
     if artifacts > ASTERISK_NOISE:
         print(f"  note: {artifacts} per-word asterisk span(s) in the Markdown -- "
               "this file's emphasis is mangled, not missing. Run "
@@ -812,6 +937,7 @@ def run_file(stem, args):
     md_lines = md_text.split("\n")
     runs, dropped = [], 0
     with fitz.open(pdf) as doc:
+        source = provenance(doc)
         for pno, page in enumerate(doc, start=1):
             share, chars = italic_share(page)
             if chars >= PAGE_CHARS and share > args.italic_noise:
@@ -822,7 +948,7 @@ def run_file(stem, args):
     pairing = pair_repeats(runs, index, md_lines, args.min_ratio) \
         if args.pair_repeats else {}
     found = analyse(runs, index, md_lines, args.min_ratio, args.margin, pairing)
-    return (md, md_lines, found, artifact_count(md_text), dropped), None
+    return (md, md_lines, found, artifact_count(md_text), dropped, source), None
 
 
 def main():
@@ -867,11 +993,11 @@ def main():
             print(err, file=sys.stderr)
             total += 1
             continue
-        md, md_lines, found, artifacts, dropped = data
+        md, md_lines, found, artifacts, dropped, source = data
         if dropped:
             print(f"{stem}: {dropped} page(s) dropped -- italic end to end, "
                   "the text layer's own mistake")
-        open_n = report(stem, md_lines, found, args.verbose, artifacts)
+        open_n = report(stem, md_lines, found, args.verbose, artifacts, source)
         if args.cmd == "fix" and open_n:
             if artifacts > ASTERISK_NOISE and not args.force:
                 print("  refused: clean this file's per-word asterisks first "

@@ -213,9 +213,11 @@ def page_segments(page, drop=2.0, column_gap=COLUMN_GAP):
     """The page's lines, cut at column boundaries, each with its own spans.
 
     A segment is what a reader would call a line: one baseline, within one
-    column. Blocks are no use for this -- ABBYY puts a line in a block,
-    ONS_210 (born-digital, 13,989 blocks to the page) puts a caption across
-    several of them mid-word -- and a whole baseline is no use either, because
+    column. Blocks are no use for this -- ABBYY puts a line in a block, while
+    ONS_210, whose text is drawn rather than OCR'd over a scan, puts a caption
+    across several of them mid-word (`Buk` in one and `khara` in the next,
+    four points apart on the page and overlapping by the `k`) -- and a whole
+    baseline is no use either, because
     on a two-column page it runs from the left column's first word to the
     right column's last, and then every run in the left column looks like it
     stops in the middle of its line.
@@ -770,7 +772,7 @@ def merge_spans(line, spans):
     """Fuse spans of one passage that the text layer reported line by line.
 
     A caption set entirely in italics comes back as one run per line of the
-    scan -- ONS_210 p2 gives `Turko-Hephthalite ... Khusru`, `II and legends
+    page -- ONS_210 p2 gives `Turko-Hephthalite ... Khusru`, `II and legends
     in`, `cursive Greek, Brahmi and Pahlevi` for one caption that `pdfmd` put
     on a single Markdown line. Wrapped separately they render as three italic
     phrases with roman joints; wrapped together they render as the caption.

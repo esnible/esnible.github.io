@@ -116,14 +116,22 @@ title that legitimately continues past a full stop is common in this corpus
 "trim the tail after the last stop" rule would break more than it fixed. Read
 the diff.
 
-**A caption set wholly in italic comes back in pieces.** The text layer
-reports it one line of the scan at a time, and `fix` fuses the pieces that sit
-together on a Markdown line (ONS_210 line 64 becomes one italic caption, as
-printed). What it cannot fuse is a piece that never matched -- ONS_210 line 66
-ends up `*Turko-Hephthalite, Prince of Bukhara*, c. AD 585-700, with legend in
-Sogdian` where the whole caption is italic on the page. The result is a
-partial restoration, not a wrong one, but on a plate-catalogue file expect to
-finish the captions by hand.
+**An italic passage broken by a Markdown line break comes out half roman.**
+The text layer reports a caption or a quotation one line of the page at a
+time, and those pieces are reassembled before matching -- ONS_210 line 66 is
+one italic caption, `*Turko-Hephthalite, Prince of Bukhara, c. AD 585-700,
+with legend in Sogdian*`, as the page prints it. What cannot be reassembled is
+a break `pdfmd` put in the *Markdown*: a run is matched against one line at a
+time, so when a title straddles two of them only the first half is wrapped.
+ONS_210 ends up with 17 of these, among them `*Shomin no ayunda*` followed by
+`kin'yushi, Fukutoku Ginko, 1991` on the line below. A partial restoration,
+not a wrong one, but on a file like that expect to finish some by hand.
+
+ONS_210 is also the corpus's odd one out, and worth knowing about before
+reading its numbers: its text is drawn, not OCR'd over a scan -- no producer
+metadata, embedded Times subsets, visible text, and its photographs sliced
+into images one pixel high (13,930 of them on page 2, against 59 text
+blocks). That is why its italics are both plentiful and clean.
 
 Measured on ONS_111 against the rendered pages: 14 of 14 proposed spans are
 genuinely italic in print, and 13 of 14 have the right boundary. A further 8

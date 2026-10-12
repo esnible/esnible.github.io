@@ -129,6 +129,11 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   also drops the second, whose captions the Markdown mostly carries as
 #   figure markers anyway, and it keeps a page like ONS_064 p4 (0.53, a long
 #   quotation in French, genuinely italic) where most of the value is.
+# BASELINE_GAP: points that may separate two italic runs on one baseline and
+#   still be one passage. A word space in this corpus is 2-5pt; 14 allows the
+#   wide gaps a justified line opens up without reaching across a column.
+# COLUMN_GAP: points of blank that end a line segment. Wider than any word
+#   space a justified line opens, narrower than the gutter between columns.
 # MAX_LEN: longest a run may be, in alphanumerics, and still be written. What
 #   this corpus italicises is a title or a phrase; a run the length of a
 #   paragraph means a page that was mis-tagged below the gate, and wrapping it
@@ -146,6 +151,7 @@ CASE_WEIGHT, DENSITY, MIN_EDGE = 0.08, 0.80, 2
 TRIGRAM = 0.35
 MIN_LEN, MIN_WORDS, MAX_LEN = 12, 2, 200
 ITALIC_NOISE, PAGE_CHARS = 0.9, 200
+BASELINE_GAP, COLUMN_GAP = 14.0, 24.0
 ASTERISK_NOISE = 20
 
 ITALIC_FLAG = 2 ** 1  # PyMuPDF span flags bit 1
@@ -173,82 +179,208 @@ WORD_RE = re.compile(r"[A-Za-zÀ-ɏḀ-ỿ'’.-]*[A-Za-zÀ-ɏḀ-ỿ]{3,}[A-Za-
 
 def span_italic(span):
     return bool(span["flags"] & ITALIC_FLAG) or "italic" in span.get("font", "").lower()
+def baselines(page, drop=2.0):
+    """{baseline y: line number} for every line of text on the page.
 
+    Two things this cannot do, and both cost real fixes when it does.
 
-def italic_runs(page, pno):
-    """The page's italic passages, as a reader would see them.
+    It cannot key on `bbox[1]`: a glyph box's top depends on the face, so on
+    ONS_111 p5 the italic title and the roman `Vol. III (Oxford, 1934)` beside
+    it keyed to different lines, the title then looked like a whole line, and
+    the two bibliography entries below it were joined into one run that
+    matched nothing. `origin` is the baseline the typesetter set and every
+    face on the line shares it.
 
-    Built in two joins, because neither the span nor the line is the unit of
-    emphasis. Adjacent italic spans inside a line are one run (ABBYY splits
-    `Ta 'rikh al-rusul` across spans at the quote). A run that reaches the end
-    of its line and continues at the start of the next is also one run -- the
-    Walker title on ONS_111 p6 is `A Catalogue of Arabic-Byzantine` + `and
-    Post-reform Umayad Coins`, and neither half matches the Markdown alone.
-
-    The unjoined pieces are kept on the run as `pieces`: joining is a guess
-    (two italic titles on consecutive lines look identical to one that wraps),
-    so the matcher falls back to them when the joined text matches nothing.
+    It cannot round into fixed buckets either. Baselines on one line differ by
+    fractions of a point and a bucket boundary falls where it likes, which
+    split `Fatihin` from `Sikke ve Madalyalari` on ONS_134 p6. The baselines
+    are clustered instead, each line taking whatever sits within `drop`.
     """
-    runs = []
+    ys = sorted({span["origin"][1]
+                 for block in page.get_text("dict")["blocks"]
+                 if block.get("type") == 0
+                 for line in block["lines"] for span in line["spans"]
+                 if span["text"].strip()})
+    out, line_no = {}, 0
+    for i, y in enumerate(ys):
+        if i and y - ys[i - 1] > drop:
+            line_no += 1
+        out[y] = line_no
+    return out
+
+
+def page_segments(page, drop=2.0, column_gap=COLUMN_GAP):
+    """The page's lines, cut at column boundaries, each with its own spans.
+
+    A segment is what a reader would call a line: one baseline, within one
+    column. Blocks are no use for this -- ABBYY puts a line in a block,
+    ONS_210 (born-digital, 13,989 blocks to the page) puts a caption across
+    several of them mid-word -- and a whole baseline is no use either, because
+    on a two-column page it runs from the left column's first word to the
+    right column's last, and then every run in the left column looks like it
+    stops in the middle of its line.
+    """
+    keys = baselines(page, drop)
+    rows = {}
     for block in page.get_text("dict")["blocks"]:
         if block.get("type") != 0:
             continue
-        prev_open = None  # a run left hanging at the end of the previous line
         for line in block["lines"]:
-            spans = [s for s in line["spans"] if s["text"].strip()]
-            if not spans:
-                prev_open = None
-                continue
-            words_in_line = len("".join(s["text"] for s in spans).split())
-            cur, first = None, True
-            for s in spans:
-                if span_italic(s):
-                    if cur is None:
-                        cur = {"text": s["text"], "at_start": first,
-                               "line_words": words_in_line}
-                    else:
-                        cur["text"] += s["text"]
-                else:
-                    if cur is not None:
-                        cur["at_end"] = False
-                        runs.append((cur, prev_open))
-                        prev_open = None
-                        cur = None
-                first = False
-            if cur is not None:
-                cur["at_end"] = True
-                runs.append((cur, prev_open))
-                prev_open = len(runs) - 1
+            for span in line["spans"]:
+                if span["text"].strip():
+                    rows.setdefault(keys[span["origin"][1]], []).append(span)
+    segments = []
+    for line_no in sorted(rows):
+        current = None
+        for span in sorted(rows[line_no], key=lambda s: s["bbox"][0]):
+            if current and span["bbox"][0] - current["x1"] <= column_gap:
+                current["x1"] = max(current["x1"], span["bbox"][2])
+                current["words"] += len(span["text"].split())
+                current["spans"].append(span)
             else:
-                prev_open = None
+                current = {"line": line_no, "y": span["origin"][1],
+                           "x0": span["bbox"][0], "x1": span["bbox"][2],
+                           "words": len(span["text"].split()), "spans": [span]}
+                segments.append(current)
+    return segments
 
-    # Second join: stitch a run that ran to the end of a line onto the one that
-    # opened the next, walking backwards so a three-line title ends up whole.
-    out, merged_into = [], {}
-    for idx, (run, after) in enumerate(runs):
-        run.setdefault("at_end", False)
-        run["page"] = pno
-        run["pieces"] = [run["text"]]
-        if after is not None and run["at_start"]:
-            target = merged_into.get(after, after)
-            host = runs[target][0]
-            # A run that is a whole short line of its own is a cell or a label,
-            # not a sentence that wrapped. ONS_111 p4 sets the words `silver`
-            # and `copper` bold-italic on consecutive lines as column heads;
-            # joined, they become `silver copper`, which then matches `silver
-            # and copper` in a paragraph forty lines away.
-            if host.get("line_words", 9) <= 2 and host.get("at_start"):
-                out.append(run)
+
+def line_pitch(segments):
+    """The page's median step from one line to the next, within a column.
+
+    Measured down a column, not down the page. A two-column page interleaves
+    its baselines, so the gaps between them in reading order are a mixture of
+    real line pitch and the offset between the columns, and the median of that
+    mixture is smaller than either. On ONS_210 p19 it came out at 6.4 points
+    against a true pitch of 10.4, which closed the join window below the
+    page's own line spacing and left a quotation running over five lines in
+    five pieces.
+
+    Line numbers cannot stand in for it: they count lines of text, and two
+    captions with a plate between them are consecutive by that count.
+    """
+    steps = []
+    for i, seg in enumerate(segments):
+        for other in segments[i + 1:]:
+            if other["y"] <= seg["y"]:
                 continue
-            host["text"] = host["text"].rstrip() + " " + run["text"].lstrip()
-            host["pieces"].append(run["text"])
-            host["at_end"] = run["at_end"]
-            merged_into[idx] = target
+            if other["y"] - seg["y"] > 40:
+                break
+            if min(seg["x1"], other["x1"]) - max(seg["x0"], other["x0"]) > 0:
+                steps.append(other["y"] - seg["y"])
+                break
+    return sorted(steps)[len(steps) // 2] if steps else None
+
+
+def line_measure(segments):
+    """The width of a full line on this page -- a column's measure.
+
+    The median, not a high quantile: a two-column page carries a few lines
+    that span both columns (a heading, a footnote rule's text) and they are
+    half as wide again as any line in a column. Taken at the 90th percentile
+    those set the measure, every line in a column then counts as short, and
+    nothing is ever read as continuing onto the next line -- which is what
+    kept ONS_210 p19's five-line quotation in five pieces.
+    """
+    widths = sorted(seg["x1"] - seg["x0"] for seg in segments)
+    return widths[len(widths) // 2] if widths else 0.0
+
+
+def italic_runs(page, pno, drop=2.0, gap=BASELINE_GAP, edge=3.0):
+    """The page's italic passages, as a reader would see them.
+
+    Two joins, because the span is not the unit of emphasis and neither is
+    the block.
+
+    Along the line  Italic spans side by side in one segment are one run.
+                    ABBYY splits `Ta 'rikh al-rusul` at the quote; ONS_210
+                    splits `Bukhara` across two blocks 4 points apart on the
+                    page, both carrying the `k` where they overlap.
+    Down the lines  A run that reaches the end of its segment continues in one
+                    that starts the segment below. That is how a quotation set
+                    in italics arrives (ONS_210 p19 runs one over five lines)
+                    and how a title wraps (`Fatihin` / `Sikke ve Madalyalari`
+                    on ONS_134 p6). The test is where the run sits in its
+                    line, not whether the two overlap in x -- justified prose
+                    wraps from the right margin to the left, so a continuation
+                    never overlaps what it continues.
+
+    The unjoined pieces are kept on the run as `pieces`: the second join is a
+    judgement, so the matcher falls back to them when the joined text matches
+    nothing.
+    """
+    segments = page_segments(page, drop)
+    pitch = line_pitch(segments)
+    measure = line_measure(segments)
+    runs = []
+    for seg in segments:
+        current = None
+        for span in sorted(seg["spans"], key=lambda s: s["bbox"][0]):
+            if not span_italic(span):
+                current = None
+                continue
+            text, bbox = span["text"], list(span["bbox"])
+            if current and -6 <= bbox[0] - current["bbox"][2] <= gap:
+                # Overlapping blocks share their boundary glyph: ONS_210's
+                # `Buk` and `khara` overlap by four points, both with the `k`.
+                if (bbox[0] < current["bbox"][2] and text[:1]
+                        and current["text"].endswith(text[0])):
+                    text = text[1:]
+                joiner = "" if (bbox[0] - current["bbox"][2] < 1.5
+                                or current["text"].endswith(" ")
+                                or text.startswith(" ")) else " "
+                current["text"] += joiner + text
+                current["pieces"].append(text)
+                current["bbox"][2] = max(current["bbox"][2], bbox[2])
+                continue
+            current = {"text": text, "bbox": bbox, "page": pno,
+                       "pieces": [text], "seg": seg, "line": seg["line"],
+                       "y": seg["y"]}
+            runs.append(current)
+
+    for run in runs:
+        seg = run["seg"]
+        run["at_start"] = run["bbox"][0] <= seg["x0"] + edge
+        run["at_end"] = run["bbox"][2] >= seg["x1"] - edge
+        run["line_words"] = seg["words"]
+
+    out = []
+    for run in sorted(runs, key=lambda r: (r["y"], r["bbox"][0])):
+        host = None
+        # The line a run continues is not always the one before it in reading
+        # order. ONS_210 p2 sets its plates two to a row, so the second line
+        # of a right-hand caption follows a line of the left-hand one. The
+        # candidate is looked for up the column instead, within a line of
+        # space.
+        for cand in reversed(out[-8:]):
+            if not pitch or run["y"] - cand["y"] > pitch * 1.6:
+                break
+            if run["y"] <= cand["y"] or not cand["at_end"] or not run["at_start"]:
+                continue
+            if min(cand["seg"]["x1"], run["seg"]["x1"]) \
+                    - max(cand["seg"]["x0"], run["seg"]["x0"]) <= 0:
+                continue  # a different column
+            # Text continues onto the next line because it ran out of room, so
+            # the line above a continuation is a full one. A short line is a
+            # cell or a label instead: ONS_111 p4 sets `silver` and `copper`
+            # bold-italic on consecutive lines as column heads, and joined
+            # they match `silver and copper` in a paragraph forty lines away.
+            if cand["seg"]["x1"] - cand["seg"]["x0"] < measure * 0.6:
+                continue
+            host = cand
+            break
+        if host is None:
+            out.append(run)
             continue
-        out.append(run)
+        host["text"] = host["text"].rstrip() + " " + run["text"].lstrip()
+        host["pieces"].append(run["text"])
+        host["at_end"], host["line"] = run["at_end"], run["line"]
+        host["seg"], host["y"] = run["seg"], run["y"]
+
     for run in out:
         run["text"] = re.sub(r"\s+", " ", run["text"]).strip()
-        run["pieces"] = [re.sub(r"\s+", " ", p).strip() for p in run["pieces"]]
+        run["pieces"] = [re.sub(r"\s+", " ", piece).strip() for piece in run["pieces"]]
+        del run["seg"]
     return out
 
 

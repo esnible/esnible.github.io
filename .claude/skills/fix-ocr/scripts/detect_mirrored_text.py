@@ -12,7 +12,7 @@ but each word's glyphs are mirrored, so it transcribed every word reversed:
 This matters because it does not look recoverable. `dehsilbup` reads as pure
 noise, so a fix-ocr pass sees it, correctly judges it un-guessable under the
 Hard constraints (it cannot be deleted -- over 12 characters -- and must not
-be invented), reports it as residual garble, and ticks the file off. ONS_100
+be invented), reports it as residual garble, and calls the file done. ONS_100
 went through exactly that way and stayed broken. The text is in fact fully
 recoverable: reverse each token and the English comes back.
 

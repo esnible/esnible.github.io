@@ -122,8 +122,8 @@ dna \_ niJ taerg liated dna dehsilbup 5 ynaM tnereiffd
 **Why this needs a script rather than an eye.** It does not look
 recoverable. `dehsilbup` reads as pure noise, so a pass sees it, correctly
 judges it un-guessable under the Hard constraints -- too long to delete,
-forbidden to invent -- reports it as residual garble, and ticks the file
-off. That is exactly how ONS_100 passed a full pass and stayed broken. The
+forbidden to invent -- reports it as residual garble, and calls the file
+done. That is exactly how ONS_100 passed a full pass and stayed broken. The
 text was recoverable the whole time.
 
 cspell does not rescue you. It flags most of the run, which is how the pass
@@ -320,10 +320,10 @@ After all edits and dictionary updates:
      carry an `<!-- OCR: ... -->` marker at that spot saying so;
    - anything else — not fine. Go back and fix it.
 
-   **Do not tick the file off while an unknown is merely "residual garble"
+   **Do not call the file done while an unknown is merely "residual garble"
    you looked at once and gave up on.** That judgment is what let ONS_100
    through: its `dehsilbup`/`liated`/`taerg` run was flagged by cspell, read
-   as unrecoverable noise, reported, and the box ticked — when the passage
+   as unrecoverable noise, reported, and signed off — when the passage
    was mirrored text that reverses straight back into English. Before
    writing a word off, run `detect_mirrored_text.py` over the file, and ask
    whether the run is garbled *or* merely transformed. Transformed text is
@@ -336,10 +336,6 @@ After all edits and dictionary updates:
    scripts/detect_mirrored_text.py scan "<path>"
    grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
-
-## Update the TODO tracker
-
-After verification passes, check the box for this file in `jons/spellcheck-todo.md`. Entries live inside Markdown tables organized by year — a cell looks like `| [ ] [Newsletter No. 152](ONS_152.md) |` — so quote the checkbox together with the link text to make the edit unique, and change `[ ]` to `[x]`. If the file is not listed there (rare — only for newly-added files), add it under the "Files not in the published archive" section at the bottom of that page.
 
 ## What NOT to do
 

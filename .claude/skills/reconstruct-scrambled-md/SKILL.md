@@ -49,7 +49,7 @@ If `pdftotext -layout` is *also* garbled (rare — happens with some scanned-ima
    - If a contents page was found in step 2, confirm every listed article appears, in order, with a matching heading.
    - Spot-check a handful of catalogue entries and any article containing non-Latin script against rendered page images, especially where the reconstruction required stitching together sub-agent outputs.
 
-8. **Hand off to `fix-ocr`.** Structural reconstruction usually leaves ordinary letter-level OCR garble behind (wrong letters, digit/letter swaps, stray glyphs) — run the `fix-ocr` skill on the file next to clean that up and update the numismatic dictionaries (`dictionaries/{chinese,islamic,indian}-numismatics.txt`) and `jons/spellcheck-todo.md`. Don't duplicate that workflow here; this skill's job is getting the words in the right order, not spelling them correctly.
+8. **Hand off to `fix-ocr`.** Structural reconstruction usually leaves ordinary letter-level OCR garble behind (wrong letters, digit/letter swaps, stray glyphs) — run the `fix-ocr` skill on the file next to clean that up and update the numismatic dictionaries (`dictionaries/{chinese,islamic,indian}-numismatics.txt`). Don't duplicate that workflow here; this skill's job is getting the words in the right order, not spelling them correctly.
 
 ## Known pitfall: page-break splitting drops content
 

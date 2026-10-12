@@ -31,7 +31,7 @@ takes 45, all of it in the fuzzy match.
 
 ## This is not the mangled-emphasis problem
 
-On 112 of the 268 files `pdfmd` *did* carry emphasis across -- as per-word
+On 114 of the 268 files `pdfmd` *did* carry emphasis across -- as per-word
 asterisks, `*word *` around every word of the passage. There the italics are
 not missing, they are mangled, and that is `clean-ocr-formatting`'s job.
 `scan` says so when it sees more than 20 such spans in a file, and `fix`

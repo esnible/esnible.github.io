@@ -27,7 +27,7 @@ And adds two of its own:
                        prose: 11 of ONS_111's 40 italic spans are `IVi-`,
                        `J:>`, `2=T`. A run has to read as words before it is
                        matched at all.
-  a mangled emphasis   On 112 of the 268 files `pdfmd` did carry emphasis
+  a mangled emphasis   On 114 of the 268 files `pdfmd` did carry emphasis
   layer                across -- as per-word asterisks, `*word *` around every
                        word in the passage. There the italics are not missing,
                        they are mangled, which is `clean-ocr-formatting`'s job
@@ -136,9 +136,11 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 # PAGE_CHARS: a page with less text than this is not worth the noise test --
 #   a page that is one caption can legitimately be 100% italic.
 # ASTERISK_NOISE: per-word emphasis spans (`*word *`) in the Markdown before
-#   the file's emphasis layer is judged mangled rather than missing. Files are
-#   bimodal on this: 156 have fewer than 20, and the 112 that have more have
-#   hundreds (ONS_Supplement_205 has 1253). 20 sits in the empty middle.
+#   the file's emphasis layer is judged mangled rather than missing. The
+#   corpus is lopsided on this: 111 files have none at all, 42 have fewer
+#   than 20, and of the 114 above that most have hundreds (ONS_Supplement_205
+#   has over a thousand). 20 is low enough to catch a file whose asterisks are
+#   only starting to be cleaned.
 RATIO, MARGIN = 0.85, 0.10
 CASE_WEIGHT, DENSITY, MIN_EDGE = 0.08, 0.80, 2
 TRIGRAM = 0.35
@@ -160,7 +162,10 @@ SKIP_MD = ("|", "<!--", ">", "```", "#")
 # marker another skill owns.
 UNSAFE_CHARS = set("*_[]<>|`")
 # `*word *` -- the per-word asterisk artifact `clean-ocr-formatting` strips.
-ARTIFACT_RE = re.compile(r"\*[^\s*]{1,20} ?\*")
+# One short word, carrying a letter, and no bracket: `*[figure]*` is the
+# figure marker the other skills write, not a mangled emphasis span, and
+# counting those flagged a figure-heavy file as mangled and refused to fix it.
+ARTIFACT_RE = re.compile(r"\*(?=[^\s*]*[^\W\d_])[^\s*\[\]<>()]{1,20} ?\*")
 WORD_RE = re.compile(r"[A-Za-zÀ-ɏḀ-ỿ'’.-]*[A-Za-zÀ-ɏḀ-ỿ]{3,}[A-Za-zÀ-ɏḀ-ỿ'’.,:;()-]*")
 
 
@@ -493,11 +498,12 @@ def classify(line, start, end):
 def pair_repeats(runs, index, md_lines, min_ratio=RATIO):
     """Match a title cited k times in the scan to its k places in the Markdown.
 
-    A journal cited on four pages produces four identical runs and four
-    equally good matches, and every one of them is AMBIGUOUS under the margin
-    test -- ONS_134's `Spink Numismatic Circular` among them. But both files
-    are the same publication read in the same order, so when the counts agree
-    exactly the i-th run is the i-th match and the ambiguity is only apparent.
+    A journal cited twice produces two identical runs and two equally good
+    matches, and both are AMBIGUOUS under the margin test -- ONS_134 cites
+    `Numismatic Digest` on p6 and p8 and `Xinjiang Tuzhi` twice on p8. But
+    both files are the same publication read in the same order, so when the
+    counts agree exactly the i-th run is the i-th match (here: lines 292 and
+    364, lines 383 and 396) and the ambiguity is only apparent.
 
     Off by default all the same. The counts agreeing is evidence, not proof:
     one false match among the k, or one citation the Markdown lost, shifts the

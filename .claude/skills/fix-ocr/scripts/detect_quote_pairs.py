@@ -51,11 +51,33 @@ page actually prints. To keep the output a worklist rather than a census:
     bucket, and turning it on adds 1,083 spans of much poorer precision.
     `--include-single` does that.
 
-That leaves 726 spans across 99 files, against 24,188 pairs that balance --
-a 3% defect rate. A span whose surroundings are shot through with OCR
+That leaves 664 spans across 99 files, against 24,188 pairs that balance --
+a 3% defect rate; it read 726 before ONS_165's worklist was worked off.
+A span whose surroundings are shot through with OCR
 wreckage (`j ^ ' *\\J^* \\}• • •`) is reported as `WRECK` only under
 `--include-wrecks`: the quote marks there are a symptom, and the line belongs
 to `transcribe-foreign-script` or `restructure-flattened-md`.
+
+## A `''` that closes nothing is often a question mark
+
+Working ONS_165's worklist turned up a defect the pairing itself cannot see.
+A printed `?` scans as `''` on these pages, so a rhetorical question ends up
+looking like a stray quote run:
+
+    Are we really meant to believe this''      ->  ... believe this?
+    read the name ... as "Muhammad''",         ->  "Muhammad?",
+    In AH 568 and 56(9 or 7'')                 ->  56(9 or 7?)
+
+ONS_165 carried 15, one of them in a sentence that goes on to say *with
+question-mark i.e. he was not sure*. The PDF's own text layer reads `''`
+there too -- both OCR passes make the same mistake -- so only the page image
+settles it, and `triage_percent.py`'s text-layer shortcut does not help.
+
+The screen reports a `''` that **closes nothing** (the pairing consumed no
+opener for it), sits right after a lowercase letter, and is followed by the
+next sentence or the end of the line: 231 of them across 38 files. A `''`
+that does close a quotation is a `QUOTES` span instead, and the two never
+report the same run.
 
 ## Superscripts: a quarter of the runs are not quotes
 
@@ -79,8 +101,8 @@ This is the `®` class of #209 in another costume, and it cuts both ways:
 So the script splits the class in two. A run is an **ordinal** when the word
 after it says so -- a century word, a month, `c.`/`cent`, `year`, `regnal`,
 `anniversary`, `edition`, `standard`, `International`, or a connector with a
-century word just beyond it -- and the number is small enough to be one. 547
-runs in 29 files qualify, and `ordinals` emits them as an `apply_edits.py`
+century word just beyond it -- and the number is small enough to be one. 533
+runs in 28 files qualify, and `ordinals` emits them as an `apply_edits.py`
 batch:
 
     detect_quote_pairs.py ordinals ONS_162 > edits.txt
@@ -126,7 +148,8 @@ ASCII_QUOTE = {"‘": "'", "’": "'", "“": '"', "”": '"'}
 AYN_NAMES = (
     "Abbas", "Abbasid", "Abbasids", "Abd", "Abdallah", "Abdullah", "Abu",
     "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
-    "Alamgir", "Ali", "Alim", "AlT", "Am", "Amr", "Ayn", "Aziz", "Id", "Imad",
+    "AIT", "Ain", "Alamgir", "Alf", "Ali", "Alim", "All", "AlT", "Am",
+    "Amr", "Ayn", "Aziz", "Id", "Imad",
     "Iraq", "Isa", "Izz", "Ubaid", "Ubayd", "Umar", "Umayyad", "Umayyads",
     "Uthman",
 )
@@ -285,21 +308,30 @@ def is_nested_close(toks, i, j, inner):
     return False
 
 
+def pairs_of(toks):
+    """[(opener index, closer index)] left to right; unclosed openers pair with
+    nothing, which is what keeps one stray mark from shifting everything after
+    it."""
+    out, i = [], 0
+    while i < len(toks):
+        if toks[i][2] != "O":
+            i += 1
+            continue
+        j = next((k for k in range(i + 1, len(toks)) if toks[k][2] == "C"), None)
+        if j is None:
+            break
+        out.append((i, j))
+        i = j + 1
+    return out
+
+
 def quote_findings(text, include_single=False):
     """[(offset, opener, closer, span, wreck)] for mismatched quote spans."""
     found = []
     for base, scope in scopes(text):
         toks = quote_tokens(scope)
-        i = 0
-        while i < len(toks):
-            if toks[i][2] != "O":
-                i += 1
-                continue
-            j = next((k for k in range(i + 1, len(toks)) if toks[k][2] == "C"), None)
-            if j is None:
-                break                         # an unclosed opener pairs nothing
-            opener, closer = toks[i], toks[j]
-            pair, i = (i, j), j + 1
+        for pair in pairs_of(toks):
+            opener, closer = toks[pair[0]], toks[pair[1]]
             if opener[1] == closer[1] and (len(opener[1]) == 1 or opener[1] == '"'):
                 continue                      # balanced
             if len(opener[1]) == 1 and len(closer[1]) == 1 and not include_single:
@@ -313,6 +345,30 @@ def quote_findings(text, include_single=False):
             found.append((base + opener[0], opener[1], closer[1], span,
                           is_wreck(scope[max(0, opener[0] - 20):
                                          closer[0] + len(closer[1]) + 20])))
+    return found
+
+
+# A `''` that closes nothing, right after a lowercase letter, with the next
+# sentence starting after it. On these scans that is a question mark: ONS_165
+# alone carried 15, among them `"Muhammad''"` in a sentence that goes on to
+# say *with question-mark i.e. he was not sure*.
+QUESTION_AT = re.compile(r"''(?=\s+[\"'(*A-Z]|\s*$)")
+
+
+def question_findings(text):
+    """[(offset, word, context)] for a `''` the page may print as `?`."""
+    found = []
+    for base, scope in scopes(text):
+        toks = quote_tokens(scope)
+        used = {k for pair in pairs_of(toks) for k in pair}
+        for k, (off, run, _kind) in enumerate(toks):
+            if k in used or run != "''" or not off or not scope[off - 1].islower():
+                continue
+            if not QUESTION_AT.match(scope, off):
+                continue
+            word = re.search(r"[A-Za-z-]+$", scope[:off])
+            found.append((base + off, word.group(0) if word else "",
+                          scope[max(0, off - 60):off + 16]))
     return found
 
 
@@ -404,17 +460,19 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
     text = readable(path)
     quotes = quote_findings(text, include_single)
     sups = superscript_findings(text)
+    questions = question_findings(text)
     shown = [q for q in quotes if include_wrecks or not q[4]]
     wrecks = len(quotes) - len(shown)
     ordinals = sum(1 for s in sups if s[2])
 
-    if not shown and not sups:
+    if not shown and not sups and not questions:
         if not quiet_clean:
             print(f"{path}: clean")
         return 0
 
     rows = [(off, "q", rest) for off, *rest in shown]
     rows += [(off, "s", rest) for off, *rest in sups]
+    rows += [(off, "?", rest) for off, *rest in questions]
     for off, kind, f in sorted(rows, key=lambda r: r[0]):
         n = line_of(text, off)
         if kind == "q":
@@ -422,6 +480,11 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
             tag = "QUOTES-WRECK" if wreck else "QUOTES"
             print(f"{path}:{n}: {tag}  opener `{opener}` vs closer `{closer}`")
             print(f"    {one_line(span)[:150]}")
+        elif kind == "?":
+            word, ctx = f
+            print(f"{path}:{n}: QUESTION  `''` closing nothing after "
+                  f"`{word}` -- the page may print `?`; render it")
+            print(f"    {one_line(ctx)[:150]}")
         else:
             run, reading, ctx = f
             if reading:
@@ -432,7 +495,8 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
                       f"ordinal, footnote marker or a real quote?")
             print(f"    {one_line(ctx)[:150]}")
 
-    note = f"-- {len(shown)} mismatched span(s), {len(sups)} superscript run(s)"
+    note = (f"-- {len(shown)} mismatched span(s), {len(sups)} superscript "
+            f"run(s), {len(questions)} unclosed `''`")
     if ordinals:
         note += f" ({ordinals} readable as ordinals: `ordinals` emits the batch)"
     if wrecks:

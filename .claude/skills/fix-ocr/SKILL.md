@@ -224,7 +224,7 @@ plenty of the mixed ones are correct text -- the inner `'` in `("'Abd Allah
 ibn Ibrahim")` is the ʿayn of the name. What is decidable from the text
 alone is **opener ≠ closer**: pair each opening mark with its closer and
 report the spans where the two disagree, or where either is a run. That is
-726 spans across 99 files against 24,188 pairs that balance, and the script
+664 spans across 99 files against 24,188 pairs that balance, and the script
 already drops the classes that look like the defect without being it --
 apostrophes, ʿayn, nested closings (`...the Name "Safi""`), runs after a
 digit, and spans long enough to mean the pairing desynchronised rather than
@@ -248,6 +248,30 @@ them in the output:
   clan'"` and `"A Coin Bearing the Name "Safi""`. Two closers side by side
   are each doing their own job.
 - **an inch mark** -- `10 3/8" x 7 3/8''` in a book description.
+
+### A `''` that closes nothing is a question mark
+
+The screen's third verdict, and the one ONS_165's worklist turned up: a
+printed `?` scans as `''` on these pages, so a rhetorical question ends up
+looking like a stray quote run.
+
+```
+Are we really meant to believe this''   ->  ... believe this?
+as "Muhammad''", with question-mark     ->  "Muhammad?", with question-mark
+In AH 568 and 56(9 or 7'')              ->  56(9 or 7?)
+A fals of AH394''(B D Kochnev           ->  A fals of AH 394? (B. D. Kochnev
+```
+
+231 across 38 files, worst in the review articles of `ONS_15*`-`ONS_17*`,
+where the author argues with other numismatists a question at a time.
+ONS_165 alone had 15, one of them inside a sentence that goes on to say
+*with question-mark i.e. he was not sure*.
+
+**The PDF text layer repeats the error**, so `triage_percent.py`'s
+text-layer shortcut cannot settle these -- both OCR passes read the same
+`''`. Render each one. A `''` after a digit is a `SUPERSCRIPT` hit instead
+(see below) and is just as often a `?`: `(404'')` is `(404?)`, `425''` is
+`425?`.
 
 ### A quote run after a digit is a superscript
 
@@ -274,7 +298,7 @@ the class in two:
 - **`ordinal`** -- a century word, a month, `c.`/`cent` (but not `c/m`, which
   is a countermark), `year`, `regnal`, `anniversary`, `edition`, `standard`,
   `International`, or a connector with a century word just beyond it
-  (`19"' and 20''' centuries`). 547 runs across 29 files. The suffix comes
+  (`19"' and 20''' centuries`). 533 runs across 28 files. The suffix comes
   from the number -- 14 → th, 33 → rd, 21 → st, 11-13 → th -- and the
   restoration is **plain `14th`**: this corpus writes 3,599 ordinals that
   way and not one as `14ᵗʰ`. `ordinals` emits them as an `apply_edits.py`
@@ -293,7 +317,7 @@ the class in two:
   still a candidate list, not evidence: confirm a sample per page against
   the render before `--write`, the same rule `punct_candidates.py` follows.
 
-- **`check`** -- the other 366. Render each one. A footnote marker restores
+- **`check`** -- the other 344. Render each one. A footnote marker restores
   as a Unicode superscript **digit** (`⁶`), which is this corpus's
   convention with 1,817 of them already in place, and **the digit is not
   fixed** -- read it off the page and cross-check it against the footnote
@@ -431,11 +455,12 @@ After all edits and dictionary updates:
    grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
 
-   `detect_quote_pairs.py` reports two kinds of hit and neither is settled
-   from the text: a `QUOTES` span says the opener and closer disagree, and a
+   `detect_quote_pairs.py` reports three kinds of hit and none is settled
+   from the text: a `QUOTES` span says the opener and closer disagree, a
    `SUPERSCRIPT` run says a quote run after a digit is an ordinal or a
-   footnote marker. Both need the render before anything is edited — see
-   the two sections above.
+   footnote marker, and a `QUESTION` hit says a `''` closing nothing is
+   probably a `?`. All three need the render before anything is edited —
+   see the three sections above.
 
 ## What NOT to do
 

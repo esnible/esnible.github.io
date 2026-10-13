@@ -206,6 +206,99 @@ record their own evidence there, and that includes quoting the bad reading:
 where the `€` is the point of the sentence. A blanket sweep over the file
 destroys the note. The same goes for `<!-- OCR: ... -->` placeholders.
 
+### A quotation mark the OCR split in two
+
+```
+python3 .claude/skills/fix-ocr/scripts/detect_quote_pairs.py scan "<path>"
+```
+
+A typewritten `"` scans badly, and pdfmd routinely reads one printed mark as
+two or three. ONS_111's publications notice came out `'""Chopmarks"` where
+the page prints `"Chopmarks"`, and eleven runs in that one file were the
+same defect.
+
+**Do not screen for "an illogical quote combination".** A run of two or more
+marks fires 3,657 times across 127 files, and that census is three different
+things: about a quarter are not quotes at all (see the next section), and
+plenty of the mixed ones are correct text -- the inner `'` in `("'Abd Allah
+ibn Ibrahim")` is the ʿayn of the name. What is decidable from the text
+alone is **opener ≠ closer**: pair each opening mark with its closer and
+report the spans where the two disagree, or where either is a run. That is
+726 spans across 99 files against 24,188 pairs that balance, and the script
+already drops the classes that look like the defect without being it --
+apostrophes, ʿayn, nested closings (`...the Name "Safi""`), runs after a
+digit, and spans long enough to mean the pairing desynchronised rather than
+that the quotes disagree.
+
+**The pair decides *that* it is wrong; only the render decides what it should
+be.** The marks the OCR split do not tell you what was printed, and the
+answer is not always a quotation mark at all: ONS_051's `''A Study of Holkar
+State coinage"'` is a review heading that the page prints with no quotes
+whatsoever. The Hard constraints apply here exactly as they do to any other
+punctuation fix.
+
+Three readings that are correct text, and must be left alone when you meet
+them in the output:
+
+- **a ʿayn inside a quotation** -- `("'Abd Allah ibn Ibrahim")`, `"'am"
+  instead of "sanah"` (IS_018, where the file's own `script-ok` note records
+  the عام). The script suppresses the names it knows; add to `AYN_NAMES`
+  when a new one surfaces.
+- **a nested quotation closing** -- `"...the title *yagbu* 'chief of a
+  clan'"` and `"A Coin Bearing the Name "Safi""`. Two closers side by side
+  are each doing their own job.
+- **an inch mark** -- `10 3/8" x 7 3/8''` in a book description.
+
+### A quote run after a digit is a superscript
+
+993 of those runs sit immediately after a digit, and they are OCR'd
+superscript ordinals and footnote markers -- the `®` class of the section
+above in another costume:
+
+```
+the 14'''  All-Russian Numismatic Conference   ->  14th
+30""  November                                 ->  30th
+the 33'"''  International Archaeometry Conf.   ->  33rd
+7'''  century Byzantine coins                  ->  7th
+```
+
+**A digit before the run does not prove an ordinal**, so there is no
+skip-after-a-digit rule either. ONS_111 p5 prints `...perpetuate his
+sovereignty 828".` -- a plain closing quote after a year -- and ONS_120 p5
+prints `"Capitalism and Material life 1400-1800", Braudel`, both verified on
+the render. `AH 40(7'' or 6'')` is a footnote marker on a date.
+
+What settles it is the word *after* the run, which is why the screen splits
+the class in two:
+
+- **`ordinal`** -- a century word, a month, `c.`/`cent` (but not `c/m`, which
+  is a countermark), `year`, `regnal`, `anniversary`, `edition`, `standard`,
+  `International`, or a connector with a century word just beyond it
+  (`19"' and 20''' centuries`). 547 runs across 29 files. The suffix comes
+  from the number -- 14 → th, 33 → rd, 21 → st, 11-13 → th -- and the
+  restoration is **plain `14th`**: this corpus writes 3,599 ordinals that
+  way and not one as `14ᵗʰ`. `ordinals` emits them as an `apply_edits.py`
+  batch:
+
+  ```
+  python3 .claude/skills/fix-ocr/scripts/detect_quote_pairs.py ordinals <STEM> > edits.txt
+  python3 .claude/skills/fix-ocr/scripts/apply_edits.py "<path>" edits.txt          # dry run
+  python3 .claude/skills/fix-ocr/scripts/apply_edits.py "<path>" edits.txt --write
+  ```
+
+  Each edit carries the word that proved it -- `16''' century => 16th
+  century`, not `16''' => 16th` -- so it fires only where the evidence is;
+  a bare edit would sweep the footnote markers of the same shape elsewhere
+  in the file, and 30 runs across 13 files are exactly that. The batch is
+  still a candidate list, not evidence: confirm a sample per page against
+  the render before `--write`, the same rule `punct_candidates.py` follows.
+
+- **`check`** -- the other 366. Render each one. A footnote marker restores
+  as a Unicode superscript **digit** (`⁶`), which is this corpus's
+  convention with 1,817 of them already in place, and **the digit is not
+  fixed** -- read it off the page and cross-check it against the footnote
+  list, exactly as for `®`.
+
 ### Numbers that look like words
 - Long runs of digits in the middle of a sentence (e.g., `511868515 that the first two`) are OCR'd images or stamps. Replace with `[illegible]` only if the user has asked for that style; otherwise leave a HTML comment `<!-- OCR: 511868515 -->` near the spot and remove the noise from the prose.
 
@@ -334,8 +427,15 @@ After all edits and dictionary updates:
 
    ```
    scripts/detect_mirrored_text.py scan "<path>"
+   scripts/detect_quote_pairs.py scan "<path>"
    grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
+
+   `detect_quote_pairs.py` reports two kinds of hit and neither is settled
+   from the text: a `QUOTES` span says the opener and closer disagree, and a
+   `SUPERSCRIPT` run says a quote run after a digit is an ordinal or a
+   footnote marker. Both need the render before anything is edited — see
+   the two sections above.
 
 ## What NOT to do
 

@@ -27,12 +27,13 @@ And adds two of its own:
                        prose: 11 of ONS_111's 40 italic spans are `IVi-`,
                        `J:>`, `2=T`. A run has to read as words before it is
                        matched at all.
-  a mangled emphasis   On 114 of the 268 files `pdfmd` did carry emphasis
-  layer                across -- as per-word asterisks, `*word *` around every
-                       word in the passage. There the italics are not missing,
-                       they are mangled, which is `clean-ocr-formatting`'s job
-                       and not this script's. `fix` refuses to write to such a
-                       file; `scan` says so and carries on.
+  a mangled emphasis   `pdfmd` sometimes carries emphasis across but marks it
+  layer                a word at a time -- `*a* *b* *c*` for one italic
+                       phrase. There the italics are not missing, they are
+                       mangled, which is `clean-ocr-formatting`'s job (its
+                       merge_emphasis_runs.py) and not this script's. The tell
+                       is two spans left adjacent with only whitespace between
+                       them; `fix` refuses such a file and `scan` says so.
 
 Verdicts:
 
@@ -140,19 +141,22 @@ MD_DIR = pathlib.Path(__file__).resolve().parents[4] / "jons"
 #   would italicise the paragraph. Reported as OVERLONG.
 # PAGE_CHARS: a page with less text than this is not worth the noise test --
 #   a page that is one caption can legitimately be 100% italic.
-# ASTERISK_NOISE: per-word emphasis spans (`*word *`) in the Markdown before
-#   the file's emphasis layer is judged mangled rather than missing. The
-#   corpus is lopsided on this: 111 files have none at all, 42 have fewer
-#   than 20, and of the 114 above that most have hundreds (ONS_Supplement_205
-#   has over a thousand). 20 is low enough to catch a file whose asterisks are
-#   only starting to be cleaned.
+# ASTERISK_NOISE: mangled-emphasis pairs -- two spans of the same marker with
+#   nothing but whitespace between them -- before the file's emphasis layer is
+#   judged mangled rather than missing. This used to count short spans
+#   (`*word*`), which measured the wrong thing: a file whose emphasis is
+#   perfectly good is still full of one-word italic titles, so cleaning the
+#   mangling left 113 of the 114 still refused. Adjacency is the actual
+#   signature, and `clean-ocr-formatting`'s merge_emphasis_runs.py drives it
+#   to zero. 5 is well above what a clean file carries (none do, now) and low
+#   enough to catch one only part-way cleaned.
 RATIO, MARGIN = 0.85, 0.10
 CASE_WEIGHT, DENSITY, MIN_EDGE = 0.08, 0.80, 2
 TRIGRAM = 0.35
 MIN_LEN, MIN_WORDS, MAX_LEN = 12, 2, 200
 ITALIC_NOISE, PAGE_CHARS = 0.9, 200
 BASELINE_GAP, COLUMN_GAP = 14.0, 24.0
-ASTERISK_NOISE = 20
+ASTERISK_NOISE = 5
 
 ITALIC_FLAG = 2 ** 1  # PyMuPDF span flags bit 1
 # Lines the matcher will not look at: a table row, an HTML comment (the
@@ -171,7 +175,11 @@ UNSAFE_CHARS = set("*_[]<>|`")
 # One short word, carrying a letter, and no bracket: `*[figure]*` is the
 # figure marker the other skills write, not a mangled emphasis span, and
 # counting those flagged a figure-heavy file as mangled and refused to fix it.
-ARTIFACT_RE = re.compile(r"\*(?=[^\s*]*[^\W\d_])[^\s*\[\]<>()]{1,20} ?\*")
+# `*a* *b*` -- two emphasis spans with only whitespace between them, which is
+# what `pdfmd` leaves where it carried a phrase's italics across a word at a
+# time. A span holding a bracket is a marker another skill owns (`*[figure]*`)
+# and never part of a mangled run.
+ARTIFACT_SPAN = re.compile(r"(?<![\\*])(\*{1,3})(?!\*)([^*\n\[\]<>|`]*)\1(?!\*)")
 WORD_RE = re.compile(r"[A-Za-zÀ-ɏḀ-ỿ'’.-]*[A-Za-zÀ-ɏḀ-ỿ]{3,}[A-Za-zÀ-ɏḀ-ỿ'’.,:;()-]*")
 
 
@@ -817,7 +825,13 @@ def analyse(runs, index, md_lines, min_ratio=RATIO, margin=MARGIN, pairing=None)
 # --- reporting and repair -------------------------------------------------
 
 def artifact_count(md_text):
-    return len(ARTIFACT_RE.findall(md_text))
+    """Emphasis spans left adjacent to one another, the mark of a mangled run."""
+    n = 0
+    for line in md_text.split("\n"):
+        ms = list(ARTIFACT_SPAN.finditer(line))
+        n += sum(1 for a, b in zip(ms, ms[1:])
+                 if a.group(1) == b.group(1) and not line[a.end():b.start()].strip())
+    return n
 
 
 LAYER_NAME = {"ocr": "OCR'd layer", "drawn": "drawn layer",
@@ -871,9 +885,10 @@ def report(stem, md_lines, found, verbose, artifacts, source):
     for note in layer_notes(found, counts, source):
         print(note)
     if artifacts > ASTERISK_NOISE:
-        print(f"  note: {artifacts} per-word asterisk span(s) in the Markdown -- "
-              "this file's emphasis is mangled, not missing. Run "
-              "clean-ocr-formatting first; fix will not write here.")
+        print(f"  note: {artifacts} emphasis span(s) left adjacent to another "
+              "in the Markdown -- this file's emphasis is mangled, not missing. "
+              "Run clean-ocr-formatting's merge_emphasis_runs.py first; fix "
+              "will not write here.")
     for f in found:
         if f["verdict"] in QUIET and not verbose:
             continue
@@ -982,8 +997,9 @@ def main():
         if name == "fix":
             p.add_argument("--force", action="store_true",
                            help="write even to a file whose emphasis layer is "
-                                "mangled with per-word asterisks (normally "
-                                "clean-ocr-formatting's job, and refused)")
+                                "mangled into adjacent per-word spans "
+                                "(normally clean-ocr-formatting's job, and "
+                                "refused)")
     args = ap.parse_args()
 
     total = 0

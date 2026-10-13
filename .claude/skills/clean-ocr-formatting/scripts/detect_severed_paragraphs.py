@@ -43,8 +43,27 @@ rules below are the ways a line can prove it was cut rather than ended:
                       bibliography entry (`- W. Wiggins` for `K. W. Wiggins`,
                       `- B. Coole` for `A. B. Coole`), where the blank line
                       is a real entry boundary and only the marker was wrong.
-  * `hyphen-split` -- the line ends on a hyphenated word fragment, so the
-                      halves join into one word with no space.
+  * `hyphen-split` -- the line ends on a hyphenated fragment and the line
+                      below carries on the same token, so the halves join
+                      into one with no space. Two shapes qualify: a word cut
+                      at its hyphen continuing in lower case (`manu-` +
+                      `facture`), and a *number* range cut at its dash
+                      continuing in digits (`the Yemen 1006-` + `1054H`,
+                      ONS_111). The numeric half is certain rather than
+                      probable: a range's two ends cannot sit in different
+                      paragraphs, and all 78 in the corpus are dates, page
+                      ranges, weights or catalogue numbers.
+  * `hyphen-cap`   -- the same cut, but the continuation is capitalised:
+                      `pre-` + `Islamic`, `Rukn al-` + `Dunia`, `Arab-` +
+                      `Byzantine`. Usually a hyphenated compound or a name,
+                      and 39 of them across 28 files -- but about one in
+                      twelve is not. The three in the corpus that are not
+                      show the shapes to watch: a heading glued below the
+                      cut (`number XVII-` + `A Copper Paisa from Kangra by
+                      ...`), OCR noise standing where a word was (`IT-` +
+                      `Finally`), and a fragment whose completion the OCR
+                      lost altogether (`the mono-` + `For the standard`).
+                      Reported, never fixed.
   * `paren-split`  -- the line leaves a bracket open and the continuation
                       opens with the matching closer: `... of the same date
                       (AH` + `1200/Ry.4). The coin shows ...` (ONS_109).
@@ -172,6 +191,8 @@ WORD_RE = re.compile(r"[A-Za-z][A-Za-z'’]*$")
 # A hyphenated fragment: `manu-`, `Muzaf-`. Not ` -` (a quote intro) and not
 # an em/en dash.
 HYPHEN_TAIL_RE = re.compile(r"[A-Za-z]{2}-$")
+# The same cut through a number: `1006-`, `pp. 109-`, `13.12-`.
+NUM_TAIL_RE = re.compile(r"\d-$")
 BRACKETS = {"(": ")", "[": "]", "{": "}"}
 BRACKET_CHARS = set(BRACKETS) | set(BRACKETS.values())
 # How long a parenthesis may run, opener to closer, and still read as one.
@@ -445,11 +466,28 @@ def scan(path, loose=False):
         tail = last_word(prev)
         terminal = ends_terminally(prev)
 
-        if HYPHEN_TAIL_RE.search(strip_closers(prev)) and nxt[:1].islower():
+        core = strip_closers(prev)
+        if NUM_TAIL_RE.search(core) and nxt[:1].isdigit():
+            findings.append((
+                gap_line, "ERROR", "hyphen-split",
+                f"number range split across the break: {prev.strip()[-32:]!r} + "
+                f"{nxt.strip()[:32]!r} -- join, no space"))
+            continue
+
+        if HYPHEN_TAIL_RE.search(core) and nxt[:1].islower():
             findings.append((
                 gap_line, "ERROR", "hyphen-split",
                 f"word split across the break: {prev.strip()[-32:]!r} + "
                 f"{nxt.strip()[:32]!r} -- join into one word, no space"))
+            continue
+
+        if HYPHEN_TAIL_RE.search(core) and nxt[:1].isupper():
+            findings.append((
+                gap_line, "ERROR", "hyphen-cap",
+                f"hyphenated fragment, capitalised continuation: "
+                f"{prev.strip()[-32:]!r} + {nxt.strip()[:32]!r} -- usually one "
+                f"compound to join, but read it: a heading, OCR noise or a lost "
+                f"completion looks the same"))
             continue
 
         if (not terminal and BULLET_RE.match(nxt)
@@ -543,7 +581,8 @@ DEFAULT_FIX_RULES = ("tail", "hyphen-split", "paren-split")
 def fix(path, rules=DEFAULT_FIX_RULES):
     """Collapse the blank line for the mechanically-safe findings."""
     findings = scan(path, loose=False)
-    safe = {n for n, _, lab, msg in findings if sub_rule(lab, msg) in rules}
+    safe = {n: sub_rule(lab, msg) for n, _, lab, msg in findings
+            if sub_rule(lab, msg) in rules}
     refused = [(n, sub_rule(lab, msg)) for n, _, lab, msg in findings
                if sub_rule(lab, msg) not in rules]
     if not safe:
@@ -553,7 +592,16 @@ def fix(path, rules=DEFAULT_FIX_RULES):
         # Drop the blank lines bottom-up so earlier indices stay valid.
         for n in sorted(safe, reverse=True):
             idx = n - 1
-            if lines[idx].strip() == "":
+            if lines[idx].strip() != "":
+                continue
+            del lines[idx]
+            if safe[n] != "hyphen-split":
+                continue
+            # A hyphen join has to close up: leaving the halves on two lines
+            # renders `1006- 1054H`, since Markdown makes a space of the
+            # newline. Every other rule wants the soft break kept.
+            if idx and idx < len(lines):
+                lines[idx - 1] = lines[idx - 1].rstrip() + lines[idx].lstrip()
                 del lines[idx]
         path.write_text("\n".join(lines), encoding="utf-8")
         print(f"{path}: collapsed {len(safe)} break(s) at "
@@ -565,6 +613,9 @@ def fix(path, rules=DEFAULT_FIX_RULES):
                  "time (an OCR'd full stop) -- decide this one by eye",
         "lower": "a lower-case continuation is usually a catalogue field, "
                  "not prose resuming -- decide this one by eye",
+        "hyphen-cap": "a capitalised continuation after a hyphen is a compound "
+                      "about eleven times in twelve; the twelfth is a glued "
+                      "heading or a lost word, so read it",
         "paren-far": "the bracket closes so far down that the two halves are "
                      "probably unrelated -- check the opener really belongs "
                      "to this sentence before collapsing",

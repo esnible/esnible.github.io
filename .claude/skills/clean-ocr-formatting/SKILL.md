@@ -7,7 +7,7 @@ description: Repair three OCR layout artifacts in a `jons/` Markdown file -- per
 
 This skill handles three OCR artifacts that show up together when the source PDF used letter-spaced text or per-character styling (common with title styling, italic body text, or laser-printed pre-1980 typescripts):
 
-1. **Per-word asterisks** — every word wrapped in `*word *` or `**word **` instead of one span enclosing the phrase.
+1. **Per-word asterisks** — every word wrapped in `*word *` or `**word **` instead of one span enclosing the phrase. Merged into one span per phrase by `scripts/merge_emphasis_runs.py`, never stripped: the emphasis is the page's and the Markdown is the only record of it.
 2. **Word-internal spaces** — `Numi smat i c` for `Numismatic`; `re lat i vely` for `relatively`.
 3. **Severed paragraphs** — a physical line of the source PDF becomes its own Markdown "paragraph" with a `\n\n` after it, so one paragraph breaks into blocks that stop mid-clause. The tell is the line *before* the break (it ends with no terminal punctuation), not the capitalisation of what follows.
 
@@ -21,23 +21,57 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
 1. **Read the file** and identify the affected line ranges. The artifact is almost always localised to one section or page — not the whole document. Quote the start and end lines back to the user before editing if the range is non-obvious.
 
-2. **Strip per-word asterisks** in the affected range.
-
-   First, preview the change by dumping to stdout (do NOT edit in place yet):
-
-   ```
-   sed -n '<start>,<end>p' "<path>" | sed -E 's/\*+//g; s/  +/ /g'
-   ```
-
-   Inspect the output. If it reads cleanly, apply with `sed -i` and a backup:
+2. **Merge per-word asterisks into one span per phrase.** Use the script;
+   it is mechanical and it checks itself.
 
    ```
-   sed -i.bak -E '<start>,<end> { s/\*+//g; s/  +/ /g; }' "<path>"
+   scripts/merge_emphasis_runs.py scan ONS_185      # report, change nothing
+   scripts/merge_emphasis_runs.py scan ONS_185 -v   # print every line it changes
+   scripts/merge_emphasis_runs.py fix  ONS_185
+   scripts/merge_emphasis_runs.py scan jons/*.md    # corpus sweep
    ```
 
-   Diff `<path>` against `<path>.bak`. If correct, `rm <path>.bak`. If wrong, `mv <path>.bak <path>` to revert.
+   It moves a span's padding outside its markers (`*word *` -> `*word* `),
+   drops a span with nothing in it, and joins two spans of the same marker
+   that have only whitespace between them, repeating until the line settles.
 
-   If the range has mixed legitimate formatting (a real `*emphasis*` span you want to keep), use `Edit` line by line instead — never blanket-strip in that case.
+   **Do not strip the asterisks.** This step used to say
+   `sed -E 's/\*+//g'`, which throws the emphasis away: the page sets those
+   words in italic and the Markdown is the only record of it left, since
+   `pdfmd` does not re-read the fonts. Merging keeps it.
+
+   **What the asterisks were doing to the rendered page**, before this script
+   existed: CommonMark will not close a span on a space, so `*word *` renders
+   as the literal text `*word *`, and **35,868 asterisks reached the rendered
+   corpus** that way across 153 files. The degenerate spans were worse than
+   literal -- `* *` alone on a line renders as a bullet list whose item is
+   `*`, and `**  **` as a horizontal rule, so 13 files carried 23 rules nobody
+   set. After the pass: 4,802 asterisks left, and those are a different
+   defect (a row of `***********` the newsletter really prints as a divider,
+   and stray `*` standing in for a superscript footnote marker -- `fix-ocr`'s).
+
+   **Why merging is safe.** `<em>a</em> <em>b</em>` and `<em>a b</em>` set the
+   same words in the same face, so the merge cannot change what a reader
+   sees. The only claim it adds is that the page set one phrase where it may
+   have set two side by side -- two table cells, two captions in a row -- and
+   that claim is invisible in the rendering. A `*` in the wrong place *inside*
+   a word would not be, which is why nothing else is touched.
+
+   Every write is checked: the line's text with all markers removed and
+   whitespace collapsed has to come out identical, or the line is left alone
+   and reported `REFUSED`. Over the corpus it merged 13,815 lines in 113 files
+   with no refusals and no text changed.
+
+   It will not touch a span holding `[`, `]`, `<`, `>`, `|` or a backtick
+   (`*[figure]*` is `detect-missing-figures`' marker and `*Obv.* *[figure]*`
+   must stay two spans), a span with a `*` inside it, an escaped `\*`, or a
+   gap with anything but whitespace in it -- `*A* and *B*` are two titles with
+   a roman `and` between them, and `*Gharn* ā *ta*` is a word split by a
+   diacritic the OCR set in another face, which is `fix-ocr`'s.
+
+   Run this **before** `restore-italics`: that skill refuses a file whose
+   emphasis is mangled, because it cannot tell a missing italic from a
+   mangled one.
 
 3. **Collapse severed paragraphs.** Find them with the script, which reports
    a line number and a label per break:

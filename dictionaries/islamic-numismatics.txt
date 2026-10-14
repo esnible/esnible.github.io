@@ -3250,7 +3250,6 @@ xliv
 # ONS_116 — ONS Newsletter 116: Abbasid Mustazhir coin; Zirid dinar; Malwa coinage; Mughal rupees; Paul Balog conference
 Abdagases
 Ahdi
-Aladdiini
 alayhi
 Allahu
 Amitai-Preiss
@@ -3268,7 +3267,6 @@ Courtenay
 Cuttermill
 Darjat
 Darley-Doran
-Diinal
 Gondophares
 Haqqi
 Haza
@@ -4243,8 +4241,8 @@ Chiostro
 Civiche
 Cufiche
 Emevi
-Imperatorskavo
-Inventarnii
+Imperatorskago
+Inventarnyi
 Izdatelstvo
 Kongresi
 Mahmüd
@@ -5155,7 +5153,6 @@ Tugra
 Tukhtiev
 universum
 Ustadh
-Uthmaniin
 uzbekistana
 Uzbekistana
 Uzbekskoi
@@ -6788,7 +6785,6 @@ Numaylah
 Ordü
 Saljüqid
 Seljüq
-Seljüqiia
 Tabghach
 taluqa
 taunne
@@ -7300,8 +7296,6 @@ Sultaniye
 Ya'qubi
 masalik
 mamalik
-qulib
-quliib
 taqasim
 
 # ONS_203 — new members' addresses (Righetti, Funke, etc.)
@@ -7340,7 +7334,6 @@ Malazkirt
 MALAZKIRT
 Manavazkert
 Manazkert
-Mansiir
 Menua
 Urartian
 Morrocan
@@ -7357,7 +7350,6 @@ Gogava
 Mamaladze
 Geradze
 Harda
-Hariin
 Hobson
 Jobson
 Hofstra
@@ -9787,7 +9779,6 @@ ERKLE
 halfmarchili
 Khamsa
 keshide
-kesliide
 malikdoms
 minumi
 morige
@@ -9968,9 +9959,8 @@ Gruzinskaya
 Haykakan
 Hercule
 MDCCCLV
-Miinzen
 Monographie
-Munzkabinetle
+Munzkabinetten
 Opusculorum
 origines
 Petropoli
@@ -10340,7 +10330,6 @@ Universidad
 
 # ONS_164 — Golden Horde/Qarakhanid/Seljuqid/Samanid/Ghaznavid digest and
 # articles: scholars, rulers, places, Russian/German bibliography terms
-Abii
 AbX
 Akhs
 AkhsTkath
@@ -10524,7 +10513,6 @@ Shaharyar
 Shareny
 Sijistan
 Simonian
-Sochmeniia
 sogenannten
 stempelgleich
 Stempelgleichungen
@@ -10608,8 +10596,6 @@ monetakh
 mongol'skogo
 nadpisei
 nashestviia
-nashestvua
-naterritorii
 nauki
 Nerazik
 Nizhny
@@ -10626,7 +10612,6 @@ Rannesamamdskie
 Rtvetadze
 Sarays
 Sbornik
-Seldjuqiia
 shahür
 silvergilt
 skogo

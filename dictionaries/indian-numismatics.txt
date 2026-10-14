@@ -3241,7 +3241,7 @@ Shobhana
 Silaharas
 Simhanatha
 Sitamau
-solidii
+solidi
 Sourabaya
 Tiwari
 Uddaka's
@@ -4559,7 +4559,6 @@ Simhasena
 SIMHASENA
 Subba
 Sudi
-timaii
 timasi
 trambiyos
 Trimbak
@@ -4918,7 +4917,6 @@ muhi
 Nariman
 Nazrana
 nomismata
-nummii
 Oaklands
 Outram
 Padanabhana
@@ -6877,10 +6875,6 @@ Iqtidar
 Ja'afarabad
 Jafrabad
 Jalna
-julis
-juliis
-jults
-jultis
 Kandhar
 Kandhara
 Khelna
@@ -6894,13 +6888,12 @@ Mahrot
 Mahroth
 Mahur
 majhool
-maniis
-manis
+manus
 Marot
 Munawwar
 Musheer
-mushirabad
 Mushirabad
+Mushīrābād
 Nandeir
 nandeir
 Nandikata
@@ -8250,7 +8243,6 @@ muntasaf
 Murād
 Murtazanagar
 Mushtarī
-muslimiin
 mustanṣir
 mutā
 mutī
@@ -9177,7 +9169,6 @@ dhvaja
 Distt
 dvitiyamiva
 Geer
-Giriisa
 Girisa
 Giritra
 Gita
@@ -9677,7 +9668,6 @@ Dhavala
 Eretnaid
 Gajesva
 Gajesvara
-grysii
 hananda
 Herrscher
 Hussai

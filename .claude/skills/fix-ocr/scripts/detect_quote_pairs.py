@@ -148,7 +148,8 @@ ASCII_QUOTE = {"‘": "'", "’": "'", "“": '"', "”": '"'}
 AYN_NAMES = (
     "Abbas", "Abbasid", "Abbasids", "Abd", "Abdallah", "Abdullah", "Abu",
     "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
-    "AIT", "Ain", "Alamgir", "Alf", "Ali", "Alim", "All", "AlT", "Am",
+    "abbasidischen", "AIT", "Ain", "Alamgir", "Alf", "Ali", "Alim", "All",
+    "AlT", "Am",
     "Amr", "Ayn", "Aziz", "Id", "Imad",
     "Iraq", "Isa", "Izz", "Ubaid", "Ubayd", "Umar", "Umayyad", "Umayyads",
     "Uthman",

@@ -55,6 +55,7 @@ except ImportError:
         sys.exit(f"missing dependency: {exc}. Needs PyMuPDF "
                  f"(see .claude/skills/requirements.txt).")
 
+import classify_source as source
 import detect_quote_pairs as dqp
 
 PDF_DIR = Path(os.environ.get(
@@ -460,6 +461,8 @@ def main(argv=None):
                     help="crop resolution; 450 for a close look (default 300)")
     ap.add_argument("--quality", type=int, default=72,
                     help="JPEG quality of the crops, 1-100 (default 72)")
+    ap.add_argument("--anyway", action="store_true",
+                    help="build the sheet even when the source is not a scan")
     ap.add_argument("--stack", action="store_true",
                     help="labelled JPEG sheets instead of HTML, for an agent "
                          "reading the scans itself")
@@ -481,6 +484,13 @@ def main(argv=None):
     if not pdf.exists():
         print(f"no scan for {path.stem}: {pdf}\n"
               f"set ONS_ARCHIVE_DIR to the archive directory")
+        return 2
+
+    verdict, note = source.classify(pdf)
+    if verdict != "SCAN" and not args.anyway:
+        print(f"{path}: {verdict}  {note}\n"
+              f"a sheet settles OCR guesses against the page image; this file "
+              f"has none to settle. Pass --anyway to build it regardless.")
         return 2
 
     text, rows = collect(path, args.include_single, args.include_wrecks)

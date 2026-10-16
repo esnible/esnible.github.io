@@ -247,6 +247,23 @@ the wrong part of the scan -- so check that the Markdown and the crop are
 the same sentence before trusting either. This is the cheap way to settle a
 file when a person is doing the reading; it rewrites nothing.
 
+Before either, check what the source is:
+
+```
+python3 .claude/skills/fix-ocr/scripts/classify_source.py scan <STEM>...
+```
+
+`SCAN` is the ordinary case -- a page image with an OCR layer behind it,
+where every mark in the Markdown is a guess a render can settle.
+`BORN-DIGITAL` is not: from ONS_186 (1998) onward the PDF carries the
+publisher's own text, 57 files in all, so its punctuation was never OCR'd
+and reading it off a page render is the wrong tool -- the quote screen may
+still report runs there, but they are a different defect with a different
+remedy. `NO-TEXT-LAYER` (ONS_177, ONS_197, OP_014) is a scan nobody OCR'd
+into the PDF: nothing can locate words on those pages, so a crop sheet
+cannot be built at all. `quote_crops.py` refuses both unless passed
+`--anyway`.
+
 `--stack` is the same crops for an agent doing the reading: labelled JPEG
 sheets (`<STEM>-quotes-1.jpg`, ...) of five findings each instead of one
 HTML page, with the Markdown printed to stdout, where text is cheap. Marks

@@ -10,4 +10,3 @@ This site contains experimental content that belongs to the [Oriental Numismatic
 ## Publications
 
 - [Journal Archive](jons/archive.md)
-- [Journal Spellcheck TODO checklist](jons/spellcheck-todo.md)

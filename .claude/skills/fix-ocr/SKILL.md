@@ -497,12 +497,21 @@ After all edits and dictionary updates:
    grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
 
-   `detect_quote_pairs.py` reports three kinds of hit and none is settled
+   `detect_quote_pairs.py` reports five kinds of hit and none is settled
    from the text: a `QUOTES` span says the opener and closer disagree, a
    `SUPERSCRIPT` run says a quote run after a digit is an ordinal or a
-   footnote marker, and a `QUESTION` hit says a `''` closing nothing is
-   probably a `?`. All three need the render before anything is edited —
-   see the three sections above.
+   footnote marker, a `QUESTION` hit says a `''` closing nothing is probably
+   a `?`, a `MARKER` hit says two or more marks after a period are a closer
+   with the footnote marker folded into it, and a `QMARK` hit says a `?`
+   that cannot end its sentence is a closing mark the scan misread. All five
+   need the render before anything is edited — see the sections above.
+
+   `SUPERSCRIPT ordinal` is the one hit the screen can also write: the
+   `ordinals` subcommand emits an `apply_edits.py` batch for every run whose
+   proving word it recognises (`16''' century`, `22"''July`, `3'" ed`,
+   `May 31"`), each edit carrying that word so it fires only where the
+   evidence is. Confirm a sample against a render, then apply the batch
+   instead of rendering each one.
 
 ## What NOT to do
 

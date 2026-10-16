@@ -15,3 +15,4 @@ __pycache__/
 
 # Review sheets from .claude/skills/fix-ocr/scripts/quote_crops.py
 *-quotes.html
+*-quotes-*.jpg

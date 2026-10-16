@@ -247,6 +247,31 @@ the wrong part of the scan -- so check that the Markdown and the crop are
 the same sentence before trusting either. This is the cheap way to settle a
 file when a person is doing the reading; it rewrites nothing.
 
+Before either, check what the source is:
+
+```
+python3 .claude/skills/fix-ocr/scripts/classify_source.py scan <STEM>...
+```
+
+`SCAN` is the ordinary case -- a page image with an OCR layer behind it,
+where every mark in the Markdown is a guess a render can settle.
+`BORN-DIGITAL` is not: from ONS_186 (1998) onward the PDF carries the
+publisher's own text, 57 files in all, so its punctuation was never OCR'd
+and reading it off a page render is the wrong tool -- the quote screen may
+still report runs there, but they are a different defect with a different
+remedy. `NO-TEXT-LAYER` (ONS_177, ONS_197, OP_014) is a scan nobody OCR'd
+into the PDF: nothing can locate words on those pages, so a crop sheet
+cannot be built at all. `quote_crops.py` refuses both unless passed
+`--anyway`.
+
+`--stack` is the same crops for an agent doing the reading: labelled JPEG
+sheets (`<STEM>-quotes-1.jpg`, ...) of five findings each instead of one
+HTML page, with the Markdown printed to stdout, where text is cheap. Marks
+in the same printed paragraph share a band. A file's worth of evidence then
+costs two or three images rather than a render apiece -- ONS_053's fourteen
+findings came to three sheets, and every one of them turned out to be the
+same split `"`.
+
 **The pair decides *that* it is wrong; only the render decides what it should
 be.** The marks the OCR split do not tell you what was printed, and the
 answer is not always a quotation mark at all: ONS_051's `''A Study of Holkar
@@ -472,12 +497,24 @@ After all edits and dictionary updates:
    grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
 
-   `detect_quote_pairs.py` reports three kinds of hit and none is settled
+   `detect_quote_pairs.py` reports five kinds of hit and none is settled
    from the text: a `QUOTES` span says the opener and closer disagree, a
    `SUPERSCRIPT` run says a quote run after a digit is an ordinal or a
-   footnote marker, and a `QUESTION` hit says a `''` closing nothing is
-   probably a `?`. All three need the render before anything is edited —
-   see the three sections above.
+   footnote marker, a `QUESTION` hit says a `''` closing nothing is probably
+   a `?`, a `MARKER` hit says two or more marks after a period are a closer
+   with the footnote marker folded into it, and a `QMARK` hit says a `?`
+   that cannot end its sentence is a closing mark the scan misread. All five
+   need the render before anything is edited — see the sections above.
+
+   `SUPERSCRIPT ordinal` is the one hit the screen can also write: the
+   `ordinals` subcommand emits an `apply_edits.py` batch for every run whose
+   proving word it recognises (`16''' century`, `22"''July`, `3'" ed`,
+   `May 31"`, `the early 6\\* century`), each edit carrying that word so it
+   fires only where the evidence is. The `\\*` form is the same superscript
+   set as an escaped asterisk rather than as quote marks; the screen reads
+   it only where it resolves to an ordinal, because a `\\*` after a digit is
+   as often a footnote marker, and those are settled one page at a time. Confirm a sample against a render, then apply the batch
+   instead of rendering each one.
 
 ## What NOT to do
 

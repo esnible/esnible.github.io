@@ -230,6 +230,23 @@ apostrophes, ʿayn, nested closings (`...the Name "Safi""`), runs after a
 digit, and spans long enough to mean the pairing desynchronised rather than
 that the quotes disagree.
 
+**Settling a whole file by eye instead of one render at a time:**
+
+```
+python3 .claude/skills/fix-ocr/scripts/quote_crops.py <STEM>
+```
+
+writes `<STEM>-quotes.html` -- one row per finding, the Markdown line with
+the run highlighted beside the band of the scan it came from, located by
+matching the words before the mark against the page's text layer. Open it
+next to the editor and work down the list; `--only quotes` (or
+`superscript`, `question`) splits a long one into batches, and `--dpi 450`
+enlarges the crops. A row whose words the OCR mangled, or whose phrase
+repeats on several pages, says so and shows no image rather than showing
+the wrong part of the scan -- so check that the Markdown and the crop are
+the same sentence before trusting either. This is the cheap way to settle a
+file when a person is doing the reading; it rewrites nothing.
+
 **The pair decides *that* it is wrong; only the render decides what it should
 be.** The marks the OCR split do not tell you what was printed, and the
 answer is not always a quotation mark at all: ONS_051's `''A Study of Holkar

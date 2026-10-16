@@ -1,0 +1,27 @@
+# Project skills
+
+This repository's `jons/` corpus is OCR'd from scanned Oriental Numismatic Society publications by `pdfmd --ocr auto` (see `scripts/build.sh`). That pipeline reads typewritten English prose well, but it has no notion of figures, tables, columns, fonts, or hand-lettered foreign script — so each class of damage it leaves behind has its own skill. The skills below live in `.claude/skills/`; they are invoked by name when the matching defect is suspected, and they are designed to compose: most structural passes are typically followed by `fix-ocr` for the remaining letter-level cleanup.
+
+## Detection skills
+
+These look at the rendered PDF page rather than (or alongside) the Markdown, catching problems that leave no trace in the text itself.
+
+- **detect-missing-figures** — Finds maps, graphs, drawings, coin photographs, and plates on a source-PDF page that the Markdown has no `figure` (or `script-*` / `table-*`) marker for. `pdfmd` either drops a drawing without a trace or OCRs its labels into garbage text; because it works from the rendered page, this skill catches what no Markdown-side screen can see.
+- **detect-missing-tables** — Finds bordered tables in the source PDF that `pdfmd` flattened into interleaved prose, leaving the Markdown with no table where one belongs, and can optionally rebuild the table from the existing OCR layer and insert it at the right place. The flattened result reads as garble but is not letter-level OCR damage, so `fix-ocr` must not be pointed at it.
+- **flag-unruled-catalogs** — Distinguishes an isolated foreign-script legend (fine for `transcribe-foreign-script` to handle one line at a time) from a sustained, whitespace-aligned catalog table with no ruled borders, which no skill can safely process automatically. It exists to prevent a costly mistake: blindly running transcription Tier 2 over dozens of catalog rows that are really one table.
+
+## Repair skills
+
+Each of these rebuilds one structure or fixes one class of damage that `pdfmd` left behind.
+
+- **fix-ocr** — The workhorse: finds and corrects letter-level OCR errors in a `jons/` Markdown file — garbled characters, real-word confusions cspell cannot see, suspect glyphs (`¥` is usually `½`), and even passages pdfmd read mirrored so every word is spelled backwards. It treats errors as mechanical OCR mistakes, not authorial typos, and is typically the final pass after a structural repair.
+- **clean-ocr-formatting** — Repairs three OCR layout artifacts that travel together: per-word asterisks from letter-spaced text (`*word *`), words split with internal spaces (`Numi smat i c`), and paragraphs severed mid-sentence by a stray blank line. Usually followed by `fix-ocr` for the remaining single-word errors.
+- **reconstruct-scrambled-md** — Rebuilds a file whose source PDF had a two-column layout that `pdfmd` read across instead of down, interleaving the columns mid-word. This is a structural failure, not garble, and needs reconstruction rather than word-level fixes.
+- **restore-headings** — Recovers section headings that `pdfmd` folded into the body text (glued to the end of a paragraph, or missing their emphasis) and removes headings it invented where the scan has none.
+- **restore-italics** — Restores italic passages — book and journal titles, foreign terms, run-in masthead labels — that the source PDF's text layer records but the Markdown lost, because `pdfmd` re-OCR'd the page image and never saw the fonts.
+- **transcribe-foreign-script** — Finds Arabic, Devanagari, or Chinese-character garble (or stale `<!-- OCR: ... -->` placeholders that never actually opened the PDF), renders the source page, and transcribes the legend by eye, inserting a corroborated reading as verified or flagging a plausible one for further checks. Only applies to legends in running text; plates of facsimiles are artwork and are skipped.
+- **restructure-flattened-md** — The coordinating pass for everything else `pdfmd` flattened into prose: family trees, borderless tables, hand-drawn maps, plates, and underlined bibliography titles. It owns none of the other skills' jobs and defers each hard sub-problem to the skill that does it; use it when `detect-missing-tables screen` reports flattened lines but no missing bordered tables.
+
+## Maintenance skills
+
+- **clean-dictionary** — Audits the project spellcheck allowlists (`dictionaries/{chinese,islamic,indian}-numismatics.txt`) and removes OCR garble that earlier fix-ocr runs incorrectly added, since every such entry permanently masks that garble corpus-wide. It preserves legitimate numismatic terms and proper names, and only removes entries — the unmasks get reported for a later fix-ocr run.

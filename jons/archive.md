@@ -42,7 +42,7 @@ This site currently contains the journals, without images, rendered as text.
 | [Occasional Paper 08](/jons/OP_008.html) | [Newsletter No. 163](/jons/ONS_163.html) | Journal Vol. 259 |
 | [Occasional Paper 09](/jons/OP_009.html) | [Newsletter No. 164](/jons/ONS_164.html) | Journal Vol. 260 |
 | [Information Sheet 11](/jons/IS_011.html) | [Newsletter No. 165](/jons/ONS_165.html) | Journal Vol. 261 |
-| [Information Sheet 12](/jons/IS_002.html) | [Newsletter No. 166](/jons/ONS_166.html) | Journal Vol. 262 |
+| [Information Sheet 12](/jons/IS_012.html) | [Newsletter No. 166](/jons/ONS_166.html) | Journal Vol. 262 |
 |                      | [Newsletter No. 167](/jons/ONS_167.html) |          |
 | **1976**             | **2001**           | **2026**         |
 | [Occasional Paper 10](/jons/OP_010.html) | [Newsletter No. 168](/jons/ONS_168.html) | Journal Vol. 263 |

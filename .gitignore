@@ -12,3 +12,6 @@ __pycache__/
 
 # Local venv for the .claude/skills scripts (see .claude/skills/requirements.txt)
 .venv/
+
+# Review sheets from .claude/skills/fix-ocr/scripts/quote_crops.py
+*-quotes.html

@@ -650,9 +650,28 @@ def emit_ordinals(path):
             # `apply_edits.py` replaces plain text, and the OCR skills quote
             # bad readings inside `<!-- ... -->` on purpose. Hand-edit this
             # one rather than sweeping the file.
-            print(f"# {old} => {new}  -- SKIPPED: also occurs inside an "
+            # ` => ` in a comment is read as an edit by `apply_edits.py`,
+            # on purpose (a heading fix starts with `#` too), so a skip note
+            # must not carry the separator.
+            print(f"# SKIPPED `{old}` -> `{new}`: also occurs inside an "
                   f"HTML comment; edit the prose occurrence by hand")
             continue
+        # `8"\' century` is a substring of `18"\' century`, and a plain-text
+        # replacement inside the longer one writes the shorter number\'s
+        # suffix: harmless for 8 in 18, silently wrong for 2 in 12 (`12nd
+        # century`). Carry the character before the number so the edit can
+        # only fire where the number ends.
+        lead = {raw[m.start() - 1] for m in re.finditer(re.escape(old), raw)
+                if m.start()}
+        if any(c.isdigit() for c in lead):
+            if len(lead) > 1:
+                print(f"# SKIPPED `{old}` -> `{new}`: also occurs inside "
+                      f"a longer number, and the text before it varies; "
+                      f"edit this one by hand")
+                continue
+            guard = lead.pop()
+            old, new = guard + old, guard + new
+            count = raw.count(old)
         print(f"{old} => {new}" + (f" => {count}" if count != 1 else ""))
     return 1
 

@@ -216,6 +216,14 @@ MAX_SPAN = 300
 # `98''^ year`, `23'''^August`. `*` is excluded -- it closes an italic span
 # (`*2"'^*`), and eating it would unbalance the emphasis.
 MARKER_TAIL = "^\\"
+# The same superscript, set as an escaped asterisk rather than as quote
+# marks: `the early 6\\* century`, `around 30\\* November`, `11\\* century
+# Syria`. ONS_175 has 68 of them and ONS_178 20, and no quote character is
+# involved, so the pairing never sees them. 278 of them read as ordinals
+# across 27 scanned files. The ones that do NOT read as an ordinal are left
+# alone: a `\\*` after a digit is as often a footnote marker, and that class
+# belongs with the `®` markers of #209, which the page settles one at a time.
+STAR_SUP = re.compile(r"(?<=\d)\\\*")
 
 
 def norm(run):
@@ -533,7 +541,11 @@ def ordinal_reading(text, start, end):
 
 
 def superscript_findings(text):
-    """[(offset, run, reading, context)] for every quote run after a digit."""
+    """[(offset, run, reading, context)] for every superscript run after a digit.
+
+    Quote runs whether or not they read as an ordinal, and `\\*` runs only
+    when they do -- see STAR_SUP.
+    """
     found = []
     for base, scope in scopes(text):
         for off, run, kind in quote_tokens(scope):
@@ -543,6 +555,12 @@ def superscript_findings(text):
             reading = ordinal_reading(scope, off, end)
             ctx = scope[max(0, off - 28):end + 32]
             found.append((base + off, run, reading, ctx))
+        for m in STAR_SUP.finditer(scope):
+            reading = ordinal_reading(scope, m.start(), m.end())
+            if reading:
+                found.append((base + m.start(), m.group(0), reading,
+                              scope[max(0, m.start() - 28):m.end() + 32]))
+    found.sort(key=lambda row: row[0])
     return found
 
 

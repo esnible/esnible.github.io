@@ -509,8 +509,11 @@ After all edits and dictionary updates:
    `SUPERSCRIPT ordinal` is the one hit the screen can also write: the
    `ordinals` subcommand emits an `apply_edits.py` batch for every run whose
    proving word it recognises (`16''' century`, `22"''July`, `3'" ed`,
-   `May 31"`), each edit carrying that word so it fires only where the
-   evidence is. Confirm a sample against a render, then apply the batch
+   `May 31"`, `the early 6\\* century`), each edit carrying that word so it
+   fires only where the evidence is. The `\\*` form is the same superscript
+   set as an escaped asterisk rather than as quote marks; the screen reads
+   it only where it resolves to an ordinal, because a `\\*` after a digit is
+   as often a footnote marker, and those are settled one page at a time. Confirm a sample against a render, then apply the batch
    instead of rendering each one.
 
 ## What NOT to do

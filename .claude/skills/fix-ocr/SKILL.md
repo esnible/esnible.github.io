@@ -247,6 +247,14 @@ the wrong part of the scan -- so check that the Markdown and the crop are
 the same sentence before trusting either. This is the cheap way to settle a
 file when a person is doing the reading; it rewrites nothing.
 
+`--stack` is the same crops for an agent doing the reading: labelled JPEG
+sheets (`<STEM>-quotes-1.jpg`, ...) of five findings each instead of one
+HTML page, with the Markdown printed to stdout, where text is cheap. Marks
+in the same printed paragraph share a band. A file's worth of evidence then
+costs two or three images rather than a render apiece -- ONS_053's fourteen
+findings came to three sheets, and every one of them turned out to be the
+same split `"`.
+
 **The pair decides *that* it is wrong; only the render decides what it should
 be.** The marks the OCR split do not tell you what was printed, and the
 answer is not always a quotation mark at all: ONS_051's `''A Study of Holkar

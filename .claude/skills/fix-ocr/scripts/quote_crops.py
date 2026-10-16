@@ -64,6 +64,8 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 WORDS_BEFORE = 7        # anchor the crop on the words leading up to the mark
 WORDS_WIDE = 18         # ... and on this many when seven match several pages
 CONTEXT_CHARS = 150     # Markdown shown either side of the run
+STACK_WIDTH = 1500      # pixels across a stacked sheet
+STACK_LABEL = 26        # the caption strip above each band, in those pixels
 PAD_LINES = 1.2         # printed lines of context above and below the crop
 
 
@@ -194,6 +196,16 @@ class Scan:
         _hit, page, k = top
         return page, self.words[page][k:k + n + 4]
 
+    def clip(self, page_no, boxes):
+        """The band to show: the located words, plus a line above and below."""
+        page = self.doc[page_no]
+        height = max(b[3] - b[1] for b in boxes)
+        return pymupdf.Rect(
+            max(0, min(b[0] for b in boxes) - 40),
+            max(0, min(b[1] for b in boxes) - PAD_LINES * height),
+            min(page.rect.width, max(b[2] for b in boxes) + 220),
+            min(page.rect.height, max(b[3] for b in boxes) + PAD_LINES * height))
+
     def crop(self, page_no, boxes, dpi, quality):
         """A grey JPEG of the band, as a data URI.
 
@@ -204,18 +216,28 @@ class Scan:
         rendered once and shared.
         """
         page = self.doc[page_no]
-        height = max(b[3] - b[1] for b in boxes)
-        clip = pymupdf.Rect(
-            max(0, min(b[0] for b in boxes) - 40),
-            max(0, min(b[1] for b in boxes) - PAD_LINES * height),
-            min(page.rect.width, max(b[2] for b in boxes) + 220),
-            min(page.rect.height, max(b[3] for b in boxes) + PAD_LINES * height))
+        clip = self.clip(page_no, boxes)
         key = (page_no, round(clip.x0), round(clip.y0), round(clip.x1), round(clip.y1))
         if key not in self._crops:
             pix = page.get_pixmap(clip=clip, dpi=dpi, colorspace=pymupdf.csGRAY)
             data = base64.b64encode(pix.tobytes("jpeg", jpg_quality=quality))
             self._crops[key] = "data:image/jpeg;base64," + data.decode("ascii")
         return self._crops[key]
+
+
+def place(path, rows, text, scan):
+    """Each finding with the page and word boxes it was located on.
+
+    [(line_no, verdict, note, offset, run, page, found)], page None when the
+    words could not be placed -- `found` is then the reason.
+    """
+    raw = path.read_text(encoding="utf-8")
+    out = []
+    for off, verdict, note, run in rows:
+        before = re.findall(r"[A-Za-z0-9]+", raw[:off + len(run)])[-WORDS_WIDE:]
+        page, found = scan.locate(before)
+        out.append((dqp.line_of(text, off), verdict, note, off, run, page, found))
+    return raw, out
 
 
 # --- the sheet -----------------------------------------------------------
@@ -294,6 +316,17 @@ own text layer repeats the OCR's reading here, so only the image settles it.
 """
 
 
+def plain(raw, off, length):
+    """The Markdown around a run, on one line, with the run in brackets."""
+    line = raw[:off].rfind("\n") + 1
+    end = raw.find("\n", off)
+    end = len(raw) if end < 0 else end
+    before = raw[max(line, off - 60):off]
+    after = raw[off + length:min(end, off + length + 60)]
+    out = f"{before}[[{raw[off:off + length]}]]{after}"
+    return re.sub(r"\s+", " ", out)
+
+
 def window(raw, off, length):
     """The Markdown line around the mark, trimmed, with the run highlighted."""
     start = raw.rfind("\n", 0, off) + 1
@@ -309,15 +342,10 @@ def window(raw, off, length):
     return chunk
 
 
-def build(path, pdf, rows, text, dpi, quality):
-    raw = path.read_text(encoding="utf-8")
-    scan = Scan(pdf)
+def build(path, pdf, raw, placements, scan, dpi, quality):
     cells = []
     located = 0
-    for off, verdict, note, run in rows:
-        line_no = dqp.line_of(text, off)
-        before = re.findall(r"[A-Za-z0-9]+", raw[:off + len(run)])[-WORDS_WIDE:]
-        page, found = scan.locate(before)
+    for line_no, verdict, note, off, run, page, found in placements:
         if page is None:
             crop = f'<div class="missing">no crop — {html.escape(found)}</div>'
             where = "—"
@@ -334,7 +362,7 @@ def build(path, pdf, rows, text, dpi, quality):
             f'<div class="text">{window(raw, off, len(run))}</div></td>'
             f'<td>{crop}</td></tr>')
 
-    title = f"{path.name} — {len(rows)} finding(s) to settle against the scan"
+    title = f"{path.name} — {len(placements)} finding(s) to settle against the scan"
     return located, f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -344,7 +372,7 @@ def build(path, pdf, rows, text, dpi, quality):
 <header>
 <h1>{html.escape(title)}</h1>
 <div class="meta">{html.escape(str(path))} against {html.escape(pdf.name)} ·
-{located} of {len(rows)} located on the scan · crops at {dpi}dpi grey ·
+{located} of {len(placements)} located on the scan · crops at {dpi}dpi grey ·
 page numbers are 0-based, as the skills count them</div>
 {LEGEND}
 </header>
@@ -355,6 +383,64 @@ page numbers are 0-based, as the skills count them</div>
 <script>{SCRIPT}</script>
 </body></html>
 """
+
+
+def stack(raw, placements, scan, dpi, quality, per_sheet, out_stem):
+    """The same crops as tall labelled JPEGs, a few findings to a sheet.
+
+    The HTML sheet is for a person with a browser and an editor beside it.
+    An agent reading the scans itself pays per image *and* per tool call, so
+    fourteen crops become three sheets: same pixels, a fifth of the calls.
+    Each band is captioned with the line and page it came from, and the
+    Markdown goes to stdout, where text is cheap.
+    """
+    bands = []
+    for line_no, verdict, _note, _off, _run, page_no, found in placements:
+        if page_no is None:
+            continue
+        clip = scan.clip(page_no, found)
+        # Several marks in one printed paragraph crop to overlapping bands.
+        # The HTML sheet shares identical ones; here they are merged outright,
+        # since every pixel sent twice is paid for twice.
+        if bands and bands[-1][0] == page_no:
+            grown = bands[-1][1] | clip
+            if clip.y0 < bands[-1][1].y1 and grown.height <= 2.2 * clip.height:
+                bands[-1][1] = grown
+                bands[-1][2].append(line_no)
+                bands[-1][3].add(verdict)
+                continue
+        bands.append([page_no, clip, [line_no], {verdict}])
+
+    sheets = []
+    for start in range(0, len(bands), per_sheet):
+        chunk = []
+        height = 0.0
+        for page_no, clip, lines, verdicts in bands[start:start + per_sheet]:
+            band = STACK_WIDTH * clip.height / clip.width
+            seen = sorted(set(lines))
+            label = ("line " if len(seen) == 1 else "lines ") + \
+                ", ".join(str(n) for n in seen)
+            chunk.append((f"{label} - page {page_no} - {', '.join(sorted(verdicts))}",
+                          page_no, clip, band))
+            height += band + STACK_LABEL
+        doc = pymupdf.open()
+        sheet = doc.new_page(width=STACK_WIDTH, height=height)
+        y = 0.0
+        for label, page_no, clip, band in chunk:
+            sheet.draw_rect(pymupdf.Rect(0, y, STACK_WIDTH, y + STACK_LABEL),
+                            color=None, fill=(0.87, 0.87, 0.87))
+            sheet.insert_text((6, y + 18), label, fontsize=12)
+            pix = scan.doc[page_no].get_pixmap(clip=clip, dpi=dpi,
+                                               colorspace=pymupdf.csGRAY)
+            sheet.insert_image(
+                pymupdf.Rect(0, y + STACK_LABEL, STACK_WIDTH, y + STACK_LABEL + band),
+                pixmap=pix)
+            y += STACK_LABEL + band
+        out = Path(f"{out_stem}-{len(sheets) + 1}.jpg")
+        flat = sheet.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY)
+        out.write_bytes(flat.tobytes("jpeg", jpg_quality=quality))
+        sheets.append(out)
+    return sheets
 
 
 def resolve(arg):
@@ -374,6 +460,11 @@ def main(argv=None):
                     help="crop resolution; 450 for a close look (default 300)")
     ap.add_argument("--quality", type=int, default=72,
                     help="JPEG quality of the crops, 1-100 (default 72)")
+    ap.add_argument("--stack", action="store_true",
+                    help="labelled JPEG sheets instead of HTML, for an agent "
+                         "reading the scans itself")
+    ap.add_argument("--per-sheet", type=int, default=5,
+                    help="findings per stacked sheet (default 5)")
     ap.add_argument("--only", choices=("quotes", "superscript", "question"),
                     help="one verdict only, to take a long list in batches")
     ap.add_argument("--include-single", action="store_true",
@@ -401,7 +492,23 @@ def main(argv=None):
         print(f"{path}: clean")
         return 0
 
-    located, page = build(path, pdf, rows, text, args.dpi, args.quality)
+    scan = Scan(pdf)
+    raw, placements = place(path, rows, text, scan)
+
+    if args.stack:
+        stem = args.out or f"{path.stem}-quotes"
+        sheets = stack(raw, placements, scan, args.dpi, args.quality,
+                       args.per_sheet, stem)
+        for line_no, verdict, _note, off, run, page, found in placements:
+            where = f"p{page}" if page is not None else f"no crop -- {found}"
+            print(f"{path}:{line_no}: {verdict}  {where}\n"
+                  f"    {plain(raw, off, len(run))}")
+        placed_n = sum(1 for row in placements if row[5] is not None)
+        print(f"{path}: {len(placements)} finding(s), {placed_n} located -> "
+              + ", ".join(f"{s} ({s.stat().st_size // 1024} KB)" for s in sheets))
+        return 1
+
+    located, page = build(path, pdf, raw, placements, scan, args.dpi, args.quality)
     out = Path(args.out) if args.out else Path(f"{path.stem}-quotes.html")
     out.write_text(page, encoding="utf-8")
     print(f"{path}: {len(rows)} finding(s), {located} located -> {out} "

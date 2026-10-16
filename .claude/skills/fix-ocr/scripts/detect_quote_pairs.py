@@ -58,6 +58,32 @@ wreckage (`j ^ ' *\\J^* \\}• • •`) is reported as `WRECK` only under
 `--include-wrecks`: the quote marks there are a symptom, and the line belongs
 to `transcribe-foreign-script` or `restructure-flattened-md`.
 
+## Two marks after a period are a closer and a footnote marker
+
+One closing mark after a period is ordinary typography, and the corpus has
+700 of them. Two or more is the scan folding the marker into the closer:
+
+    Appa Sahib's reigns."'        ->  reigns."<sup>22</sup>
+    which may be the royal mint,''  ->  mint,<sup>5</sup>
+    begrenzte Auflage hinweist...''  ->  hinweist..."<sup>3</sup>
+
+55 in the scanned files, and 53 of them sit outside every other verdict --
+the pairing cannot see them because the closer itself is not in doubt. The
+number is not decidable from the text: it comes off the page, like the rest
+of the marker class.
+
+## A `?` can be a closing mark the scan misread
+
+    a unique feature are the "modi"? records which have been
+    the so-called "Oriental Cabinet"? of the Smithsonian
+
+A `?` cannot end a sentence that runs on in lower case, so each of these is
+a closing mark. Where a capital follows, an authorial question mark is
+ordinary English -- `what is the meaning of 'money'? A special building` --
+and 20 of the corpus's 23 are exactly that, so only the lower-case case is
+reported. The pairing is blind to all of them: the quotation balances, and
+the stray mark sits outside it.
+
 ## A `''` that closes nothing is often a question mark
 
 Working ONS_165's worklist turned up a defect the pairing itself cannot see.
@@ -129,6 +155,7 @@ Usage:
 Exit status is 0 when nothing is found, 1 otherwise (sibling-skill convention).
 """
 
+import difflib
 import re
 import sys
 from pathlib import Path
@@ -150,7 +177,7 @@ AYN_NAMES = (
     "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
     "abbasidischen", "AIT", "Ain", "Alamgir", "Alf", "Ali", "Alim", "All",
     "AlT", "Am",
-    "Amr", "Ayn", "Aziz", "Id", "Imad",
+    "Amr", "Ayn", "Ayyar", "Ayyani", "Aziz", "Id", "Imad",
     "Iraq", "Isa", "Izz", "Ubaid", "Ubayd", "Umar", "Umayyad", "Umayyads",
     "Uthman",
 )
@@ -167,7 +194,17 @@ CENTURY_WORDS = ("century", "centuries", "cent", "cents")
 ORDINAL_NOUNS = (
     "anniversary", "regnal", "year", "day", "edition", "standard",
     "international", "colloquium", "conference", "congress", "session",
+    # measured from the runs the rule left as `check`: `3'" ed 1991`,
+    # `5"'series vol VI`, `(15'" cycle, 51" year [or 1917 AD])`
+    "ed", "series", "cycle",
 )
+# The scan garbles the proving word itself often enough to matter --
+# `11"" cenmry`, `the 18''' centuiy*` -- and a token that close to `century`
+# is nothing else.
+CENTURY_FUZZ = 0.78
+# Words that may stand between the run and its proving noun: `5"' western
+# standard`, `4"" Members' Congress`.
+ORDINAL_GAP = 2
 CONNECTORS = ("and", "or", "to")
 # Beyond this, a mismatched pair is a desynchronised pairing rather than a
 # defect: the opener's real closer was missed, so the span runs on to the next
@@ -251,7 +288,13 @@ def quote_tokens(text):
         if len(run) >= 2 and before.isdigit():
             toks.append((start, run, "SUP"))
             continue
-        if run.endswith("'") and AYN_RE.match(text[end:]):
+        if run[-1] in "'\"" and AYN_RE.match(text[end:]):
+            # The scan sets the mark as `"` as readily as `'`: `"Abd Allah`,
+            # `(sometimes "Adud) al-Daula`, `the Qarluq warlord, 'Ayyar Bek`.
+            # 86 of these in the scanned files, and a sample of 16 was a name
+            # in all 16; each one the screen took for an opener cost a false
+            # span, as it did in ONS_163, ONS_166 and ONS_168. A quotation
+            # that genuinely opens on such a name is the price, and is rarer.
             run = run[:-1]                    # ("'Abd -> opener `("`, then ʿayn
             if not run:
                 continue
@@ -373,10 +416,52 @@ def question_findings(text):
     return found
 
 
+# One closing mark after a period is ordinary typography (`...Rajputana."`,
+# 700 of them in the scans). Two or more is not: the extra marks are the
+# footnote marker the OCR folded into the closer -- `reigns."\'`, `royal
+# mint,\'\'`, `hinweist...\'\'`. 55 in the scanned files, 53 of which no other
+# verdict sees.
+MARKER_AT = re.compile(r"[.,!]([\'\"]{2,4})(?=\s|$)")
+# `the "modi"? records`: a `?` cannot end a sentence that runs on in lower
+# case, so that one is a closing mark the scan read as a question mark.
+# Where a capital follows, an authorial question mark is ordinary English --
+# 20 of the corpus\'s 23 are exactly that -- so those are left alone.
+QMARK_AT = re.compile(r"([\'\"])[^\'\"\n]{2,60}\1\?(?=\s+[a-z])")
+
+
+def marker_findings(text):
+    """[(offset, run, context)] for a closer with its footnote marker in it."""
+    found = []
+    for base, scope in scopes(text):
+        for m in MARKER_AT.finditer(scope):
+            found.append((base + m.start(1), m.group(1),
+                          scope[max(0, m.start() - 60):m.end() + 16]))
+    return found
+
+
+def qmark_findings(text):
+    """[(offset, quoted, context)] for a closing mark the scan read as `?`."""
+    found = []
+    for base, scope in scopes(text):
+        for m in QMARK_AT.finditer(scope):
+            found.append((base + m.start(), m.group(0),
+                          scope[max(0, m.start() - 40):m.end() + 24]))
+    return found
+
+
 def suffix(n):
     if n % 100 in (11, 12, 13):
         return "th"
     return {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+
+
+def century_like(tok):
+    low = tok.lower()
+    if low in CENTURY_WORDS:
+        return True
+    return len(low) >= 5 and any(
+        difflib.SequenceMatcher(None, low, w).ratio() >= CENTURY_FUZZ
+        for w in ("century", "centuries"))
 
 
 def ordinal_reading(text, start, end):
@@ -393,36 +478,55 @@ def ordinal_reading(text, start, end):
     digits = re.search(r"(\d+)$", text[:start])
     if not digits:
         return None
+    n = int(digits.group(1))
     tail = end
     while tail < len(text) and text[tail] in MARKER_TAIL:
         tail += 1
-    rest = text[tail:tail + 60]
-    word = re.match(r"\s*([A-Za-z]+|[-–])", rest)
-    if not word:
-        return None
-    tok = word.group(1)
-    low = tok.lower()
-    n = int(digits.group(1))
+    rest = text[tail:tail + 80]
 
-    ordinal = False
-    if low in CENTURY_WORDS or (low == "c" and not rest[word.end():].startswith("/")):
-        ordinal = n <= 21                     # no 24th century in this corpus
-    elif tok in MONTHS:
-        ordinal = n <= 31
-    elif low in ORDINAL_NOUNS or tok in ("C", "International", "All-Russian"):
-        ordinal = n <= 99
-    elif low in CONNECTORS or tok in ("-", "–"):
-        # `6"' and 8"' century`, `8'''-10"' c. AD`: the century word is just
-        # beyond the connector. Without it, `AH 1147/1734'' to 1164` is a
-        # footnote marker on a date, not an ordinal.
-        beyond = rest[word.end():word.end() + 40]
-        ordinal = n <= 21 and bool(
-            re.search(r"\b(?:%s)\b|\bc[./\s]" % "|".join(CENTURY_WORDS),
-                      beyond, re.IGNORECASE))
+    # A month BEFORE the number proves it as surely as a noun after it, and
+    # the page sets the day as an ordinal: `May 31" sanctioned 15,000`.
+    lead = re.search(r"\b(%s)\s+$" % "|".join(MONTHS), text[:digits.start(1)])
+    if lead and n <= 31:
+        old = text[lead.start(1):tail]
+        if "\n" in old:
+            return None
+        return n, suffix(n), old, f"{lead.group(1)} {n}{suffix(n)}"
+
+    # The proving noun is not always the next word: `5"' western standard`,
+    # `4"" Members' Congress`. Step over at most ORDINAL_GAP plain words.
+    ordinal, stop, at = False, None, 0
+    for step in range(ORDINAL_GAP + 1):
+        word = re.match(r"\s*([A-Za-z]+|[-–])", rest[at:])
+        if not word:
+            break
+        tok = word.group(1)
+        low = tok.lower()
+        beyond = rest[at + word.end():]
+        if century_like(tok) or (low == "c" and not beyond.startswith("/")):
+            ordinal = n <= 21                 # no 24th century in this corpus
+        elif tok in MONTHS:
+            ordinal = n <= 31
+        elif low in ORDINAL_NOUNS or tok in ("C", "International", "All-Russian"):
+            ordinal = n <= 99
+        elif step == 0 and (low in CONNECTORS or tok in ("-", "–")):
+            # `6"' and 8"' century`, `8'''-10"' c. AD`: the century word is
+            # just beyond the connector. Without it, `AH 1147/1734'' to 1164`
+            # is a footnote marker on a date, not an ordinal.
+            ordinal = n <= 21 and bool(
+                re.search(r"\b(?:%s)\b|\bc[./\s]" % "|".join(CENTURY_WORDS),
+                          beyond[:40], re.IGNORECASE))
+        if ordinal:
+            stop = tail + at + word.end()
+            break
+        at += word.end()
+        if beyond[:1] == "'":                 # `Members' Congress`
+            at += 1
     if not ordinal:
         return None
-    stop = tail + word.end()
-    old, new = text[digits.start(1):stop], f"{n}{suffix(n)}{text[tail:stop]}"
+    old, carry = text[digits.start(1):stop], text[tail:stop]
+    # `25'''February` has no space in the Markdown; the page prints one.
+    new = f"{n}{suffix(n)}" + (" " if carry[:1].isalnum() else "") + carry
     if "\n" in old:
         return None                           # the evidence is on the next line
     return n, suffix(n), old, new
@@ -462,11 +566,13 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
     quotes = quote_findings(text, include_single)
     sups = superscript_findings(text)
     questions = question_findings(text)
+    markers = marker_findings(text)
+    qmarks = qmark_findings(text)
     shown = [q for q in quotes if include_wrecks or not q[4]]
     wrecks = len(quotes) - len(shown)
     ordinals = sum(1 for s in sups if s[2])
 
-    if not shown and not sups and not questions:
+    if not shown and not sups and not questions and not markers and not qmarks:
         if not quiet_clean:
             print(f"{path}: clean")
         return 0
@@ -474,6 +580,8 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
     rows = [(off, "q", rest) for off, *rest in shown]
     rows += [(off, "s", rest) for off, *rest in sups]
     rows += [(off, "?", rest) for off, *rest in questions]
+    rows += [(off, "m", rest) for off, *rest in markers]
+    rows += [(off, "!", rest) for off, *rest in qmarks]
     for off, kind, f in sorted(rows, key=lambda r: r[0]):
         n = line_of(text, off)
         if kind == "q":
@@ -481,6 +589,18 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
             tag = "QUOTES-WRECK" if wreck else "QUOTES"
             print(f"{path}:{n}: {tag}  opener `{opener}` vs closer `{closer}`")
             print(f"    {one_line(span)[:150]}")
+        elif kind == "m":
+            run, ctx = f
+            print(f"{path}:{n}: MARKER  `{run}` after a period -- the closer "
+                  f"with a footnote marker folded into it; the page has the "
+                  f"number")
+            print(f"    {one_line(ctx)[:150]}")
+        elif kind == "!":
+            quoted, ctx = f
+            print(f"{path}:{n}: QMARK  `{one_line(quoted)[:60]}` -- a `?` "
+                  f"cannot end a sentence that runs on in lower case; the "
+                  f"page prints a closing mark")
+            print(f"    {one_line(ctx)[:150]}")
         elif kind == "?":
             word, ctx = f
             print(f"{path}:{n}: QUESTION  `''` closing nothing after "
@@ -497,7 +617,8 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
             print(f"    {one_line(ctx)[:150]}")
 
     note = (f"-- {len(shown)} mismatched span(s), {len(sups)} superscript "
-            f"run(s), {len(questions)} unclosed `''`")
+            f"run(s), {len(questions)} unclosed `''`, {len(markers)} folded "
+            f"marker(s), {len(qmarks)} `?` for a closing mark")
     if ordinals:
         note += f" ({ordinals} readable as ordinals: `ordinals` emits the batch)"
     if wrecks:

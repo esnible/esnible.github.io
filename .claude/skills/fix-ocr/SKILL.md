@@ -264,6 +264,25 @@ into the PDF: nothing can locate words on those pages, so a crop sheet
 cannot be built at all. `quote_crops.py` refuses both unless passed
 `--anyway`.
 
+`detect_quote_pairs.py rows <STEM>` writes the same findings as
+`file<TAB>label<TAB>anchor` for that builder, leaving out the ordinals the
+batch writes. Use it when a file has findings from more than one screen: a
+quote run and a heading on the same page then share one band instead of
+costing two images.
+
+The locating and the stacking are not quote-specific, so they live in
+`.claude/skills/shared/crop_sheets.py`, which any screen can call with a
+label and an anchor per finding:
+
+```
+printf 'line 94 heading\tMichael Willis, Who built\n' |
+  python3 .claude/skills/shared/crop_sheets.py sheets ONS_166
+```
+
+A row may name its own file (`file<TAB>label<TAB>anchor`), which puts the
+last few findings of a dozen files onto one sheet instead of one sheet
+apiece.
+
 `--stack` is the same crops for an agent doing the reading: labelled JPEG
 sheets (`<STEM>-quotes-1.jpg`, ...) of five findings each instead of one
 HTML page, with the Markdown printed to stdout, where text is cheap. Marks
@@ -501,8 +520,9 @@ After all edits and dictionary updates:
    from the text: a `QUOTES` span says the opener and closer disagree, a
    `SUPERSCRIPT` run says a quote run after a digit is an ordinal or a
    footnote marker, a `QUESTION` hit says a `''` closing nothing is probably
-   a `?`, a `MARKER` hit says two or more marks after a period are a closer
-   with the footnote marker folded into it, and a `QMARK` hit says a `?`
+   a `?`, a `MARKER` hit says there are more marks after a period than
+   the page prints -- a footnote marker folded into the closer, or a doubled
+   closer, and only the render says which -- and a `QMARK` hit says a `?`
    that cannot end its sentence is a closing mark the scan misread. All five
    need the render before anything is edited — see the sections above.
 

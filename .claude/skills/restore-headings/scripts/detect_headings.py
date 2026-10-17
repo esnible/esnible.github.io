@@ -576,6 +576,48 @@ def report(stem, md_lines, found, verbose):
     return open_n
 
 
+# What `fix` will not settle on its own and a render can: everything unsafe
+# to apply, the heads the scan has and the Markdown lacks, and the
+# candidates the three-line shape test found alone -- those are roughly half
+# real. UNMATCHED is deliberately not here: by its own definition its text
+# matches no line of the scan and is mostly not words, so there is nothing
+# on the page to read. Those are a flattened table's cells wearing a `#`,
+# and they belong to `restructure-flattened-md`. ONS_166 reports 55 of them
+# against 40 findings a render can actually settle.
+NEEDS_RENDER = UNSAFE + ("LOST",)
+
+
+def rows(stem, md_lines, found, include_unmatched=False):
+    """`file<TAB>label<TAB>anchor` for each finding a render has to settle.
+
+    The anchor is the scan's own line where there is one, since that is what
+    `shared/crop_sheets.py` matches against the page; for a head the scan
+    does not have, it is the Markdown line instead.
+    """
+    out, skipped = [], 0
+    for f in found:
+        ln = f["pdf"]
+        shape_only = (f["verdict"] in FIXABLE
+                      and ln and ln.get("apart_by") == "shape")
+        if f["verdict"] in REVIEW and not include_unmatched:
+            skipped += 1
+            continue
+        if f["verdict"] not in NEEDS_RENDER + REVIEW and not shape_only:
+            continue
+        where = f"line {f['row'] + 1}" if "row" in f else f"p{ln['page']}"
+        label = f"{where} {f['verdict']}" + (" [shape]" if shape_only else "")
+        anchor = ln["text"] if ln else md_lines[f["row"]]
+        # this screen counts pages from 1, `crop_sheets.py` from 0
+        page = ln["page"] - 1 if ln else ""
+        out.append(f"{stem}\t{label}\t{page}\t{anchor.strip()}")
+    if skipped:
+        out.append(f"# {stem}: {skipped} UNMATCHED line(s) left out -- their "
+                   f"text is on no page, so no crop settles them; they are "
+                   f"flattened table cells for restructure-flattened-md "
+                   f"(--include-unmatched to crop them anyway)")
+    return out
+
+
 def apply(md_lines, found, marker, include_plain, include_shape=False):
     """Rewrite the Markdown. Returns (new lines, count applied)."""
     edits = {}
@@ -648,6 +690,8 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name, help_text in (("scan", "report, change nothing"),
+                            ("rows", "emit crop_sheets.py rows for the "
+                                     "findings a render has to settle"),
                             ("fix", "rewrite the Markdown in place")):
         p = sub.add_parser(name, help=help_text)
         p.add_argument("stems", nargs="+", metavar="IS_001")
@@ -687,6 +731,10 @@ def main():
                        help="fraction of a page's own long body lines that "
                             "may come back bold before the bold signal is "
                             f"distrusted for that whole page (default {BOLD_NOISE})")
+        if name == "rows":
+            p.add_argument("--include-unmatched", action="store_true",
+                           help="also emit the UNMATCHED lines, whose text is "
+                                "on no page")
         if name == "fix":
             p.add_argument("--marker", default=DEFAULT_MARKER,
                            help=f"what to prefix a head with (default {DEFAULT_MARKER!r})")
@@ -708,6 +756,10 @@ def main():
             total += 1
             continue
         md, md_lines, found = data
+        if args.cmd == "rows":
+            print("\n".join(rows(stem, md_lines, found,
+                                 args.include_unmatched)))
+            continue
         open_n = report(stem, md_lines, found, args.verbose)
         if args.cmd == "fix" and (open_n or args.include_plain):
             new, applied = apply(md_lines, found, args.marker,

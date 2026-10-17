@@ -68,9 +68,13 @@ One closing mark after a period is ordinary typography, and the corpus has
     begrenzte Auflage hinweist...''  ->  hinweist..."<sup>3</sup>
 
 55 in the scanned files, and 53 of them sit outside every other verdict --
-the pairing cannot see them because the closer itself is not in doubt. The
-number is not decidable from the text: it comes off the page, like the rest
-of the marker class.
+the pairing cannot see them because the closer itself is not in doubt.
+
+Which of the two it is, is not decidable from the text either. ONS_166's
+six were all markers; the first five found outside it -- across ONS_110,
+ONS_117, ONS_119 and ONS_120 -- were all doubled closers, where the page
+prints `reigns."` and the scan added a mark. Both readings come off the
+page.
 
 ## A `?` can be a closing mark the scan misread
 
@@ -174,9 +178,9 @@ ASCII_QUOTE = {"‘": "'", "’": "'", "“": '"', "”": '"'}
 # `'"'The Gondopharid Countermark"'` stops being reported.
 AYN_NAMES = (
     "Abbas", "Abbasid", "Abbasids", "Abd", "Abdallah", "Abdullah", "Abu",
-    "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
+    "Adan", "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
     "abbasidischen", "AIT", "Ain", "Alamgir", "Alf", "Ali", "Alim", "All",
-    "AlT", "Am",
+    "AlT", "Alun", "Am",
     "Amr", "Ayn", "Ayyar", "Ayyani", "Aziz", "Id", "Imad",
     "Iraq", "Isa", "Izz", "Ubaid", "Ubayd", "Umar", "Umayyad", "Umayyads",
     "Uthman",
@@ -609,9 +613,9 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
             print(f"    {one_line(span)[:150]}")
         elif kind == "m":
             run, ctx = f
-            print(f"{path}:{n}: MARKER  `{run}` after a period -- the closer "
-                  f"with a footnote marker folded into it; the page has the "
-                  f"number")
+            print(f"{path}:{n}: MARKER  `{run}` after a period -- more marks "
+                  f"than the page prints: a footnote marker folded into the "
+                  f"closer, or a doubled closer; render it")
             print(f"    {one_line(ctx)[:150]}")
         elif kind == "!":
             quoted, ctx = f
@@ -647,6 +651,44 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
     return 1
 
 
+def emit_rows(path, include_single=False, include_wrecks=False):
+    """`file<TAB>label<TAB>anchor` for the findings a render has to settle.
+
+    The same rows `quote_crops.py --stack` builds its own sheets from, in the
+    form `shared/crop_sheets.py` takes from any screen -- so a quote run and
+    a heading or a figure on the same page can share one band instead of
+    costing two. The ordinals are left out: the batch writes those, and a
+    sample settles them.
+
+    This screen reads the Markdown alone and so has no page to offer; the
+    words before the mark are the anchor, as they are for the sheets.
+    """
+    text = readable(path)
+    raw = path.read_text(encoding="utf-8")
+    rows = []
+
+    def add(off, verdict, length):
+        anchor = " ".join(raw[max(0, off - 160):off + length].split())
+        rows.append(f"{path.stem}\t{verdict} line {line_of(text, off)}\t{anchor}")
+
+    for off, opener, closer, span, wreck in quote_findings(text, include_single):
+        if wreck and not include_wrecks:
+            continue
+        add(off, "QUOTES", min(len(span), 40))
+    for off, run, reading, _ctx in superscript_findings(text):
+        if not reading:
+            add(off, "SUPERSCRIPT", len(run))
+    for off, _word, _ctx in question_findings(text):
+        add(off, "QUESTION", 2)
+    for off, run, _ctx in marker_findings(text):
+        add(off, "MARKER", len(run))
+    for off, quoted, _ctx in qmark_findings(text):
+        add(off, "QMARK", len(quoted))
+    rows.sort(key=lambda r: int(r.split("line ")[1].split("\t")[0]))
+    print("\n".join(rows))
+    return 1 if rows else 0
+
+
 def emit_ordinals(path):
     """Print an `apply_edits.py` batch for the runs that read as ordinals."""
     text = readable(path)
@@ -679,17 +721,29 @@ def emit_ordinals(path):
         # suffix: harmless for 8 in 18, silently wrong for 2 in 12 (`12nd
         # century`). Carry the character before the number so the edit can
         # only fire where the number ends.
-        lead = {raw[m.start() - 1] for m in re.finditer(re.escape(old), raw)
-                if m.start()}
-        if any(c.isdigit() for c in lead):
-            if len(lead) > 1:
-                print(f"# SKIPPED `{old}` -> `{new}`: also occurs inside "
-                      f"a longer number, and the text before it varies; "
-                      f"edit this one by hand")
+        # The edit must fire only where the number and the proving word both
+        # end: `8"\' century` sits inside `18"\' century`, and `4\\* c` inside
+        # `4\\* century`. Carry the character on whichever side collides.
+        for side in ("before", "after"):
+            spots = [m for m in re.finditer(re.escape(old), raw)]
+            if side == "before":
+                seen = {raw[m.start() - 1] for m in spots if m.start()}
+            else:
+                seen = {raw[m.end()] for m in spots if m.end() < len(raw)}
+            if not any(c.isalnum() for c in seen):
                 continue
-            guard = lead.pop()
-            old, new = guard + old, guard + new
-            count = raw.count(old)
+            if len(seen) > 1:
+                print(f"# SKIPPED `{old}` -> `{new}`: also occurs inside a "
+                      f"longer word or number, and the text {side} it "
+                      f"varies; edit this one by hand")
+                old = None
+                break
+            guard = seen.pop()
+            old, new = ((guard + old, guard + new) if side == "before"
+                        else (old + guard, new + guard))
+        if old is None:
+            continue
+        count = raw.count(old)
         print(f"{old} => {new}" + (f" => {count}" if count != 1 else ""))
     return 1
 
@@ -698,7 +752,7 @@ def main(argv):
     flags = {a for a in argv[1:] if a.startswith("-")}
     args = [a for a in argv[1:] if not a.startswith("-")]
     unknown = flags - {"--include-single", "--include-wrecks"}
-    if len(args) < 2 or args[0] not in ("scan", "ordinals") or unknown:
+    if len(args) < 2 or args[0] not in ("scan", "ordinals", "rows") or unknown:
         print(__doc__)
         return 2
 
@@ -709,7 +763,10 @@ def main(argv):
             print(f"no such file: {path}")
             rc = max(rc, 2)
             continue
-        if args[0] == "ordinals":
+        if args[0] == "rows":
+            rc = max(rc, emit_rows(path, "--include-single" in flags,
+                                   "--include-wrecks" in flags))
+        elif args[0] == "ordinals":
             rc = max(rc, emit_ordinals(path))
         else:
             rc = max(rc, scan(path,

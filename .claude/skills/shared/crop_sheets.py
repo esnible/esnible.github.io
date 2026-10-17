@@ -157,6 +157,33 @@ class Scan:
             min(page.rect.width, max(b[2] for b in boxes) + 220),
             min(page.rect.height, max(b[3] for b in boxes) + PAD_LINES * height))
 
+    def locate_on(self, page_no, text):
+        """Boxes for `text` on a page already known, however short the text.
+
+        A screen that reports against a page line knows which page it is, so
+        the fuzzy search over the whole file has nothing to add -- and a head
+        is often two words (`fig. 2`, `Beischlage`), under the minimum the
+        fuzzy anchor needs to be safe. Here the text layer is searched
+        directly, then by its first words, then by its longest word.
+        """
+        if not 0 <= page_no < self.doc.page_count:
+            return None, (f"p{page_no} is not in a {self.doc.page_count}-page "
+                          f"scan -- pages are counted from 0 here")
+        page = self.doc[page_no]
+        probe = " ".join(text.split())[:60]
+        words = probe.split()
+        tries = [probe, " ".join(words[:4])]
+        if words:
+            tries.append(max(words, key=len))
+        for attempt in tries:
+            if len(attempt) < 3:
+                continue
+            hits = page.search_for(attempt)
+            if hits:
+                r = hits[0]
+                return page_no, [(r.x0, r.y0, r.x1, r.y1, attempt)]
+        return None, f"p{page_no} does not have that text in its layer"
+
     def crop(self, page_no, boxes, dpi, quality):
         """A grey JPEG of the band, as a data URI.
 
@@ -218,10 +245,18 @@ class Library:
         return self.scans[stem]
 
     def place(self, rows):
-        """[(stem, label, page, found)] for rows of (stem, label, anchor)."""
+        """[(stem, label, page, found)] for (stem, label, page_hint, anchor).
+
+        A page hint is used as given: the screen that wrote the row read it
+        off that page.
+        """
         out = []
-        for stem, label, anchor in rows:
-            page, found = self.scan(stem).locate(anchor_words(anchor))
+        for stem, label, hint, anchor in rows:
+            scan = self.scan(stem)
+            if hint is None:
+                page, found = scan.locate(anchor_words(anchor))
+            else:
+                page, found = scan.locate_on(hint, anchor)
             out.append((stem, label, page, found))
         return out
 
@@ -319,7 +354,11 @@ def pdf_for(stem):
 
 
 def read_rows(handle):
-    """`label<TAB>anchor`, or `file<TAB>label<TAB>anchor` to mix files.
+    """A row is 2, 3 or 4 tab-separated fields:
+
+        label<TAB>anchor
+        file<TAB>label<TAB>anchor                 -- to mix files on a sheet
+        file<TAB>label<TAB>page<TAB>anchor        -- when the screen knows the page
 
     Blank lines and `#` comments are ignored.
     """
@@ -330,9 +369,14 @@ def read_rows(handle):
             continue
         parts = line.split("\t")
         if len(parts) == 2:
-            rows.append((None, parts[0].strip(), parts[1]))
-        elif len(parts) >= 3:
-            rows.append((parts[0].strip(), parts[1].strip(), "\t".join(parts[2:])))
+            rows.append((None, parts[0].strip(), None, parts[1]))
+        elif len(parts) == 3:
+            rows.append((parts[0].strip(), parts[1].strip(), None, parts[2]))
+        elif len(parts) >= 4:
+            page = parts[2].strip().lstrip("pP")
+            rows.append((parts[0].strip(), parts[1].strip(),
+                         int(page) if page.isdigit() else None,
+                         "\t".join(parts[3:])))
         else:
             sys.exit(f"a row needs `label<TAB>anchor`: {line!r}")
     return rows
@@ -357,15 +401,15 @@ def main(argv=None):
     if not rows:
         print("no rows given")
         return 2
-    if any(stem is None for stem, _l, _a in rows) and not args.file:
+    if any(stem is None for stem, _l, _h, _a in rows) and not args.file:
         print("rows without a file of their own need the `file` argument")
         return 2
 
     library = Library()
     default = Path(args.file).stem if args.file else None
     try:
-        placed = library.place([(stem or default, label, anchor)
-                                for stem, label, anchor in rows])
+        placed = library.place([(stem or default, label, hint, anchor)
+                                for stem, label, hint, anchor in rows])
     except FileNotFoundError as exc:
         print(f"{exc}\nset ONS_ARCHIVE_DIR to the archive directory")
         return 2

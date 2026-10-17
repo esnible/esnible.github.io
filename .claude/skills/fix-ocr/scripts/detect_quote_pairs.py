@@ -68,9 +68,13 @@ One closing mark after a period is ordinary typography, and the corpus has
     begrenzte Auflage hinweist...''  ->  hinweist..."<sup>3</sup>
 
 55 in the scanned files, and 53 of them sit outside every other verdict --
-the pairing cannot see them because the closer itself is not in doubt. The
-number is not decidable from the text: it comes off the page, like the rest
-of the marker class.
+the pairing cannot see them because the closer itself is not in doubt.
+
+Which of the two it is, is not decidable from the text either. ONS_166's
+six were all markers; the first five found outside it -- across ONS_110,
+ONS_117, ONS_119 and ONS_120 -- were all doubled closers, where the page
+prints `reigns."` and the scan added a mark. Both readings come off the
+page.
 
 ## A `?` can be a closing mark the scan misread
 
@@ -609,9 +613,9 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
             print(f"    {one_line(span)[:150]}")
         elif kind == "m":
             run, ctx = f
-            print(f"{path}:{n}: MARKER  `{run}` after a period -- the closer "
-                  f"with a footnote marker folded into it; the page has the "
-                  f"number")
+            print(f"{path}:{n}: MARKER  `{run}` after a period -- more marks "
+                  f"than the page prints: a footnote marker folded into the "
+                  f"closer, or a doubled closer; render it")
             print(f"    {one_line(ctx)[:150]}")
         elif kind == "!":
             quoted, ctx = f
@@ -679,17 +683,29 @@ def emit_ordinals(path):
         # suffix: harmless for 8 in 18, silently wrong for 2 in 12 (`12nd
         # century`). Carry the character before the number so the edit can
         # only fire where the number ends.
-        lead = {raw[m.start() - 1] for m in re.finditer(re.escape(old), raw)
-                if m.start()}
-        if any(c.isdigit() for c in lead):
-            if len(lead) > 1:
-                print(f"# SKIPPED `{old}` -> `{new}`: also occurs inside "
-                      f"a longer number, and the text before it varies; "
-                      f"edit this one by hand")
+        # The edit must fire only where the number and the proving word both
+        # end: `8"\' century` sits inside `18"\' century`, and `4\\* c` inside
+        # `4\\* century`. Carry the character on whichever side collides.
+        for side in ("before", "after"):
+            spots = [m for m in re.finditer(re.escape(old), raw)]
+            if side == "before":
+                seen = {raw[m.start() - 1] for m in spots if m.start()}
+            else:
+                seen = {raw[m.end()] for m in spots if m.end() < len(raw)}
+            if not any(c.isalnum() for c in seen):
                 continue
-            guard = lead.pop()
-            old, new = guard + old, guard + new
-            count = raw.count(old)
+            if len(seen) > 1:
+                print(f"# SKIPPED `{old}` -> `{new}`: also occurs inside a "
+                      f"longer word or number, and the text {side} it "
+                      f"varies; edit this one by hand")
+                old = None
+                break
+            guard = seen.pop()
+            old, new = ((guard + old, guard + new) if side == "before"
+                        else (old + guard, new + guard))
+        if old is None:
+            continue
+        count = raw.count(old)
         print(f"{old} => {new}" + (f" => {count}" if count != 1 else ""))
     return 1
 

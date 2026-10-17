@@ -1,0 +1,385 @@
+#!/usr/bin/env python3
+"""Stack the evidence for a file's findings onto a few page crops.
+
+Every screen in this repo that reports against the scan has the same problem
+once someone goes to settle its findings: one render per finding. Forty
+findings is forty renders, and an agent doing the reading pays for each in
+images *and* in tool calls. The quote screen's sheets cut that to one image
+per five or six findings, and nothing in the cutting is quote-specific.
+
+So it lives here. Give it a file's stem and a row per finding -- a label and
+the text to find on the page -- and it writes tall labelled JPEGs, merging
+the bands of findings that share a printed line:
+
+    crop_sheets.py sheets ONS_166 --rows findings.tsv
+    printf 'line 94 heading\tMichael Willis, Who built\n' | crop_sheets.py sheets ONS_166
+
+Each row is `label<TAB>anchor`, where the anchor is text from the Markdown
+near the finding; its words are matched against the page's own text layer,
+which is garbled in exactly the places a screen reports, so the match is
+fuzzy. **A crop is a located guess, not a promise**: a row that cannot be
+placed says why and shows no band rather than showing the wrong part of the
+scan. Check that the Markdown and the band are the same sentence before
+trusting either.
+
+Importers get the same thing as `locate(...)` and `stack(...)`; see
+`fix-ocr/scripts/quote_crops.py`, which builds both these sheets and an HTML
+one for a person, from the same placements.
+"""
+import argparse
+import base64
+import os
+import re
+import sys
+import unicodedata
+import difflib
+from pathlib import Path
+
+try:
+    import pymupdf
+except ImportError as exc:                                   # pragma: no cover
+    sys.exit(f"missing dependency: {exc}. Needs PyMuPDF "
+             f"(see .claude/skills/requirements.txt).")
+
+PDF_DIR = Path(os.environ.get(
+    "ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")).expanduser()
+REPO_ROOT = Path(__file__).resolve().parents[3]
+WORDS_BEFORE = 7        # anchor a band on the words leading up to the finding
+WORDS_WIDE = 18         # ... and on this many when seven match several pages
+PAD_LINES = 1.2         # printed lines of context above and below a band
+STACK_WIDTH = 1500      # pixels across a sheet
+STACK_LABEL = 26        # the caption strip above each band, in those pixels
+BAND_MERGE = 2.2        # a merged band may grow to this much of one band
+
+
+def fold(tok):
+    return re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", tok).lower())
+
+
+def alike(a, b):
+    """Near-equality, because the Markdown's own garble never matches exactly."""
+    if not a or not b:
+        return False
+    return a == b or difflib.SequenceMatcher(None, a, b).ratio() >= 0.75
+
+
+class Scan:
+    """The source PDF's pages, with their word boxes, loaded once.
+
+    Scoring every window of every page against every query is far too slow
+    on a 90-page issue with sixty findings. Instead each page keeps an index
+    from word to positions: a query proposes alignments from the positions of
+    its own longest words, and only those few windows are scored.
+    """
+
+    def __init__(self, pdf):
+        self.doc = pymupdf.open(pdf)
+        self.words = [self.doc[p].get_text("words") for p in range(self.doc.page_count)]
+        self.folded = [[fold(w[4]) for w in pw] for pw in self.words]
+        self.index = []
+        for toks in self.folded:
+            where = {}
+            for k, tok in enumerate(toks):
+                if tok:
+                    where.setdefault(tok, []).append(k)
+            self.index.append(where)
+        self._seen = {}
+        self._crops = {}
+
+    def locate(self, before):
+        """(page, [boxes]) for the words leading up to a mark, or (None, reason)."""
+        key = tuple(before)
+        if key not in self._seen:
+            self._seen[key] = self._locate(before)
+        return self._seen[key]
+
+    def _locate(self, before):
+        """Seven words usually pin a line; boilerplate needs more.
+
+        A running head or a repeated formula ("Collection Moneta 18,
+        Wetteren") matches several pages equally well on a short window, so
+        a tie is retried with everything the caller sent. A window that
+        matches *nothing* is a different problem -- the OCR mangled the
+        words -- and widening it cannot help.
+        """
+        narrow = self._score(before[-WORDS_BEFORE:])
+        if narrow[0] is not None or "equally well" not in str(narrow[1]):
+            return narrow
+        if len(before) > WORDS_BEFORE:
+            wide = self._score(before)
+            if wide[0] is not None:
+                return wide
+        return narrow
+
+    def _score(self, before):
+        want = [fold(w) for w in before]
+        n = len(want)
+        if n < 3:
+            return None, "too few words before the mark to anchor a crop"
+        # The longest words carry the most information and are the least
+        # likely to be the ones the OCR mangled.
+        anchors = sorted(range(n), key=lambda i: -len(want[i]))[:4]
+        anchors = [i for i in anchors if len(want[i]) >= 4]
+        if not anchors:
+            return None, "no distinctive word before the mark to anchor on"
+
+        best = []
+        for p, where in enumerate(self.index):
+            toks = self.folded[p]
+            starts = set()
+            for i in anchors:
+                for pos in where.get(want[i], ()):
+                    starts.add(pos - i)
+            for k in starts:
+                if k < 0 or k + n > len(toks):
+                    continue
+                hit = sum(1 for a, b in zip(want, toks[k:k + n]) if alike(a, b))
+                if hit >= 0.55 * n:
+                    best.append((hit, p, k))
+        if not best:
+            return None, "no page matches the words before the mark"
+        best.sort(reverse=True)
+        top = best[0]
+        rivals = {p for hit, p, _ in best if hit == top[0]}
+        if len(rivals) > 1:
+            return None, (f"matches {len(rivals)} pages equally well "
+                          f"({', '.join('p' + str(p) for p in sorted(rivals))})")
+        _hit, page, k = top
+        return page, self.words[page][k:k + n + 4]
+
+    def clip(self, page_no, boxes):
+        """The band to show: the located words, plus a line above and below."""
+        page = self.doc[page_no]
+        height = max(b[3] - b[1] for b in boxes)
+        return pymupdf.Rect(
+            max(0, min(b[0] for b in boxes) - 40),
+            max(0, min(b[1] for b in boxes) - PAD_LINES * height),
+            min(page.rect.width, max(b[2] for b in boxes) + 220),
+            min(page.rect.height, max(b[3] for b in boxes) + PAD_LINES * height))
+
+    def crop(self, page_no, boxes, dpi, quality):
+        """A grey JPEG of the band, as a data URI.
+
+        Grey rather than colour and JPEG rather than PNG because these are
+        black-on-white scans and a sheet carries a hundred of them: the same
+        crops come to ~40KB each this way against ~650KB as colour PNGs.
+        Identical bands -- several findings on one printed line -- are
+        rendered once and shared.
+        """
+        page = self.doc[page_no]
+        clip = self.clip(page_no, boxes)
+        key = (page_no, round(clip.x0), round(clip.y0), round(clip.x1), round(clip.y1))
+        if key not in self._crops:
+            pix = page.get_pixmap(clip=clip, dpi=dpi, colorspace=pymupdf.csGRAY)
+            data = base64.b64encode(pix.tobytes("jpeg", jpg_quality=quality))
+            self._crops[key] = "data:image/jpeg;base64," + data.decode("ascii")
+        return self._crops[key]
+
+
+def anchor_words(text, limit=WORDS_WIDE):
+    """The last words of `text`, cut the way the page's own words are cut.
+
+    The index keys are whole whitespace-delimited words of the page, folded.
+    A query that splits `so-called` into `so` and `called` has one more token
+    than the page does and misaligns the whole window against it, so the row
+    comes back unplaced with its words plainly on the page. Splitting on
+    whitespace and letting `fold` drop the punctuation keeps the two in step.
+    """
+    return [w for w in text.split() if fold(w)][-limit:]
+
+
+def locate(scan, rows):
+    """[(label, page, found)] for rows of (label, anchor); page None if unplaced.
+
+    The anchor is text near the finding; its last words do the matching, as
+    those are the ones that sit against the band being cropped.
+    """
+    return [(label, *scan.locate(anchor_words(anchor))) for label, anchor in rows]
+
+
+class Library:
+    """The scans, opened as they are wanted and kept.
+
+    A screen's last few findings are usually one apiece across a dozen
+    files, and a sheet per file is a sheet per finding -- the cost the
+    stacking exists to avoid. So a row may name its own file, and the bands
+    of several files go onto one sheet.
+    """
+
+    def __init__(self):
+        self.scans = {}
+
+    def scan(self, stem):
+        if stem not in self.scans:
+            pdf = pdf_for(stem)
+            if not pdf.exists():
+                raise FileNotFoundError(f"no scan for {stem}: {pdf}")
+            self.scans[stem] = Scan(pdf)
+        return self.scans[stem]
+
+    def place(self, rows):
+        """[(stem, label, page, found)] for rows of (stem, label, anchor)."""
+        out = []
+        for stem, label, anchor in rows:
+            page, found = self.scan(stem).locate(anchor_words(anchor))
+            out.append((stem, label, page, found))
+        return out
+
+
+def bands_of(scan, placed):
+    """Merge the placements that share a printed line into one band each.
+
+    Several findings in one paragraph crop to overlapping bands, and every
+    pixel sent twice is paid for twice.
+    """
+    bands = []
+    for label, page, found in placed:
+        if page is None:
+            continue
+        clip = scan.clip(page, found)
+        if bands and bands[-1][0] == page:
+            grown = bands[-1][1] | clip
+            if clip.y0 < bands[-1][1].y1 and grown.height <= BAND_MERGE * clip.height:
+                bands[-1][1] = grown
+                bands[-1][2].append(label)
+                continue
+        bands.append([page, clip, [label]])
+    return bands
+
+
+def stack(scan, placed, out_stem, dpi=300, quality=80, per_sheet=6):
+    """Write the bands as tall labelled JPEGs; returns the paths written.
+
+    `scan` may be a `Library`, and `placed` rows `(stem, label, page, found)`,
+    to put bands from several files on one sheet.
+    """
+    if isinstance(scan, Library):
+        return stack_many(scan, placed, out_stem, dpi, quality, per_sheet)
+    bands = bands_of(scan, placed)
+    sheets = []
+    for start in range(0, len(bands), per_sheet):
+        chunk, height = [], 0.0
+        for page, clip, labels in bands[start:start + per_sheet]:
+            tall = STACK_WIDTH * clip.height / clip.width
+            seen = sorted(dict.fromkeys(labels))
+            chunk.append((f"{' + '.join(seen)} - page {page}", page, clip, tall))
+            height += tall + STACK_LABEL
+        sheet = pymupdf.open().new_page(width=STACK_WIDTH, height=height)
+        y = 0.0
+        for label, page, clip, tall in chunk:
+            sheet.draw_rect(pymupdf.Rect(0, y, STACK_WIDTH, y + STACK_LABEL),
+                            color=None, fill=(0.87, 0.87, 0.87))
+            sheet.insert_text((6, y + 18), label, fontsize=12)
+            sheet.insert_image(
+                pymupdf.Rect(0, y + STACK_LABEL, STACK_WIDTH, y + STACK_LABEL + tall),
+                pixmap=scan.doc[page].get_pixmap(clip=clip, dpi=dpi,
+                                                 colorspace=pymupdf.csGRAY))
+            y += STACK_LABEL + tall
+        out = Path(f"{out_stem}-{len(sheets) + 1}.jpg")
+        out.write_bytes(sheet.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY)
+                        .tobytes("jpeg", jpg_quality=quality))
+        sheets.append(out)
+    return sheets
+
+
+def stack_many(library, placed, out_stem, dpi, quality, per_sheet):
+    """One sheet of bands drawn from several files, each captioned with its own."""
+    bands = []
+    for stem, label, page, found in placed:
+        if page is None:
+            continue
+        scan = library.scan(stem)
+        bands.append((stem, scan, page, scan.clip(page, found), f"{stem} {label}"))
+    sheets = []
+    for start in range(0, len(bands), per_sheet):
+        chunk = [(lab, scan, page, clip, STACK_WIDTH * clip.height / clip.width)
+                 for _s, scan, page, clip, lab in bands[start:start + per_sheet]]
+        sheet = pymupdf.open().new_page(
+            width=STACK_WIDTH, height=sum(t + STACK_LABEL for *_r, t in chunk))
+        y = 0.0
+        for label, scan, page, clip, tall in chunk:
+            sheet.draw_rect(pymupdf.Rect(0, y, STACK_WIDTH, y + STACK_LABEL),
+                            color=None, fill=(0.87, 0.87, 0.87))
+            sheet.insert_text((6, y + 18), f"{label} - page {page}", fontsize=12)
+            sheet.insert_image(
+                pymupdf.Rect(0, y + STACK_LABEL, STACK_WIDTH, y + STACK_LABEL + tall),
+                pixmap=scan.doc[page].get_pixmap(clip=clip, dpi=dpi,
+                                                 colorspace=pymupdf.csGRAY))
+            y += STACK_LABEL + tall
+        out = Path(f"{out_stem}-{len(sheets) + 1}.jpg")
+        out.write_bytes(sheet.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY)
+                        .tobytes("jpeg", jpg_quality=quality))
+        sheets.append(out)
+    return sheets
+
+
+def pdf_for(stem):
+    """The scan behind a file, whether given a stem or a jons/ path."""
+    return PDF_DIR / f"{Path(stem).stem}.pdf"
+
+
+def read_rows(handle):
+    """`label<TAB>anchor`, or `file<TAB>label<TAB>anchor` to mix files.
+
+    Blank lines and `#` comments are ignored.
+    """
+    rows = []
+    for line in handle:
+        line = line.rstrip("\n")
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) == 2:
+            rows.append((None, parts[0].strip(), parts[1]))
+        elif len(parts) >= 3:
+            rows.append((parts[0].strip(), parts[1].strip(), "\t".join(parts[2:])))
+        else:
+            sys.exit(f"a row needs `label<TAB>anchor`: {line!r}")
+    return rows
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("cmd", choices=("sheets",))
+    ap.add_argument("file", nargs="?",
+                    help="a jons/ Markdown file or its stem; omit it when the "
+                         "rows name their own file")
+    ap.add_argument("--rows", help="rows file (default: stdin)")
+    ap.add_argument("--out", help="sheet name stem (default <STEM>-sheet here)")
+    ap.add_argument("--per-sheet", type=int, default=6)
+    ap.add_argument("--dpi", type=int, default=300)
+    ap.add_argument("--quality", type=int, default=80)
+    args = ap.parse_args(argv)
+
+    with open(args.rows, encoding="utf-8") if args.rows else sys.stdin as handle:
+        rows = read_rows(handle)
+    if not rows:
+        print("no rows given")
+        return 2
+    if any(stem is None for stem, _l, _a in rows) and not args.file:
+        print("rows without a file of their own need the `file` argument")
+        return 2
+
+    library = Library()
+    default = Path(args.file).stem if args.file else None
+    try:
+        placed = library.place([(stem or default, label, anchor)
+                                for stem, label, anchor in rows])
+    except FileNotFoundError as exc:
+        print(f"{exc}\nset ONS_ARCHIVE_DIR to the archive directory")
+        return 2
+    for stem, label, page, found in placed:
+        print(f"{stem} {label}: "
+              + (f"p{page}" if page is not None else f"no crop -- {found}"))
+    sheets = stack(library, placed,
+                   args.out or f"{default or 'corpus'}-sheet",
+                   args.dpi, args.quality, args.per_sheet)
+    kept = sum(1 for _s, _l, p, _f in placed if p is not None)
+    print(f"{len(rows)} row(s), {kept} located -> "
+          + ", ".join(f"{s} ({s.stat().st_size // 1024} KB)" for s in sheets))
+    return 0 if kept == len(rows) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

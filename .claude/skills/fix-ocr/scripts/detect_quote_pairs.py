@@ -178,9 +178,9 @@ ASCII_QUOTE = {"‘": "'", "’": "'", "“": '"', "”": '"'}
 # `'"'The Gondopharid Countermark"'` stops being reported.
 AYN_NAMES = (
     "Abbas", "Abbasid", "Abbasids", "Abd", "Abdallah", "Abdullah", "Abu",
-    "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
+    "Adan", "Adil", "Adl", "Adud", "Ain", "AIT", "Al", "Ala", "Alam", "Alamat",
     "abbasidischen", "AIT", "Ain", "Alamgir", "Alf", "Ali", "Alim", "All",
-    "AlT", "Am",
+    "AlT", "Alun", "Am",
     "Amr", "Ayn", "Ayyar", "Ayyani", "Aziz", "Id", "Imad",
     "Iraq", "Isa", "Izz", "Ubaid", "Ubayd", "Umar", "Umayyad", "Umayyads",
     "Uthman",

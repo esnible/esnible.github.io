@@ -288,12 +288,23 @@ def rows(stem, md_override=None):
         if not figs:
             continue
         if pno in marked:
-            show, verdict = uncovered(figs, marked[pno]), "UNCOVERED"
-        else:
-            show, verdict = figs, "MISSING"
-        for (x0, y0, x1, y1), _kind, cells in show:
-            out.append(f"{stem}\t{verdict} {cells} cells\t{pno}\t"
-                       f"@{x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}")
+            # The page is marked, so the question is which region the markers
+            # miss -- one row each, because the answer is region by region.
+            for (x0, y0, x1, y1), _kind, cells in uncovered(figs, marked[pno]):
+                out.append(f"{stem}\tUNCOVERED {cells} cells\t{pno}\t"
+                           f"@{x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}")
+            continue
+        # Nothing on the page is marked, and the unit of work is the page:
+        # a plate of seven coin photographs is seven regions and one job.
+        # ONS_141 reports 44 regions over 7 pages that way, and every one of
+        # them is a coin beside its own paragraph.
+        x0 = min(r[0][0] for r in figs)
+        y0 = min(r[0][1] for r in figs)
+        x1 = max(r[0][2] for r in figs)
+        y1 = max(r[0][3] for r in figs)
+        n = len(figs)
+        out.append(f"{stem}\tMISSING {n} region{'s' if n > 1 else ''}\t{pno}\t"
+                   f"@{x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}")
     return out
 
 

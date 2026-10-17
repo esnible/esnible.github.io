@@ -170,7 +170,11 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
      Books for sale...`). The paragraph break is real; the defect is `Books`
      being stuck to the line above → `restore-headings`.
    - a **flattened list or family tree** is full of ` - ` separators, where
-     the dashes are structure, not a cut sentence → `restructure-flattened-md`.
+     the dashes are structure, not a cut sentence → `restructure-flattened-md`
+     for a tree, `restore-lists` for a list. A list `pdfmd` glued into one
+     paragraph (`1A: ... 1341. 1B: ...`) or wrote as labelled lines leaves
+     no severed paragraph for this script to find at all; `restore-lists`'
+     screen reads it off the scan.
      The script already skips lines with two or more ` - ` runs for this
      reason; if one slips through, don't collapse it.
 

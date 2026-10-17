@@ -1,0 +1,13 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough)
+---
+
+@import "minima";
+
+// A list whose printed labels are not 1. 2. 3. -- `1)`, `(a)`, `ii.`, `1A:` --
+// is written as a bullet list with the label kept as the item's text, under a
+// `{: .labelled}` IAL. The label is the marker, so the bullet goes.
+// See .claude/skills/restore-lists/SKILL.md.
+ul.labelled {
+  list-style: none;
+}

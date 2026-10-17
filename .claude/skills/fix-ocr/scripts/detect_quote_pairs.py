@@ -651,6 +651,44 @@ def scan(path, include_single=False, include_wrecks=False, quiet_clean=False):
     return 1
 
 
+def emit_rows(path, include_single=False, include_wrecks=False):
+    """`file<TAB>label<TAB>anchor` for the findings a render has to settle.
+
+    The same rows `quote_crops.py --stack` builds its own sheets from, in the
+    form `shared/crop_sheets.py` takes from any screen -- so a quote run and
+    a heading or a figure on the same page can share one band instead of
+    costing two. The ordinals are left out: the batch writes those, and a
+    sample settles them.
+
+    This screen reads the Markdown alone and so has no page to offer; the
+    words before the mark are the anchor, as they are for the sheets.
+    """
+    text = readable(path)
+    raw = path.read_text(encoding="utf-8")
+    rows = []
+
+    def add(off, verdict, length):
+        anchor = " ".join(raw[max(0, off - 160):off + length].split())
+        rows.append(f"{path.stem}\t{verdict} line {line_of(text, off)}\t{anchor}")
+
+    for off, opener, closer, span, wreck in quote_findings(text, include_single):
+        if wreck and not include_wrecks:
+            continue
+        add(off, "QUOTES", min(len(span), 40))
+    for off, run, reading, _ctx in superscript_findings(text):
+        if not reading:
+            add(off, "SUPERSCRIPT", len(run))
+    for off, _word, _ctx in question_findings(text):
+        add(off, "QUESTION", 2)
+    for off, run, _ctx in marker_findings(text):
+        add(off, "MARKER", len(run))
+    for off, quoted, _ctx in qmark_findings(text):
+        add(off, "QMARK", len(quoted))
+    rows.sort(key=lambda r: int(r.split("line ")[1].split("\t")[0]))
+    print("\n".join(rows))
+    return 1 if rows else 0
+
+
 def emit_ordinals(path):
     """Print an `apply_edits.py` batch for the runs that read as ordinals."""
     text = readable(path)
@@ -714,7 +752,7 @@ def main(argv):
     flags = {a for a in argv[1:] if a.startswith("-")}
     args = [a for a in argv[1:] if not a.startswith("-")]
     unknown = flags - {"--include-single", "--include-wrecks"}
-    if len(args) < 2 or args[0] not in ("scan", "ordinals") or unknown:
+    if len(args) < 2 or args[0] not in ("scan", "ordinals", "rows") or unknown:
         print(__doc__)
         return 2
 
@@ -725,7 +763,10 @@ def main(argv):
             print(f"no such file: {path}")
             rc = max(rc, 2)
             continue
-        if args[0] == "ordinals":
+        if args[0] == "rows":
+            rc = max(rc, emit_rows(path, "--include-single" in flags,
+                                   "--include-wrecks" in flags))
+        elif args[0] == "ordinals":
             rc = max(rc, emit_ordinals(path))
         else:
             rc = max(rc, scan(path,

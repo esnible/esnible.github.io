@@ -264,6 +264,12 @@ into the PDF: nothing can locate words on those pages, so a crop sheet
 cannot be built at all. `quote_crops.py` refuses both unless passed
 `--anyway`.
 
+`detect_quote_pairs.py rows <STEM>` writes the same findings as
+`file<TAB>label<TAB>anchor` for that builder, leaving out the ordinals the
+batch writes. Use it when a file has findings from more than one screen: a
+quote run and a heading on the same page then share one band instead of
+costing two images.
+
 The locating and the stacking are not quote-specific, so they live in
 `.claude/skills/shared/crop_sheets.py`, which any screen can call with a
 label and an anchor per finding:

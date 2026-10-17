@@ -1,6 +1,6 @@
 ---
 name: reconstruct-scrambled-md
-description: Rebuild a Markdown file in the `jons/` corpus whose source PDF has a two-column layout that `pdfmd --ocr auto` scrambled into single-column text (mid-paragraph or mid-word interleaving between the left and right columns). Use when a file's OCR is not just letter-level garble but reads as nonsense because column order was lost — check the source PDF layout before reaching for this skill instead of `fix-ocr`. Typically followed by `fix-ocr` for remaining letter-level cleanup.
+description: Rebuild a Markdown file in the `jons/` corpus whose source PDF has a two-column layout that `pdfmd --ocr auto` scrambled into single-column text (mid-paragraph or mid-word interleaving between the left and right columns). Use when a file's OCR is not just letter-level garble but reads as nonsense because column order was lost — check the source PDF layout before reaching for this skill instead of `fix-ocr`. Also covers PDFs whose pages are bound out of reading order, where an article stops mid-sentence at a page boundary and resumes pages later. Typically followed by `fix-ocr` for remaining letter-level cleanup.
 ---
 
 # reconstruct-scrambled-md
@@ -51,12 +51,26 @@ If `pdftotext -layout` is *also* garbled (rare — happens with some scanned-ima
 
 8. **Hand off to `fix-ocr`.** Structural reconstruction usually leaves ordinary letter-level OCR garble behind (wrong letters, digit/letter swaps, stray glyphs) — run the `fix-ocr` skill on the file next to clean that up and update the numismatic dictionaries (`dictionaries/{chinese,islamic,indian}-numismatics.txt`). Don't duplicate that workflow here; this skill's job is getting the words in the right order, not spelling them correctly.
 
+## Variant: pages bound out of reading order
+
+A different reading-order failure: every page reads correctly on its own, but the PDF holds the pages in the wrong sequence, so `pdfmd` stitched whole pages together in the wrong order. ONS_120 bound its pages 0, 1, 2, 3, 4, 5, 6, 7 where the reading order is 0, 1, 4, 5, 2, 3, 6, 7 (most likely sheets scanned in the wrong order). The workflow above does not apply. `pdftotext` reads in the same PDF order, so it reproduces the error and cannot be the source of truth, and nothing inside a page needs rebuilding.
+
+**Recognizing it.** Look for a seam: an item that stops mid-sentence at the bottom of a page and runs into an unrelated passage with no blank line between them (ONS_120's Coin Atlas item: `…coinage traditions of the Mediterranean, India, China and Islam, as the` / `Distribution of legend the same as Grabar no. 55…`), with the missing half turning up elsewhere, also glued to the wrong neighbour. `clean-ocr-formatting`'s severed-paragraph screen does not catch this, because the seam is a single newline rather than a blank line. To confirm, render the pages either side of each seam and check that the continuation really sits at the top of the page you think it does.
+
+**Fixing it.**
+
+1. Work out the true page order from the seams. Every seam should close up: the last line of each page continues on the first line of the next. A footnote, figure caption or byline that now sits with the article it belongs to is a second check.
+2. Move whole page blocks with a short script, not with `Edit`. Assert the start and end line of each block before cutting, then assert the result keeps every line of the input (a `Counter` of lines, allowing for any blank separators you added). Then re-run `detect_severed_paragraphs.py scan` and `scripts/fix_list_starts.rb`: moving a block can split or join an ordered list.
+3. Leave `page=N` markers alone. They name the PDF page, not where the block sits in the file, so they stay correct after the move.
+4. Re-read each moved article's comments. A `script-ok` / `figure` reason written while the article was split in two may describe it wrongly. ONS_120's HIMS note said the entry had no coin photograph, because the photograph was on the misplaced page.
+
 ## Known pitfall: page-break splitting drops content
 
 If you split `pdftotext -layout` output into per-page chunks (e.g., by form-feed character) to hand out to sub-agents, be aware that on two-column pages `pdftotext -layout` can place left- and right-column text that straddles a page boundary onto the same physical line — a naive split on the form-feed can silently drop that line's content. After assembling sub-agent output, diff the total word count or spot-check page-boundary regions against the source PDF/image to catch this; when in doubt, render the boundary page as an image and confirm nothing was lost.
 
 ## What NOT to do
 
+- Don't run the column workflow on a file whose pages are merely bound out of order — move whole page blocks as described under "Variant: pages bound out of reading order" instead.
 - Don't reach for this skill on ordinary OCR garble where the reading order is already correct — that's `fix-ocr`'s job, and applying structural reconstruction there is wasted work and risks introducing line-break changes `fix-ocr` forbids.
 - Don't fabricate content for illegible or unrecoverable passages — use an explicit note or `<!-- OCR: ... -->` comment.
 - Don't skip the contents-page cross-check on multi-article issues when one exists — it is the cheapest way to catch a missed or misordered article.

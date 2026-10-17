@@ -50,6 +50,35 @@ PAD_LINES = 1.2         # printed lines of context above and below a band
 STACK_WIDTH = 1500      # pixels across a sheet
 STACK_LABEL = 26        # the caption strip above each band, in those pixels
 BAND_MERGE = 2.2        # a merged band may grow to this much of one band
+MAX_BAND = 900          # a band taller than this is scaled down to fit it
+MAX_SHEET = 4200        # ... and a sheet is cut here, however few bands it has
+
+
+def laid_out(sizes, per_sheet, max_band=None, max_sheet=None):
+    """Pack bands into sheets, by height as well as by count.
+
+    A band is as tall as its crop: a line of prose is 120 pixels and a
+    full-page table 2,000, so a fixed count of bands per sheet can produce a
+    sheet 10,000 pixels tall -- which costs the reader more than the separate
+    renders it was meant to replace. A band taller than MAX_BAND is scaled
+    down whole (it is a figure or a grid, and the question asked of it is
+    whether it is there, not what it says), and a sheet is cut at MAX_SHEET.
+    """
+    max_band = max_band or MAX_BAND
+    max_sheet = max_sheet or MAX_SHEET
+    sheets, chunk, height = [], [], 0.0
+    for item, tall in sizes:
+        scale = min(1.0, max_band / tall)
+        tall, width = tall * scale, STACK_WIDTH * scale
+        if chunk and (len(chunk) >= per_sheet
+                      or height + tall + STACK_LABEL > max_sheet):
+            sheets.append(chunk)
+            chunk, height = [], 0.0
+        chunk.append((item, width, tall))
+        height += tall + STACK_LABEL
+    if chunk:
+        sheets.append(chunk)
+    return sheets
 
 
 def fold(tok):
@@ -157,6 +186,14 @@ class Scan:
             min(page.rect.width, max(b[2] for b in boxes) + 220),
             min(page.rect.height, max(b[3] for b in boxes) + PAD_LINES * height))
 
+    def clip_rect(self, page_no, rect, pad=14.0):
+        """A region a screen measured for itself, with a little air round it."""
+        page = self.doc[page_no]
+        x0, y0, x1, y1 = rect
+        return pymupdf.Rect(max(0, x0 - pad), max(0, y0 - pad),
+                            min(page.rect.width, x1 + pad),
+                            min(page.rect.height, y1 + pad))
+
     def locate_on(self, page_no, text):
         """Boxes for `text` on a page already known, however short the text.
 
@@ -201,6 +238,10 @@ class Scan:
             data = base64.b64encode(pix.tobytes("jpeg", jpg_quality=quality))
             self._crops[key] = "data:image/jpeg;base64," + data.decode("ascii")
         return self._crops[key]
+
+
+class RECT(list):
+    """A region given by the caller, to be cropped as it stands."""
 
 
 def anchor_words(text, limit=WORDS_WIDE):
@@ -253,6 +294,24 @@ class Library:
         out = []
         for stem, label, hint, anchor in rows:
             scan = self.scan(stem)
+            if anchor.startswith("@"):
+                # The screens that find tables and figures measure the region
+                # themselves; there is no text to search for, and the rect is
+                # better evidence than any anchor would be.
+                if hint is None:
+                    out.append((stem, label, None, "a `@rect` row needs a page"))
+                    continue
+                try:
+                    rect = [float(v) for v in anchor[1:].split(",")]
+                except ValueError:
+                    out.append((stem, label, None, f"unreadable rect {anchor!r}"))
+                    continue
+                if not 0 <= hint < scan.doc.page_count:
+                    out.append((stem, label, None,
+                                f"p{hint} is not in a {scan.doc.page_count}-page scan"))
+                    continue
+                out.append((stem, label, hint, RECT(rect)))
+                continue
             if hint is None:
                 page, found = scan.locate(anchor_words(anchor))
             else:
@@ -271,7 +330,8 @@ def bands_of(scan, placed):
     for label, page, found in placed:
         if page is None:
             continue
-        clip = scan.clip(page, found)
+        clip = (scan.clip_rect(page, found) if isinstance(found, RECT)
+                else scan.clip(page, found))
         if bands and bands[-1][0] == page:
             grown = bands[-1][1] | clip
             if clip.y0 < bands[-1][1].y1 and grown.height <= BAND_MERGE * clip.height:
@@ -282,70 +342,65 @@ def bands_of(scan, placed):
     return bands
 
 
-def stack(scan, placed, out_stem, dpi=300, quality=80, per_sheet=6):
+def stack(scan, placed, out_stem, dpi=300, quality=80, per_sheet=6,
+          max_band=None, max_sheet=None):
     """Write the bands as tall labelled JPEGs; returns the paths written.
 
     `scan` may be a `Library`, and `placed` rows `(stem, label, page, found)`,
     to put bands from several files on one sheet.
     """
     if isinstance(scan, Library):
-        return stack_many(scan, placed, out_stem, dpi, quality, per_sheet)
-    bands = bands_of(scan, placed)
-    sheets = []
-    for start in range(0, len(bands), per_sheet):
-        chunk, height = [], 0.0
-        for page, clip, labels in bands[start:start + per_sheet]:
-            tall = STACK_WIDTH * clip.height / clip.width
-            seen = sorted(dict.fromkeys(labels))
-            chunk.append((f"{' + '.join(seen)} - page {page}", page, clip, tall))
-            height += tall + STACK_LABEL
-        sheet = pymupdf.open().new_page(width=STACK_WIDTH, height=height)
-        y = 0.0
-        for label, page, clip, tall in chunk:
-            sheet.draw_rect(pymupdf.Rect(0, y, STACK_WIDTH, y + STACK_LABEL),
-                            color=None, fill=(0.87, 0.87, 0.87))
-            sheet.insert_text((6, y + 18), label, fontsize=12)
-            sheet.insert_image(
-                pymupdf.Rect(0, y + STACK_LABEL, STACK_WIDTH, y + STACK_LABEL + tall),
-                pixmap=scan.doc[page].get_pixmap(clip=clip, dpi=dpi,
-                                                 colorspace=pymupdf.csGRAY))
-            y += STACK_LABEL + tall
-        out = Path(f"{out_stem}-{len(sheets) + 1}.jpg")
-        out.write_bytes(sheet.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY)
-                        .tobytes("jpeg", jpg_quality=quality))
-        sheets.append(out)
-    return sheets
+        return stack_many(scan, placed, out_stem, dpi, quality, per_sheet,
+                          max_band, max_sheet)
+    sizes = []
+    for page, clip, labels in bands_of(scan, placed):
+        label = " + ".join(sorted(dict.fromkeys(labels))) + f" - page {page}"
+        sizes.append(((label, scan, page, clip), STACK_WIDTH * clip.height / clip.width))
+    return draw(laid_out(sizes, per_sheet, max_band, max_sheet),
+                out_stem, dpi, quality)
 
 
-def stack_many(library, placed, out_stem, dpi, quality, per_sheet):
+def stack_many(library, placed, out_stem, dpi, quality, per_sheet,
+               max_band=None, max_sheet=None):
     """One sheet of bands drawn from several files, each captioned with its own."""
-    bands = []
+    sizes = []
     for stem, label, page, found in placed:
         if page is None:
             continue
         scan = library.scan(stem)
-        bands.append((stem, scan, page, scan.clip(page, found), f"{stem} {label}"))
-    sheets = []
-    for start in range(0, len(bands), per_sheet):
-        chunk = [(lab, scan, page, clip, STACK_WIDTH * clip.height / clip.width)
-                 for _s, scan, page, clip, lab in bands[start:start + per_sheet]]
-        sheet = pymupdf.open().new_page(
-            width=STACK_WIDTH, height=sum(t + STACK_LABEL for *_r, t in chunk))
+        clip = (scan.clip_rect(page, found) if isinstance(found, RECT)
+                else scan.clip(page, found))
+        sizes.append(((f"{stem} {label} - page {page}", scan, page, clip),
+                      STACK_WIDTH * clip.height / clip.width))
+    return draw(laid_out(sizes, per_sheet, max_band, max_sheet),
+                out_stem, dpi, quality)
+
+
+def draw(sheets, out_stem, dpi, quality):
+    """Write each packed sheet; a band narrower than the sheet is centred."""
+    written = []
+    for chunk in sheets:
+        page_doc = pymupdf.open()
+        sheet = page_doc.new_page(
+            width=STACK_WIDTH,
+            height=sum(tall + STACK_LABEL for _item, _w, tall in chunk))
         y = 0.0
-        for label, scan, page, clip, tall in chunk:
+        for (label, scan, page, clip), width, tall in chunk:
             sheet.draw_rect(pymupdf.Rect(0, y, STACK_WIDTH, y + STACK_LABEL),
                             color=None, fill=(0.87, 0.87, 0.87))
-            sheet.insert_text((6, y + 18), f"{label} - page {page}", fontsize=12)
+            sheet.insert_text((6, y + 18), label, fontsize=12)
+            left = (STACK_WIDTH - width) / 2
             sheet.insert_image(
-                pymupdf.Rect(0, y + STACK_LABEL, STACK_WIDTH, y + STACK_LABEL + tall),
+                pymupdf.Rect(left, y + STACK_LABEL, left + width,
+                             y + STACK_LABEL + tall),
                 pixmap=scan.doc[page].get_pixmap(clip=clip, dpi=dpi,
                                                  colorspace=pymupdf.csGRAY))
             y += STACK_LABEL + tall
-        out = Path(f"{out_stem}-{len(sheets) + 1}.jpg")
+        out = Path(f"{out_stem}-{len(written) + 1}.jpg")
         out.write_bytes(sheet.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY)
                         .tobytes("jpeg", jpg_quality=quality))
-        sheets.append(out)
-    return sheets
+        written.append(out)
+    return written
 
 
 def pdf_for(stem):
@@ -359,6 +414,7 @@ def read_rows(handle):
         label<TAB>anchor
         file<TAB>label<TAB>anchor                 -- to mix files on a sheet
         file<TAB>label<TAB>page<TAB>anchor        -- when the screen knows the page
+        file<TAB>label<TAB>page<TAB>@x0,y0,x1,y1  -- a region the screen measured
 
     Blank lines and `#` comments are ignored.
     """
@@ -394,6 +450,11 @@ def main(argv=None):
     ap.add_argument("--per-sheet", type=int, default=6)
     ap.add_argument("--dpi", type=int, default=300)
     ap.add_argument("--quality", type=int, default=80)
+    ap.add_argument("--max-band", type=int, default=MAX_BAND,
+                    help="a taller band is scaled down whole; raise it to\n"
+                         f"read a full-page table (default {MAX_BAND})")
+    ap.add_argument("--max-sheet", type=int, default=MAX_SHEET,
+                    help=f"cut a sheet here (default {MAX_SHEET})")
     args = ap.parse_args(argv)
 
     with open(args.rows, encoding="utf-8") if args.rows else sys.stdin as handle:
@@ -418,7 +479,8 @@ def main(argv=None):
               + (f"p{page}" if page is not None else f"no crop -- {found}"))
     sheets = stack(library, placed,
                    args.out or f"{default or 'corpus'}-sheet",
-                   args.dpi, args.quality, args.per_sheet)
+                   args.dpi, args.quality, args.per_sheet,
+                   args.max_band, args.max_sheet)
     kept = sum(1 for _s, _l, p, _f in placed if p is not None)
     print(f"{len(rows)} row(s), {kept} located -> "
           + ", ".join(f"{s} ({s.stat().st_size // 1024} KB)" for s in sheets))

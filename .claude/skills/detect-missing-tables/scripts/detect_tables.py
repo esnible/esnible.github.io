@@ -572,6 +572,79 @@ def resolve(stem):
     return PDF_DIR / f"{stem}.pdf", MD_DIR / f"{stem}.md"
 
 
+def classify(doc, lines, ispipe, markers, args):
+    """Every bordered grid in the file, with its verdict and its page scale.
+
+    Yields `(page, table, keys, md_line, verdict, why, caption, scale)`.
+    `screen` reports from it and `rows` crops from it, so the two cannot
+    drift apart.
+    """
+    for pno, page in enumerate(doc):
+        tables, dims = page_tables(page, dpi=args.dpi)
+        scale = page.rect.width / dims[1]
+        for t in tables:
+            if t["cols"] < args.min_cols:
+                continue
+            if pno in markers:
+                kind, reason = markers[pno]
+                yield (pno, t, [], None,
+                       "RESOLVED" if kind == "ok" else "DEFERRED",
+                       reason or "(no reason given)", "", scale)
+                continue
+            text, keys, confident = caption_for(page, t, dims)
+            hit = anchor_match(lines, keys) if confident else None
+            if hit is None:
+                verdict, why = "UNKNOWN", ("no usable caption above grid" if not keys
+                                           else "weak anchor (looks like a header row)"
+                                           if not confident else "anchor not found in md")
+            else:
+                # Widest pipe row near the anchor. Presence alone is not
+                # enough: pdfmd often leaves a mangled 2-3 column fragment
+                # where a wide table belongs, and treating that as the table
+                # yields a false PRESENT -- the one error that silently ends
+                # the investigation.
+                near = [lines[n].count("|") - 1
+                        for n in range(hit, min(len(lines), hit + args.window))
+                        if ispipe[n]]
+                md_cols = max(near) if near else 0
+                if not md_cols:
+                    verdict, why = "MISSING", f"no pipe table within {args.window} lines"
+                elif md_cols < args.col_ratio * t["cols"]:
+                    verdict, why = ("MISSING",
+                                    f"nearby table has {md_cols} cols, PDF grid has "
+                                    f"{t['cols']} -- looks like a fragment")
+                else:
+                    verdict, why = "PRESENT", f"{md_cols}-col table within {args.window} lines"
+            yield pno, t, keys, hit, verdict, why, text, scale
+
+
+def cmd_rows(args):
+    """`file<TAB>label<TAB>page<TAB>@rect` for the grids a render has to settle.
+
+    MISSING is a bordered grid with no pipe table near its caption; UNKNOWN
+    is one whose caption could not be anchored, so the screen has no opinion
+    and a person must look. PRESENT, RESOLVED and DEFERRED need no crop. The
+    rect is the grid's own bounding box, in points.
+    """
+    out = []
+    for stem in args.stems:
+        pdf_path, md_path = resolve(stem)
+        if not pdf_path.exists() or not md_path.exists():
+            print(f"# {stem}: no PDF or no Markdown", file=sys.stderr)
+            continue
+        lines, ispipe = md_pipe_lines(md_path)
+        doc = fitz.open(pdf_path)
+        for pno, t, _k, _h, verdict, _w, _text, scale in classify(
+                doc, lines, ispipe, md_markers(lines), args):
+            if verdict not in ("MISSING", "UNKNOWN"):
+                continue
+            x0, y0, x1, y1 = [c * scale for c in t["bbox_px"]]
+            out.append(f"{stem}\t{verdict} {t['cols']} cols\t{pno}\t"
+                       f"@{x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}")
+    print("\n".join(out))
+    return 1 if out else 0
+
+
 def cmd_screen(args):
     """Classify each detected grid as PRESENT / MISSING / UNKNOWN.
 
@@ -591,43 +664,7 @@ def cmd_screen(args):
         lines, ispipe = md_pipe_lines(md_path)
         markers = md_markers(lines)
         doc = fitz.open(pdf_path)
-        findings = []
-        for pno, page in enumerate(doc):
-            tables, dims = page_tables(page, dpi=args.dpi)
-            for t in tables:
-                if t["cols"] < args.min_cols:
-                    continue
-                if pno in markers:
-                    kind, reason = markers[pno]
-                    findings.append((pno, t, [], None,
-                                     "RESOLVED" if kind == "ok" else "DEFERRED",
-                                     reason or "(no reason given)", ""))
-                    continue
-                text, keys, confident = caption_for(page, t, dims)
-                hit = anchor_match(lines, keys) if confident else None
-                if hit is None:
-                    verdict, why = "UNKNOWN", ("no usable caption above grid" if not keys
-                                               else "weak anchor (looks like a header row)"
-                                               if not confident else "anchor not found in md")
-                else:
-                    # Widest pipe row near the anchor. Presence alone is not
-                    # enough: pdfmd often leaves a mangled 2-3 column fragment
-                    # where a wide table belongs, and treating that as the table
-                    # yields a false PRESENT -- the one error that silently ends
-                    # the investigation.
-                    near = [lines[n].count("|") - 1
-                            for n in range(hit, min(len(lines), hit + args.window))
-                            if ispipe[n]]
-                    md_cols = max(near) if near else 0
-                    if not md_cols:
-                        verdict, why = "MISSING", f"no pipe table within {args.window} lines"
-                    elif md_cols < args.col_ratio * t["cols"]:
-                        verdict, why = ("MISSING",
-                                        f"nearby table has {md_cols} cols, PDF grid has "
-                                        f"{t['cols']} -- looks like a fragment")
-                    else:
-                        verdict, why = "PRESENT", f"{md_cols}-col table within {args.window} lines"
-                findings.append((pno, t, keys, hit, verdict, why, text))
+        findings = [f[:7] for f in classify(doc, lines, ispipe, markers, args)]
 
         counts = {v: sum(1 for f in findings if f[4] == v)
                   for v in ("MISSING", "UNKNOWN", "PRESENT", "RESOLVED", "DEFERRED")}
@@ -736,6 +773,14 @@ def main():
                    help="skip the flattened-prose check (escaped pipes in "
                         "non-table lines) and judge on grid findings alone")
     s.set_defaults(func=cmd_screen)
+
+    r = sub.add_parser("rows", help="crop_sheets.py rows for the grids to look at")
+    r.add_argument("stems", nargs="+", metavar="ONS_181")
+    r.add_argument("--dpi", type=int, default=DPI)
+    r.add_argument("--min-cols", type=int, default=3)
+    r.add_argument("--window", type=int, default=15)
+    r.add_argument("--col-ratio", type=float, default=0.6)
+    r.set_defaults(func=cmd_rows)
 
     g = sub.add_parser("grids", help="Tier 1: grid geometry per page")
     g.add_argument("stem")

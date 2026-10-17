@@ -64,6 +64,23 @@ Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overw
 python3 .../detect_tables.py grids IS_001 --page 3
 ```
 
+
+### The cheap path
+
+`rows` writes `file<TAB>label<TAB>page<TAB>@x0,y0,x1,y1` for the findings a
+person has to look at, and this screen measures its own regions, so the row
+carries the rect rather than words to search for:
+
+```
+detect_tables.py rows ONS_181 > rows.tsv
+python3 .claude/skills/shared/crop_sheets.py sheets --rows rows.tsv --out ONS_181-tables
+```
+
+One sheet of stacked bands instead of a render per finding. A band taller
+than 900px is scaled down whole, which answers *is this grid in the
+Markdown* but not *what does it say*; raise `--max-band`, or crop that one
+region at a higher `--dpi`, when the answer needs reading.
+
 It also prints `bands` — the gaps between consecutive horizontal rules — and, when the rules look incomplete, a `NOTE`. Both `grids` and `cells` take `--min-frac` for per-page tuning; **never** lower it for `screen` (see *Tuning*).
 
 ### Tier 2 — rebuild and insert

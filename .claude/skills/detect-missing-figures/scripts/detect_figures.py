@@ -265,22 +265,64 @@ def screen(stem, verbose, md_override=None):
     return counts["MISSING"] > 0
 
 
+def rows(stem, md_override=None):
+    """`file<TAB>label<TAB>page<TAB>@rect` for the regions a render has to settle.
+
+    This screen measures its own regions, so the rows carry the rect rather
+    than an anchor to search for -- `shared/crop_sheets.py` crops it as it
+    stands. MISSING is a page whose figure ink the Markdown marks nowhere;
+    UNCOVERED is a region on a marked page that no marker rect covers.
+    RULED and COVERED are left out: the first is a table's business, the
+    second is already accounted for.
+    """
+    pdf_path = PDF_DIR / f"{stem}.pdf"
+    md_path = pathlib.Path(md_override) if md_override else MD_DIR / f"{stem}.md"
+    if not pdf_path.exists() or not md_path.exists():
+        print(f"# {stem}: no PDF or no Markdown", file=sys.stderr)
+        return []
+    marked = marked_pages(md_path.read_text(encoding="utf-8"))
+    doc = fitz.open(pdf_path)
+    out = []
+    for pno in range(len(doc)):
+        figs = figure_ink(figure_regions(doc[pno], pno))
+        if not figs:
+            continue
+        if pno in marked:
+            show, verdict = uncovered(figs, marked[pno]), "UNCOVERED"
+        else:
+            show, verdict = figs, "MISSING"
+        for (x0, y0, x1, y1), _kind, cells in show:
+            out.append(f"{stem}\t{verdict} {cells} cells\t{pno}\t"
+                       f"@{x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("screen", help="report pages with unmarked figure-like ink")
     p.add_argument("stems", nargs="*", help="e.g. OP_015 ONS_146")
+    r = sub.add_parser("rows", help="crop_sheets.py rows for the regions to look at")
+    r.add_argument("stems", nargs="+", help="e.g. OP_015 ONS_146")
+    r.add_argument("--md", help="read markers from this Markdown file instead")
     p.add_argument("--all", action="store_true", help="every jons/*.md that has a PDF")
     p.add_argument("-v", "--verbose", action="store_true", help="also list COVERED and RULED pages")
     p.add_argument("--md", help="read markers from this Markdown file instead of jons/<STEM>.md (one stem only)")
     args = ap.parse_args()
     stems = args.stems
+    if args.cmd == "rows":
+        args.all = False
+        args.verbose = False
     if args.all:
         stems = sorted(f.stem for f in MD_DIR.glob("*.md") if (PDF_DIR / f"{f.stem}.pdf").exists())
     if not stems:
         ap.error("give one or more stems, or --all")
     if args.md and len(stems) != 1:
         ap.error("--md takes exactly one stem")
+    if args.cmd == "rows":
+        found = [r for stem in stems for r in rows(stem, args.md)]
+        print("\n".join(found))
+        sys.exit(1 if found else 0)
     missing = False
     for stem in stems:
         missing |= screen(stem, args.verbose, args.md)

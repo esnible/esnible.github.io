@@ -103,6 +103,15 @@ def collect(path, include_single=False, include_wrecks=False):
             out.append((off, "SUPERSCRIPT check",
                         "a run after a digit: ordinal, footnote marker, or a "
                         "real quote?", run))
+    for off, run, _ctx in dqp.marker_findings(text):
+        out.append((off, "MARKER",
+                    "a closer with the footnote marker folded into it: "
+                    f"<code>{html.escape(run)}</code>; the page has the number",
+                    run))
+    for off, quoted, _ctx in dqp.qmark_findings(text):
+        out.append((off, "QMARK",
+                    "a <code>?</code> that cannot end this sentence: the page "
+                    "prints a closing mark", quoted))
     for off, word, _ctx in dqp.question_findings(text):
         out.append((off, "QUESTION",
                     f"<code>''</code> closing nothing after "
@@ -468,7 +477,8 @@ def main(argv=None):
                          "reading the scans itself")
     ap.add_argument("--per-sheet", type=int, default=5,
                     help="findings per stacked sheet (default 5)")
-    ap.add_argument("--only", choices=("quotes", "superscript", "question"),
+    ap.add_argument("--only", choices=("quotes", "superscript", "question",
+                                       "marker", "qmark"),
                     help="one verdict only, to take a long list in batches")
     ap.add_argument("--include-single", action="store_true",
                     help="also rows for single-vs-single disagreements")
@@ -496,7 +506,8 @@ def main(argv=None):
     text, rows = collect(path, args.include_single, args.include_wrecks)
     if args.only:
         want = {"quotes": "QUOTES", "superscript": "SUPERSCRIPT",
-                "question": "QUESTION"}[args.only]
+                "question": "QUESTION", "marker": "MARKER",
+                "qmark": "QMARK"}[args.only]
         rows = [r for r in rows if r[1].startswith(want)]
     if not rows:
         print(f"{path}: clean")

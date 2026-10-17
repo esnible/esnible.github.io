@@ -25,9 +25,31 @@ escaped-pipe fingerprint never fires on it. A file can pass `screen` with
 detect_headings.py scan IS_001            # report, change nothing
 detect_headings.py scan IS_001 -v         # include what the Markdown got right
 detect_headings.py fix  IS_001            # rewrite the Markdown
+detect_headings.py rows IS_001            # the findings a render has to settle
 ```
 
 `scan` exits non-zero when there is something to fix.
+
+`rows` writes `file<TAB>label<TAB>page<TAB>anchor` for the findings `fix`
+will not apply on its own -- the unsafe splits, the heads the scan has and
+the Markdown lacks, and the candidates the shape test found alone -- and
+pipes straight into the shared sheet builder:
+
+```
+detect_headings.py rows ONS_120 | grep -v '^#' > rows.tsv
+python3 .claude/skills/shared/crop_sheets.py sheets --rows rows.tsv --out ONS_120-head
+```
+
+One image for five findings instead of five renders. The rows carry their
+own page, so a two-word head (`fig. 2`, `Beischlage`) is found by searching
+that page rather than by matching words across the whole file.
+
+`UNMATCHED` is left out of `rows` on purpose: its text matches no line of
+the scan and is mostly not words, so no crop settles it. Those are a
+flattened table's cells wearing a `#`, and they belong to
+`restructure-flattened-md` -- which is most of what a catalogue-heavy file
+reports. ONS_166 counts 95 such findings and 55 of them are that; the 40
+left are what a render can decide. `--include-unmatched` crops them anyway.
 
 ## Why four signals
 

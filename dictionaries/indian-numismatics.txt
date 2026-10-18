@@ -681,7 +681,6 @@ Spalagadamasa
 Spalahoraputrasa
 Spalahorasa
 Spalahore
-Spalirifasa
 Srang
 subah
 Sudarsan
@@ -847,7 +846,6 @@ Pispari
 Sasan
 Shahdaur
 SODASA
-Spaliriéasa
 Stroteaasga
 tase
 Tredatasa

@@ -55,6 +55,9 @@ SCREENS = {
     "figures": {
         "rows": ["detect-missing-figures/scripts/detect_figures.py", "rows", "@stem"],
     },
+    "lists": {
+        "rows": ["restore-lists/scripts/detect_lists.py", "rows", "@stem"],
+    },
 }
 
 

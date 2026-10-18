@@ -245,6 +245,7 @@ npx cspell lint jons/<STEM>.md
 | `*[figure]*` placeholder convention, `rect=` extraction | `detect-missing-tables` | reuse it verbatim for maps and plates |
 | Column-order scramble across a page/file | `reconstruct-scrambled-md` | use its method for map-adjacent paragraphs; don't reconstruct a whole two-column file here |
 | Headings folded into body text, file-wide | `restore-headings` | remove only the bogus headings *inside* flattened regions; run `restore-headings fix` for the rest |
+| A single-column list glued into prose, or written as labelled lines | `restore-lists` | none; side-by-side "lists" that are really columns stay here as borderless tables |
 | Is this dense script a catalogue or a plate? | `flag-unruled-catalogs` | run it before rebuilding a foreign-script region |
 | Reading a legend off a render (corroborate or flagged-guess) | `transcribe-foreign-script` | hand it each legend that ends up inside a rebuilt cell; it also tells you to skip plates |
 | Letter-level OCR garble in prose | `fix-ocr` | the pass *after* this one; only touch glyphs inside regions being rewritten |

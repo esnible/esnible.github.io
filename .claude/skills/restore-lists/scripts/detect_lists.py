@@ -124,7 +124,7 @@ def _to_roman(n):
 ROMAN = {_to_roman(n): n for n in range(1, 40)}
 LABEL_RE = re.compile(
     r"(?P<open>\()?(?P<lab>\d{1,3}[A-Za-z]|\d{1,3}|[ivxIVX]{1,6}|[ivxl1]{2,6}|[A-Za-z])"
-    r"(?P<close>[.):])(?=\s+\S)")
+    r"\\?(?P<close>[.):])(?=\s+\S)")
 # The text layer's `lA Coins bearing ...`: a digit+letter label whose `1`
 # came back `l` or `I` and whose colon was lost.
 BARE_KEY_RE = re.compile(r"(?P<lab>[lI1]|\d{1,2})(?P<let>[A-H])(?=\s+[A-Z])")
@@ -226,6 +226,37 @@ def bare_roman(text):
     return None
 
 
+def gutter(frags, width):
+    """x of the right column's left edge, on a page set in two columns.
+
+    `COL_GAP` alone cannot see a tightly set gutter: IS_029 leaves 22 points
+    between its columns on a 592-point page, a sixth of what that fraction
+    allows, so every baseline merged into one line that read straight across
+    the page -- entry 5's citation came back glued to the middle of entry 9's
+    annotation, and the run was judged against the wrong Markdown. The
+    columns give themselves away by their left edges instead: a two-column
+    page starts a crowd of fragments at each of two x values and none
+    between them. Returns None unless the page shows that pattern, so a
+    single-column page merges exactly as before.
+    """
+    starts = sorted(min(w[0] for w in ws) for ws in frags)
+    if len(starts) < 20:
+        return None
+    groups = []
+    for x in starts:
+        if groups and x - groups[-1][0] <= EDGE:
+            groups[-1].append(x)
+        else:
+            groups.append([x])
+    big = sorted((g for g in groups if len(g) >= 8), key=len, reverse=True)
+    if len(big) < 2:
+        return None
+    a, b = sorted((big[0][0], big[1][0]))
+    if a < 0.35 * width and 0.40 * width < b < 0.65 * width:
+        return b - EDGE
+    return None
+
+
 def page_lines(page):
     """The page's lines as a reader sees them, per column, in reading order.
 
@@ -238,11 +269,14 @@ def page_lines(page):
         frags.setdefault((block, line), []).append((x0, y0, x1, y1, word))
     frags = sorted(frags.values(), key=lambda ws: (min(w[1] for w in ws),
                                                    min(w[0] for w in ws)))
+    gut = gutter(frags, width)
     lines = []
     for ws in frags:
         y0 = min(w[1] for w in ws)
         x0, x1 = min(w[0] for w in ws), max(w[2] for w in ws)
         for ln in reversed(lines[-4:]):
+            if gut and (ln["x0"] < gut <= x0 or x0 < gut <= ln["x0"]):
+                continue            # two columns, however narrow the gutter
             if abs(ln["y0"] - y0) <= 2.5 and x0 - ln["x1"] < COL_GAP * width \
                     and ln["x0"] - x1 < COL_GAP * width:
                 ln["words"].extend(ws)
@@ -661,6 +695,44 @@ def cmd_rows(args):
 
 LABELLED_IAL_RE = re.compile(r"^\s*\{:[^}]*\.labelled\b[^}]*\}\s*$")
 BULLET_RE = re.compile(r"^(\s*)[-*+]\s+(.*)$")
+BARE_LABEL_RE = re.compile(r"(?P<lab>\d{1,3}|[ivx]{1,6}|[a-z])(?=\s+\S)")
+# IS_027's king-list numbers forty rulers and marks three more with an
+# asterisk, for princes who probably struck coins but whose coins are not
+# known. It is a printed label like any other, and it has to be escaped in
+# the source or kramdown reads `- * Name` as a nested bullet list.
+STAR_LABEL_RE = re.compile(r"\\?\*(?=\s+\S)")
+
+
+def bare_labels(items):
+    """Rows of `items` whose label is printed with no full stop after it.
+
+    ONS_128's footnotes to the Jammu table are typed `1 Drapery below
+    shield shown as`, keys and no punctuation, and the convention copies a
+    label as the page prints it. A lone numeral opening an item is not a
+    label on its own -- `- 1967 saw the first of them` is a sentence -- so
+    one is only believed when the item beside it carries the label that
+    counts up from it. That makes this far narrower than teaching
+    `parse_label` about bare labels, which would read a label into the
+    opening of every item that starts with a number.
+
+    The neighbour's own label may be punctuated: IS_027's king-list prints
+    `38.` and `40.` either side of a `39` whose full stop the typesetter
+    dropped, and a bare label with a stopped one counting on from it is
+    believed on the same evidence as two bare ones."""
+    seen = []
+    for k, text in items:
+        got = parse_label(text)
+        if got:
+            seen.append((k, got[0], False))
+            continue
+        m = BARE_LABEL_RE.match(text)
+        got = parse_label(m["lab"] + ". x") if m else None
+        seen.append((k, got[0] if got else None, True))
+    out = set()
+    for (ka, a, bare_a), (kb, b, bare_b) in zip(seen, seen[1:]):
+        if a and b and follows(a, b):
+            out.update(k for k, is_bare in ((ka, bare_a), (kb, bare_b)) if is_bare)
+    return out
 def lint_file(path):
     rows = path.read_text(encoding="utf-8").split("\n")
     kinds, in_fence = [], False
@@ -727,15 +799,19 @@ def lint_file(path):
                 found.append((r, "IAL", "no bullet item under it", line))
                 continue
             indent = len(BULLET_RE.match(rows[nxt]).group(1))
-            k = nxt
+            k, items = nxt, []
             while k < len(rows) and kinds[k] != "blank" or (
                     k + 1 < len(rows) and kinds[k] == "blank" and kinds[k + 1] == "bullet"
                     and len(BULLET_RE.match(rows[k + 1]).group(1)) == indent):
                 if kinds[k] == "bullet" and len(BULLET_RE.match(rows[k]).group(1)) == indent:
-                    if not parse_label(BULLET_RE.match(rows[k]).group(2)):
-                        found.append((k, "IAL", "item has no label, and its bullet is hidden",
-                                      rows[k]))
+                    items.append((k, BULLET_RE.match(rows[k]).group(2)))
                 k += 1
+            bare = bare_labels(items)
+            for k, text in items:
+                if not parse_label(text) and k not in bare \
+                        and not STAR_LABEL_RE.match(text):
+                    found.append((k, "IAL", "item has no label, and its bullet is hidden",
+                                  rows[k]))
     bullets = []
     for r, line in enumerate(rows):
         if kinds[r] != "bullet":

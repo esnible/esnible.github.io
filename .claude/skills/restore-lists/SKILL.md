@@ -1,6 +1,7 @@
 ---
 name: restore-lists
 description: Find lists in a `jons/` Markdown file that do not render as lists -- items `pdfmd` glued into one paragraph (`1A: Coins ... 1341. 1B: Coins ...`), labelled lines or paragraphs kramdown joins or leaves as prose (`i. ...<br>` / `ii. ...`, `a) ...`, `(1) ...`), or items whose labels the OCR dropped altogether -- and restore them to Markdown list structure. Use when a file's numbered or lettered items read as running text, when a list on the scan is indented or set line by line and the Markdown is not, or when working the `lists` row of `docs/screens.tsv`.
+effort: high
 ---
 
 # Restoring lists

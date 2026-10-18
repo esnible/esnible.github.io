@@ -32,7 +32,7 @@ the file done.
 
 | On the page | In the Markdown |
 |:--- |:--- |
-| `1.` `2.` `3.` | an ordered list; `{: start="N"}` when it does not start at 1 (`scripts/fix_list_starts.rb` sets these) |
+| `1.` `2.` `3.` | an ordered list; `{: start="N"}` when it does not start at 1 (the repo's `scripts/fix_list_starts.rb` sets these) |
 | any other label -- `1)`, `(1)`, `i.`, `(ii)`, `a)`, `A.`, `1A:`, `1(b)` | a `{: .labelled}` bullet list, with the printed label copied as the first text of each item |
 | several printed lines inside **one** item (Obv. / Rev., Copper / Obverse / Reverse, an address) | `<br>` at the end of each line, continuation lines indented under the item |
 
@@ -175,8 +175,10 @@ instead of trusting the range.
    is clear ..."), and a heading may be glued to the list's last line.
 4. Edit with a script that asserts each substitution matches exactly once,
    or with `Edit`; keep a backup.
-5. Run `scripts/fix_list_starts.rb jons/<STEM>.md` (an ordered list split or
-   moved renumbers from 1), `lint` and `screen` again, and
+5. Run `scripts/fix_list_starts.rb jons/<STEM>.md` -- from the repo root,
+   where that script lives, not from this skill's own `scripts/` (an
+   ordered list split or moved renumbers from 1), `lint` and `screen`
+   again, and
    `restructure-flattened-md/scripts/lint_structure.py`. Render the file
    with kramdown and look at the lists.
 6. `survey.py run <STEM> --screens lists --refresh`.

@@ -78,7 +78,11 @@ GLYPH_CHARS = MARKER_CHARS + r"<>"
 # According to`, `Alice Counte^^ of Reading` (a letter run the OCR ate rather
 # than a footnote digit -- the page says which, and both go to the page). 45
 # of those in 15 files, again none on a line `detect_quote_pairs` reports.
-MARKER_RE = re.compile(rf"[A-Za-z0-9)\]'\"](\\?[{MARKER_CHARS}])+"
+# It may also follow the sentence's full stop rather than its last word --
+# `the Sichuan Rupee.®` is the shape the `®` section of fix-ocr's SKILL.md
+# documents, and `India.^ Another thin gold piece` is ONS_158's. 41 more in
+# 23 files, again none on a line `detect_quote_pairs` reports.
+MARKER_RE = re.compile(rf"[A-Za-z0-9)\]'\".,;:!?](\\?[{MARKER_CHARS}])+"
                        rf"(?=\s+[\"'(*A-Za-z“])")
 GLYPH_RE = re.compile(rf"[A-Za-z](\\?[{GLYPH_CHARS}])(?=[A-Za-z])")
 ANGLE_RE = re.compile(r"\\?[<>]")

@@ -2835,3 +2835,14 @@ Saccamotta
 Sakamoto
 Sukarto
 Tammary
+
+# ONS_158 — Qarakhitay Kangguo cash, Soghdian Kaiyuans: Liao and Khitan rulers,
+# era and place names
+Abaoji
+Jurchen
+Kaiyuans
+Kangguo
+Taizu
+Tianzuo
+Tunhuang
+Xianqing

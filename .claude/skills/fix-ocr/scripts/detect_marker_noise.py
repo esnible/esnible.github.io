@@ -12,11 +12,14 @@ it, the pairing never sees it, and the file screens clean:
     Sikander 'Adil Shah surrendered to the Emperor.^ Thereafter he...
 
 `transcribe-foreign-script`'s screen does know these glyphs -- its
-`LATIN_NOISE_CHARS` is `^\\<>±«»¬°·•` -- but it is looking for a *run* of
-them (four consecutive noise tokens at 15% of the line, beside an
-`Obv.`/`Rev.` gloss), because its job is a legend pdfmd read as Latin. One
-caret in sixty words of English prose is not that, and LATIN is kept out of
-its exit status in any case. So nothing reports these.
+`LATIN_NOISE_CHARS` is `^\\<>±«»¬°·•` -- but both of its caret tests
+want several of them at once, beside an `Obv.`/`Rev.` gloss: LATIN wants four
+consecutive noise tokens at 15% of the line, and CARET wants three carets
+within 25 characters of each other. Both are looking for a legend pdfmd read
+as Latin. One caret in sixty words of English prose is not that -- and that
+division is measured, not assumed: ONS_158's 137 carets, resolved one by one
+off the page, came out 69 markers and diacritics to ~56 Arabic, so neither
+screen can have the other's half. Nothing but this one reports the singletons.
 
 Two shapes, both of them the glyph standing where a printed character was:
 

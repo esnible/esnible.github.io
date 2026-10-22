@@ -19,6 +19,11 @@ all reliably. Three failure shapes show up in this corpus:
      codepoint test cannot see it at all (ONS_158 line 199:
      `<(^ ^,>4JU / ^\\ ^^\\y J / **diij-oooi ( o b v )**`). That is the LATIN
      verdict below -- a lead, not a verdict, and kept out of the exit status.
+  4. The same again, but with the Latin letters too sparse for LATIN's
+     consecutive-run test and the carets heaped up instead (ONS_159 line 442:
+     `Obverse in the field AJ Ay;, *^/o^^j* AUI/ÜI AJI ^/j`). That is the
+     CARET verdict -- also a lead, also out of the exit status. 145 of them
+     in 35 files, against LATIN's 79 in 31.
 
 Usage:
     detect_script_garble.py screen IS_001 [IS_002 ...]     # Tier 0
@@ -143,6 +148,29 @@ LATIN_MIN_RUN = 4       # consecutive noise tokens, punctuation skipped over
 LATIN_MIN_DENSITY = 0.15  # share of the line's countable tokens that are noise
 LATIN_GLOSS_WINDOW = 1  # content lines each side that may carry the gloss
 
+# --- the CARET verdict -------------------------------------------------------
+# The LATIN run test needs four *consecutive* noise tokens, and a legend read
+# as Latin does not reliably give it four: ONS_159 line 442 is
+# `Obverse in the field AJ Ay;, *^/o^^j* AUI/ÜI AJI ^/j`, where `AJ` and `AJI`
+# read as ordinary words and `AUI/UEI` carries a Latin-Extended `Ü`, so the run
+# breaks twice and the line screens clean with an Arabic legend in it.
+#
+# What that line does have is carets in a heap. Measured over the corpus's
+# 5,978 carets, nearest-neighbour distance is strongly bimodal: 47.1% have
+# another caret within 9 characters, 34.4% sit 100+ characters from the next
+# one, and the middle is nearly empty. The two humps are two different
+# defects. An *isolated* caret is usually a footnote marker or a lost
+# diacritic -- of ONS_158's 137 carets, resolved one by one off the page, 69
+# were superscript digits, `<sup>` markers, letters or a question mark, and
+# only ~56 were Arabic -- which is why this test requires a cluster and
+# `fix-ocr/scripts/detect_marker_noise.py` owns the singletons.
+#
+# A cluster is CARET_MIN carets with no more than CARET_GAP characters between
+# neighbours. The gap sits in the dead zone between the humps, so it is not a
+# tuned number: 15, 25 and 40 all land within 3% of each other.
+CARET_GAP = 25
+CARET_MIN = 3
+
 
 def _latin_token_kind(tok):
     t = tok.strip("*_`")
@@ -179,6 +207,32 @@ def _latin_line_is_noisy(stripped):
     return noisy / counted >= LATIN_MIN_DENSITY
 
 
+def _caret_cluster(stripped):
+    """(size, start, end) of the longest run of carets <= CARET_GAP apart."""
+    offs = [i for i, c in enumerate(stripped) if c == "^"]
+    best = (0, 0, 0)
+    run = []
+    for k, off in enumerate(offs):
+        run = run + [off] if k and off - offs[k - 1] <= CARET_GAP else [off]
+        if len(run) > best[0]:
+            best = (len(run), run[0], run[-1])
+    return best
+
+
+def _caret_snippet(stripped, start, end, width=100):
+    """The line around the cluster, not its first `width` characters.
+
+    A LATIN line is noise end to end, so its first 100 characters are a fair
+    sample of it. A caret cluster is often a short burst a long way into a
+    paragraph of ordinary English, and the first 100 characters of that line
+    show the reviewer nothing at all.
+    """
+    pad = max(0, (width - (end - start + 1)) // 2)
+    lo, hi = max(0, start - pad), min(len(stripped), end + 1 + pad)
+    return (("..." if lo else "") + stripped[lo:hi]
+            + ("..." if hi < len(stripped) else ""))
+
+
 def resolve(stem):
     return PDF_DIR / f"{stem}.pdf", MD_DIR / f"{stem}.md"
 
@@ -195,11 +249,12 @@ def _strip_fenced(lines):
 
 
 def find_candidates(lines):
-    """Return (comment_candidates, raw_candidates, latin_candidates, resolved,
-    deferred, guessed) as lists/sets of 0-based line indices, each with a reason
-    string."""
+    """Return (comment_candidates, raw_candidates, latin_candidates,
+    caret_candidates, resolved, deferred, guessed) as lists/sets of 0-based
+    line indices, each with a reason string."""
     comment_candidates, raw_candidates = [], []
     latin_pre = []   # noisy lines, before the gloss-window test below
+    caret_pre = []   # caret clusters, likewise
     content = []     # (index, stripped) for every non-blank, non-marker line
     resolved, deferred, guessed = set(), set(), set()
     marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed}
@@ -268,10 +323,17 @@ def find_candidates(lines):
         # would just inflate the count. Nor is a pipe-table row, an IAL, or a
         # line carrying a marker comment: a figure marker's prose reads as
         # noise to this test and is not a legend.
-        if (not has_foreign and not is_table_row
-                and not stripped.startswith("{:") and "<!--" not in stripped
-                and _latin_line_is_noisy(stripped)):
+        reportable = (not has_foreign and not is_table_row
+                      and not stripped.startswith("{:")
+                      and "<!--" not in stripped)
+        if reportable and _latin_line_is_noisy(stripped):
             latin_pre.append((i, stripped[:100]))
+        # A line LATIN already has is not reported twice; the whole point of
+        # this test is the legends its consecutive-run requirement drops.
+        elif reportable:
+            size, lo, hi = _caret_cluster(stripped)
+            if size >= CARET_MIN:
+                caret_pre.append((i, _caret_snippet(stripped, lo, hi)))
 
         prev_content_idx = i
 
@@ -279,17 +341,21 @@ def find_candidates(lines):
     # paragraph beside it -- a legend set on its own line with "Which means ..."
     # under it is the commonest shape in this corpus.
     at = {idx: k for k, (idx, _) in enumerate(content)}
-    latin_candidates = []
-    for i, why in latin_pre:
-        k = at.get(i)
-        if k is None:
-            continue
-        lo = max(0, k - LATIN_GLOSS_WINDOW)
-        hi = min(len(content), k + LATIN_GLOSS_WINDOW + 1)
-        if any(LATIN_GLOSS_RE.search(content[j][1]) for j in range(lo, hi)):
-            latin_candidates.append((i, why))
 
-    return comment_candidates, raw_candidates, latin_candidates, resolved, deferred, guessed
+    def with_gloss(pre):
+        out = []
+        for i, why in pre:
+            k = at.get(i)
+            if k is None:
+                continue
+            lo = max(0, k - LATIN_GLOSS_WINDOW)
+            hi = min(len(content), k + LATIN_GLOSS_WINDOW + 1)
+            if any(LATIN_GLOSS_RE.search(content[j][1]) for j in range(lo, hi)):
+                out.append((i, why))
+        return out
+
+    return (comment_candidates, raw_candidates, with_gloss(latin_pre),
+            with_gloss(caret_pre), resolved, deferred, guessed)
 
 
 def cmd_screen(args):
@@ -300,7 +366,8 @@ def cmd_screen(args):
             print(f"{stem}: no Markdown at {md_path}")
             continue
         lines = md_path.read_text(encoding="utf-8").splitlines()
-        comment_c, raw_c, latin_c, resolved, deferred, guessed = find_candidates(lines)
+        (comment_c, raw_c, latin_c, caret_c,
+         resolved, deferred, guessed) = find_candidates(lines)
         handled = resolved | deferred | guessed
 
         def open_items(cands):
@@ -309,16 +376,22 @@ def cmd_screen(args):
         open_comment = open_items(comment_c)
         open_raw = [] if args.no_raw else open_items(raw_c)
         open_latin = [] if args.no_latin else open_items(latin_c)
-        # LATIN is a lead, not a verdict -- around one in five is something
-        # else -- so it never counts towards "to review" or the exit status.
-        # A file whose only finding is LATIN still screens clean.
+        open_caret = [] if args.no_caret else open_items(caret_c)
+        # LATIN and CARET are leads, not verdicts -- around one in five and
+        # around one in eight respectively is something else -- so neither
+        # ever counts towards "to review" or the exit status. A file whose
+        # only findings are leads still screens clean.
         n_open = len(open_comment) + len(open_raw)
         if n_open:
             needs_attention = True
         status = "nothing outstanding" if not n_open else f"{n_open} to review"
-        latin_note = "" if (args.no_latin or not latin_c) else f", {len(latin_c)} latin run(s)"
+        leads = ""
+        if latin_c and not args.no_latin:
+            leads += f", {len(latin_c)} latin run(s)"
+        if caret_c and not args.no_caret:
+            leads += f", {len(caret_c)} caret cluster(s)"
         print(
-            f"{stem}: {len(comment_c)} flagged comment(s), {len(raw_c)} raw run(s){latin_note} | "
+            f"{stem}: {len(comment_c)} flagged comment(s), {len(raw_c)} raw run(s){leads} | "
             f"RESOLVED {len(resolved)}  GUESSED {len(guessed)}  DEFERRED {len(deferred)} -- {status}"
         )
         # GUESSED lines are content-added-but-unverified -- surface them every
@@ -332,6 +405,8 @@ def cmd_screen(args):
             print(f"  RAW      md line {i + 1}: {why!r}")
         for i, why in open_latin:
             print(f"  LATIN    md line {i + 1}: {why!r}")
+        for i, why in open_caret:
+            print(f"  CARET    md line {i + 1}: {why!r}")
     sys.exit(1 if needs_attention else 0)
 
 
@@ -492,6 +567,8 @@ def main():
     p.add_argument("--no-raw", action="store_true", help="skip raw foreign-run detection, comment-flagged only")
     p.add_argument("--no-latin", action="store_true",
                    help="skip the LATIN leads (script pdfmd read as Latin gibberish)")
+    p.add_argument("--no-caret", action="store_true",
+                   help="skip the CARET leads (script pdfmd read as a heap of carets)")
     p.set_defaults(func=cmd_screen)
 
     p = sub.add_parser("locate")

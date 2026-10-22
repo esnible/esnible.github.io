@@ -9906,3 +9906,11 @@ Sandanes
 Udumbara
 Vajrasana
 Vedisri
+
+# ONS_051 — Sri-Sata coin (Tye): Satavahana names and the Prakrit legend, with the
+# diacritics the page prints and pdfmd dropped
+Pañcāla
+Raño
+Sātakarni
+Sātasa
+Śātavāhana

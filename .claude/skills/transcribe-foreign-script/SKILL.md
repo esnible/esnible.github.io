@@ -171,6 +171,18 @@ This is a **coarse bounding region for the whole deferred section**, not a tight
 
 - **A clean screen is weaker evidence than it looks.** `RAW` sees codepoints and `LATIN` sees one printed shape — a noisy run with a gloss beside it. Neither sees a legend `pdfmd` dropped entirely, a plate whose labels OCR'd as plausible English, or a Latin-rendered legend with no `Obv.`/`Rev.` or gloss anywhere near it. `ONS_158` is the standing warning: it screened clean, twice, with work in it.
 - **cspell needs both `@cspell/dict-ar` and `@cspell/dict-fa-ir` installed globally, and both wired into `cspell.config.yaml`'s `import:` and `dictionaries:` lists, to clear a correct transcription.** This corpus's legends are Mughal-era Perso-Arabic, not Modern Standard Arabic: `ar` alone recognized `عالم` but not `غازی`/`مبارک`/`اکبر` (Persian KEHEH `ک` and FARSI YEH `ی` letterforms instead of Arabic `ك`/`ي`) or `بادشاه` (a Persian word, absent from any Arabic dictionary regardless of letterform). Adding `fa-ir` closed the letterform gap; `بادشاه` itself still needed adding to `islamic-numismatics.txt` as corpus vocabulary, same as any other recurring proper term. Devanagari and CJK are not meaningfully spellcheckable by cspell at all — don't expect a dictionary fix there.
+- **A render cannot show more than the scan holds, and six files hold very
+  little.** The page raster's own resolution is the ceiling: on ONS_159 it is
+  599x840px for a 599x840pt page, i.e. **72 dpi**, so `render --dpi 900` on
+  that file returns an interpolated blur while the Latin beside it stays
+  sharp -- that Latin is the embedded OCR font layer, not the scan. Measured
+  over the 216 scanned files, 161 are around 288-312 dpi and only six are at
+  or below 100: ONS_159 (72), and ONS_160, ONS_180, ONS_181, ONS_182 and
+  ONS_184 (around 96). On those, extract the raster once
+  (`pdfimages -f N -l N -png`) and upscale the line region rather than asking
+  `render` for a DPI the page cannot supply. Resolution does not predict how
+  bad a file's punctuation is, though -- ONS_181 at 96 dpi has a better text
+  layer than ONS_171 at 150.
 - **`locate`'s page ranking degrades with the surrounding text's own OCR quality.** If the words immediately around a candidate are themselves garbled, there may be too few distinctive tokens to rank pages confidently — widen `--window`, or fall back to manually searching the PDF for a phrase you can read cleanly.
 - **The embedded PDF text layer (what `page.search_for()`/`page.get_text()` read) is a separate, generally worse OCR pass than the one that produced the `.md` file**, and this applies to English words too, not just foreign script — searching `IS_005`'s pages for 15 different printed section-title words found a clean match for only 2 of them. Don't expect `search_for()` on an exact phrase to succeed; if it fails, that's the corpus, not a typo in your query.
 - **Corroboration is not always available for body text.** Many legends in this corpus have no adjacent transliteration (unlike the `IS_004` Section I/IV cases, which happened to). That's the normal `script-guess` case, not a reason to defer — see Hard constraints. Reserve `script-deferred` for body text that doesn't support a plausible reading, or for content that isn't body text at all (a plate of drawings — see the layout test in Hard constraints, which comes first and is not about corroboration).

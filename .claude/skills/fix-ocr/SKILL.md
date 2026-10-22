@@ -56,6 +56,15 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
 4. **Also scan for OCR errors cspell will NOT catch.** Spellcheck only flags non-words. Many OCR errors are real words used wrongly, or punctuation/whitespace glitches. Do a targeted re-read for the patterns in "Beyond spellcheck" below.
 
+   Two of those classes have screens, and both read the Markdown alone — no render, no PDF, milliseconds each. Run them before the re-read, because each is invisible to cspell *and* to the five rendering screens in `docs/screens.tsv`:
+
+   ```
+   python3 .claude/skills/fix-ocr/scripts/detect_dropped_punct.py scan "<path>"
+   python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py scan "<path>"
+   ```
+
+   The first says whether this file is one of the 42 that lost their sentence-ending periods wholesale (see that section below); the second finds the bare `^` the quote screen cannot match. Neither writes anything: both report candidates for a render to settle, which is the only evidence Hard constraints allow.
+
 5. **Apply edits with the `Edit` tool**, one logical fix at a time. For each edit:
    - Quote enough surrounding context that `old_string` is unique.
    - When the **same misreading recurs identically** (e.g., a name misread the same way ten times), fix all occurrences in one call with `replace_all` — the audit trail is identical either way. Unrelated fixes still go one per call.
@@ -384,12 +393,67 @@ the class in two:
   fixed** -- read it off the page and cross-check it against the footnote
   list, exactly as for `®`.
 
+### A superscript with no quote mark at all
+
+The screen above pairs on quote characters: `^` reaches it only as
+`MARKER_TAIL`, the garble swallowed *after* a quote run. Where the printed
+superscript came through as a bare caret with no quote mark anywhere near it,
+nothing in `docs/screens.tsv` sees it, and the file screens clean on all five
+rendering screens:
+
+```
+In a forthcoming monograph^ I suggest that the reverse deities...
+Sikander 'Adil Shah surrendered to the Emperor.^ Thereafter he...
+```
+
+`transcribe-foreign-script`'s screen does know the glyph — its
+`LATIN_NOISE_CHARS` is `^\<>±«»¬°·•` — but it wants a *run* of four such
+tokens at 15% of the line beside an `Obv.`/`Rev.` gloss, because its job is a
+legend pdfmd read as Latin. One caret in sixty words of English prose is not
+that, and LATIN is kept out of its exit status in any case.
+
+```
+python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py scan <STEM>
+python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py rows <STEM>
+```
+
+Two shapes, both of them the glyph standing where a printed character was:
+
+- **MARKER** — a caret at a word's end, before a capital. The scan prints a
+  superscript footnote number, so this restores exactly as the `®` and `''`
+  markers above do: a Unicode superscript **digit** (`⁶`), with the digit read
+  off the page and cross-checked against the footnote list. 447 in 41 files.
+- **GLYPH** — a caret or an angle bracket *between two letters*, which is a
+  letter or a diacritic the OCR lost: `Öl^er` for Ölçer, `ak^e` for akçe,
+  `be^hk` for beşlik, `'O^ene'` for Ozene, and in ONS_163 a whole file's worth
+  of `\>` for `y` (`Arab-B\>zantine`, `Uma\>\>ad`, `b\> telephone`). 430 in 44
+  files.
+
+A hit inside a run of garble is tagged **WRECK** and reported as a lead, not
+counted — that is a legend for `transcribe-foreign-script`, which renders the
+whole thing rather than one glyph. Standalone angle brackets are left out
+unless you pass `--angles`: measured corpus-wide, most are legitimate —
+comparison operators in alloy tables (`Cu >70`, `As < 0.5`), `->` arrows in a
+flattened family tree, and ONS_226's own stated convention, `In inscriptions
+\< \> represents visible`.
+
 ### Numbers that look like words
 - Long runs of digits in the middle of a sentence (e.g., `511868515 that the first two`) are OCR'd images or stamps. Replace with `[illegible]` only if the user has asked for that style; otherwise leave a HTML comment `<!-- OCR: 511868515 -->` near the spot and remove the noise from the prose.
 
 ## Files that lost their punctuation wholesale
 
-Some issues' PDF text layers dropped nearly every sentence-ending period (and many colons and decimal points): the file reads `…types Whereas…`, `17 30` for `17.30`, `No A7 2` for `No. A7.2`. Rendering each spot by hand does not scale to hundreds of marks, and the PDF text layer cannot help because it is missing them too. When a sample paragraph shows this, run a second, independent OCR over the renders and align it against the Markdown:
+Some issues' PDF text layers dropped nearly every sentence-ending period (and many colons and decimal points): the file reads `…types Whereas…`, `17 30` for `17.30`, `No A7 2` for `No. A7.2`. Rendering each spot by hand does not scale to hundreds of marks, and the PDF text layer cannot help because it is missing them too.
+
+**First, find out whether this is such a file** — the tell needs no PDF, so this is a `docs/screens.tsv` row (`punctuation`) rather than something to notice by eye:
+
+```
+python3 .claude/skills/fix-ocr/scripts/detect_dropped_punct.py scan <STEM>
+python3 .claude/skills/shared/survey.py show --screen punctuation    # the worklist
+```
+
+A dropped period leaves a lowercase word butted straight against a capitalised sentence opener — `(c 155-169) The last great monarch`, `is discussed in detail Few will have`. Measured over the corpus that shape fires 0.01 times per 1000 words where the punctuation survived and 4-6 times per 1000 where it did not, so the screen's verdict is reliable: **WHOLESALE** (42 files, the scanned issues from ONS_119 and ONS_141-202) sends you to `punct_candidates.py` below; **ISOLATED** (43 files, nine candidates or fewer each) is a handful of ordinary spots that crop sheets settle one at a time. The screen proposes no edits — capitalisation is context, and Hard constraints forbid supplying a mark from context.
+
+For a WHOLESALE file, run a second, independent OCR over the renders and align it against the Markdown:
 
 ```
 python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> [--pages 2-9]

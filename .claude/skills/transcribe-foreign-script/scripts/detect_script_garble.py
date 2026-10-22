@@ -4,7 +4,7 @@ render the corresponding PDF page so it can be read visually.
 
 pdfmd's `--lang eng+ara` pass reads Arabic, Devanagari, and Chinese-character
 legends about as well as it reads bordered tables -- which is to say, not at
-all reliably. Two failure shapes show up in this corpus:
+all reliably. Three failure shapes show up in this corpus:
 
   1. A raw run of non-Latin codepoints left sitting in otherwise-English
      prose or in a line pdfmd mistook for a heading (IS_004 line 92 before
@@ -15,6 +15,10 @@ all reliably. Two failure shapes show up in this corpus:
      68 of the corpus's ~148 `<!-- OCR: -->` comments mention script/legend/
      translit/mirror/glyph keywords and are candidates for a second look now
      that this skill exists.
+  3. The same legend read as *Latin* letters rather than as script, so a
+     codepoint test cannot see it at all (ONS_158 line 199:
+     `<(^ ^,>4JU / ^\\ ^^\\y J / **diij-oooi ( o b v )**`). That is the LATIN
+     verdict below -- a lead, not a verdict, and kept out of the exit status.
 
 Usage:
     detect_script_garble.py screen IS_001 [IS_002 ...]     # Tier 0
@@ -84,6 +88,97 @@ MARKER_RE = re.compile(r"<!--\s*script-(ok|deferred|guess)\b(?:[^>]*?reason=(.*?
 MIN_CHARS = 2  # shorter runs are lone stray glyphs -- fix-ocr's job (delete), not a transcription job
 
 
+# --- the LATIN verdict -------------------------------------------------------
+# pdfmd does not always leave an Arabic legend as Arabic codepoints. On plenty
+# of pages it reads the script as Latin letters and punctuation instead --
+# ONS_158 line 199 came out `<(^ ^,>4JU / ^\ ^^\y J / **diij-oooi ( o b v )**`
+# -- and a codepoint test is structurally blind to that. That file screened
+# clean while five body-text legends sat in it untranscribed.
+#
+# A bare "run of unpronounceable tokens" test is not usable as a replacement.
+# Measured across the corpus it flags 1,642 lines, and ~88% of them belong to
+# somebody else: 923 already carry real codepoints (RAW has them), 336 are
+# Latin-Extended -- either legitimate diacritics (`Nasir al-din Mahmud` with
+# its macrons) or broken-cmap mojibake -- 133 are C0 control bytes from a dead
+# font cmap (that is issue #222's defect, with a different remedy), and 53 are
+# Cyrillic bibliography, which is not a defect at all.
+#
+# Three things narrow it to something workable:
+#
+#   * tokens of those other kinds never count towards a run, so a mojibake run
+#     stops qualifying while a correctly accented word merely ends a run;
+#   * the noisy tokens must be a real share of the line, not four in eighty,
+#     which is what ordinary prose throws up by chance;
+#   * a side label or a gloss -- `Obv.`/`Rev.`, `legend`, `(= `, "Which means"
+#     -- must sit within one content line, because that is how a coin legend is
+#     printed here, and it is also what makes a reading corroborable
+#     (`script-ok`) rather than a guess.
+#
+# That leaves 80 lines across 32 files, around four in five of them real. It is
+# a lead and never a verdict, so LATIN is reported but deliberately kept out of
+# the exit status -- the same way detect_figures treats UNCOVERED and RULED.
+# A file whose only finding is LATIN still screens clean.
+
+# Characters that mark a token as some *other* defect, so it neither counts as
+# noise nor is worth reporting here: C0 controls and Latin-Extended (dead font
+# cmap, or a real diacritic), Cyrillic, box-drawing (a flattened table drawn in
+# ASCII art), and the fraction/superscript/AE notation this corpus uses for
+# denominations and metals, which is correct text.
+LATIN_OTHER_RE = re.compile(
+    "[\x00-\x08\x0b\x0c\x0e-\x1f\u00c0-\u024f\u1e00-\u1eff\u0400-\u04ff"
+    "\u2500-\u257f\u00bc-\u00be\u00b9\u00b2\u00b3\u2070-\u209f\u2150-\u215f"
+    "\u00c6\u00e6]"
+)
+LATIN_NOISE_CHARS = set("^\\<>\u00b1\u00ab\u00bb\u00ac\u00b0\u00b7\u2022")
+LATIN_WORD_RE = re.compile(r"^[A-Za-z][A-Za-z'\u2019-]*[.,;:)?!]?$")
+LATIN_PUNCT_RE = re.compile(r"^[-\u2013\u2014/()\[\]{},.;:'\"*_]+$")
+# The side labels and glosses a printed legend sits beside. `o b v` catches the
+# letter-spaced form pdfmd produces when it reads `(obv)` off a scan.
+LATIN_GLOSS_RE = re.compile(
+    r"\(=\s|which means|\bobv\b|\brev\b|\bobverse\b|\breverse\b|\blegend\b|"
+    r"\binscription\b|\bcountermark\b|\bo\s+b\s+v\b|\br\s+e\s+v\b",
+    re.I,
+)
+LATIN_MIN_RUN = 4       # consecutive noise tokens, punctuation skipped over
+LATIN_MIN_DENSITY = 0.15  # share of the line's countable tokens that are noise
+LATIN_GLOSS_WINDOW = 1  # content lines each side that may carry the gloss
+
+
+def _latin_token_kind(tok):
+    t = tok.strip("*_`")
+    if not t or LATIN_PUNCT_RE.match(t):
+        return "skip"  # a `/` between a legend's lines must not break the run
+    if LATIN_OTHER_RE.search(t) or FOREIGN_RE.search(t):
+        return "clean"
+    if any(c in LATIN_NOISE_CHARS for c in t):
+        return "noise"
+    if LATIN_WORD_RE.match(t) or re.search(r"\d", t):
+        return "clean"
+    return "noise" if len(t) <= 6 else "clean"
+
+
+def _latin_line_is_noisy(stripped):
+    """True when the line carries a dense run of Latin gibberish."""
+    tokens = stripped.split()
+    if len(tokens) < LATIN_MIN_RUN:
+        return False
+    run = best = noisy = counted = 0
+    for tok in tokens:
+        kind = _latin_token_kind(tok)
+        if kind == "skip":
+            continue
+        counted += 1
+        if kind == "noise":
+            run += 1
+            noisy += 1
+        else:
+            run = 0
+        best = max(best, run)
+    if counted < LATIN_MIN_RUN or best < LATIN_MIN_RUN:
+        return False
+    return noisy / counted >= LATIN_MIN_DENSITY
+
+
 def resolve(stem):
     return PDF_DIR / f"{stem}.pdf", MD_DIR / f"{stem}.md"
 
@@ -100,9 +195,12 @@ def _strip_fenced(lines):
 
 
 def find_candidates(lines):
-    """Return (comment_candidates, raw_candidates, resolved, deferred, guessed) as
-    lists/sets of 0-based line indices, each with a reason string."""
+    """Return (comment_candidates, raw_candidates, latin_candidates, resolved,
+    deferred, guessed) as lists/sets of 0-based line indices, each with a reason
+    string."""
     comment_candidates, raw_candidates = [], []
+    latin_pre = []   # noisy lines, before the gloss-window test below
+    content = []     # (index, stripped) for every non-blank, non-marker line
     resolved, deferred, guessed = set(), set(), set()
     marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed}
     prev_content_idx = None
@@ -135,6 +233,7 @@ def find_candidates(lines):
                 else:
                     bucket.add(target)
             continue
+        content.append((i, stripped))
         if in_code:
             prev_content_idx = i
             table_block = []
@@ -158,14 +257,39 @@ def find_candidates(lines):
         # OCR comment already documents the ones inside comments; a run
         # sitting bare in rendered prose is the undocumented case.
         visible = re.sub(r"<!--.*?-->", "", line)
+        has_foreign = False
         for run in FOREIGN_RE.findall(visible):
             if len(run) >= MIN_CHARS:
                 raw_candidates.append((i, stripped[:100]))
+                has_foreign = True
                 break
+
+        # A line RAW already owns is not a LATIN finding -- reporting it twice
+        # would just inflate the count. Nor is a pipe-table row, an IAL, or a
+        # line carrying a marker comment: a figure marker's prose reads as
+        # noise to this test and is not a legend.
+        if (not has_foreign and not is_table_row
+                and not stripped.startswith("{:") and "<!--" not in stripped
+                and _latin_line_is_noisy(stripped)):
+            latin_pre.append((i, stripped[:100]))
 
         prev_content_idx = i
 
-    return comment_candidates, raw_candidates, resolved, deferred, guessed
+    # The gloss may be on the legend's own line (`Obv. ... Rev. ...`) or in the
+    # paragraph beside it -- a legend set on its own line with "Which means ..."
+    # under it is the commonest shape in this corpus.
+    at = {idx: k for k, (idx, _) in enumerate(content)}
+    latin_candidates = []
+    for i, why in latin_pre:
+        k = at.get(i)
+        if k is None:
+            continue
+        lo = max(0, k - LATIN_GLOSS_WINDOW)
+        hi = min(len(content), k + LATIN_GLOSS_WINDOW + 1)
+        if any(LATIN_GLOSS_RE.search(content[j][1]) for j in range(lo, hi)):
+            latin_candidates.append((i, why))
+
+    return comment_candidates, raw_candidates, latin_candidates, resolved, deferred, guessed
 
 
 def cmd_screen(args):
@@ -176,7 +300,7 @@ def cmd_screen(args):
             print(f"{stem}: no Markdown at {md_path}")
             continue
         lines = md_path.read_text(encoding="utf-8").splitlines()
-        comment_c, raw_c, resolved, deferred, guessed = find_candidates(lines)
+        comment_c, raw_c, latin_c, resolved, deferred, guessed = find_candidates(lines)
         handled = resolved | deferred | guessed
 
         def open_items(cands):
@@ -184,12 +308,17 @@ def cmd_screen(args):
 
         open_comment = open_items(comment_c)
         open_raw = [] if args.no_raw else open_items(raw_c)
+        open_latin = [] if args.no_latin else open_items(latin_c)
+        # LATIN is a lead, not a verdict -- around one in five is something
+        # else -- so it never counts towards "to review" or the exit status.
+        # A file whose only finding is LATIN still screens clean.
         n_open = len(open_comment) + len(open_raw)
         if n_open:
             needs_attention = True
         status = "nothing outstanding" if not n_open else f"{n_open} to review"
+        latin_note = "" if (args.no_latin or not latin_c) else f", {len(latin_c)} latin run(s)"
         print(
-            f"{stem}: {len(comment_c)} flagged comment(s), {len(raw_c)} raw run(s) | "
+            f"{stem}: {len(comment_c)} flagged comment(s), {len(raw_c)} raw run(s){latin_note} | "
             f"RESOLVED {len(resolved)}  GUESSED {len(guessed)}  DEFERRED {len(deferred)} -- {status}"
         )
         # GUESSED lines are content-added-but-unverified -- surface them every
@@ -201,6 +330,8 @@ def cmd_screen(args):
             print(f"  COMMENT  md line {i + 1}: {why!r}")
         for i, why in open_raw:
             print(f"  RAW      md line {i + 1}: {why!r}")
+        for i, why in open_latin:
+            print(f"  LATIN    md line {i + 1}: {why!r}")
     sys.exit(1 if needs_attention else 0)
 
 
@@ -359,6 +490,8 @@ def main():
     p = sub.add_parser("screen")
     p.add_argument("stems", nargs="+")
     p.add_argument("--no-raw", action="store_true", help="skip raw foreign-run detection, comment-flagged only")
+    p.add_argument("--no-latin", action="store_true",
+                   help="skip the LATIN leads (script pdfmd read as Latin gibberish)")
     p.set_defaults(func=cmd_screen)
 
     p = sub.add_parser("locate")

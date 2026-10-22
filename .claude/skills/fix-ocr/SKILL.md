@@ -491,7 +491,19 @@ grep -nE '[A-Za-z]+[.:;,][A-Za-z]+' "<path>" | grep -vE 'www|http|\.com|\.net|@'
 # a period before a lowercase word: tesseract read a speck on the scan as a
 # full stop -- `the silver. crisis`, `in order. to advertise`
 grep -nE '[a-z]\.\s+[a-z]{2,}' "<path>"
+
+# a mark between two words in capitals: it looks exactly like a sentence end,
+# so neither grep above can see it -- ONS_159's masthead became
+# `# ORIENTAL NUMISMATIC. SOCIETY`
+grep -nE '\b[A-Z]{2,}[.:;,][[:space:]]+[A-Z]{2,}\b' "<path>"
 ```
+
+The third grep is narrow on purpose. A period inserted before an ordinary
+capitalised word is **indistinguishable from a real sentence end** by any
+mechanical test, so nothing catches that one but the page: `PL. Gupta`
+survived all three greps on ONS_159 and is `P.L. Gupta` on the scan. That is
+the residual risk of leaning on the sweeps instead of reading every page, and
+it is the reason a file worked that way should say so.
 
 Both greps hit legitimate text too (`Op. cit`, `Hung. ducats`, an e-mail, and the odd full stop the scan really does print mid-sentence), so diff them against the same grep over the pre-pass snapshot and look only at what the pass introduced. Of ONS_158's 53, 31 were specks, 18 were substring matches, and 4 were specks on pages whose single candidate looked safe.
 

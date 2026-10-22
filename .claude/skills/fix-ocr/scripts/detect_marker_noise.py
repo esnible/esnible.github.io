@@ -20,10 +20,10 @@ its exit status in any case. So nothing reports these.
 
 Two shapes, both of them the glyph standing where a printed character was:
 
-- **MARKER** -- a caret at the end of a word, before a capital. The scan
-  prints a superscript footnote number; the corpus restores one as a Unicode
-  superscript digit (`⁶`), read off the page, exactly as for the `®` and
-  `''` markers. 447 of them in 41 files.
+- **MARKER** -- a caret at the end of a word. The scan prints a superscript
+  footnote number; the corpus restores one as a Unicode superscript digit
+  (`⁶`), read off the page, exactly as for the `®` and `''` markers. 716 of
+  them in 43 files.
 - **GLYPH** -- a caret or an angle bracket *between two letters*, which is a
   letter or a diacritic the OCR lost: `Öl^er` for Ölçer, `ak^e` for akçe,
   `be^hk` for beşlik, `'O^ene'` for Ozene, `Weh-Andew^Sabuhr`, and in
@@ -43,7 +43,7 @@ to put in a worklist.
 
 A hit sitting inside a run of garble is tagged WRECK and reported as a lead
 rather than counted: it is a legend pdfmd read as Latin, and it belongs to
-`transcribe-foreign-script`, not here. 485 of the 1,362 hits are those.
+`transcribe-foreign-script`, not here. 569 of the 1,715 hits are those.
 
 **This screen settles nothing.** Which digit a marker was, and which letter
 a glyph ate, are both readable only off the scan -- see fix-ocr's Hard
@@ -67,11 +67,19 @@ MARKER_CHARS = r"\^¬"
 # ... plus the angle brackets for the between-letters shape, where a `>` is
 # never a comparison: `Arab-B\>zantine`. kramdown's `\>` escape counts.
 GLYPH_CHARS = MARKER_CHARS + r"<>"
-# A marker is glued to what it annotates and followed by the next sentence,
-# a quotation, or a parenthesis -- the same evidence `detect_quote_pairs`
-# reads for its `''` runs, minus the quote character.
-MARKER_RE = re.compile(rf"[A-Za-z0-9)\]'\"](\\?[{MARKER_CHARS}])"
-                       rf"(?=\s+[\"'(*A-Z“])")
+# A marker is glued to what it annotates, and what follows it is the rest of
+# the document -- a new sentence, a quotation, a parenthesis, or just the next
+# word, because a footnote reference falls wherever its claim ends
+# (`Joe Cribb^ supported this view`, `Hodivala^ in a note on this`). Requiring
+# a capital after it, as the first cut of this screen did, missed 222 of these
+# in 40 files, none of them on a line `detect_quote_pairs` reports.
+# A letter after the caret is a GLYPH instead, so that case is excluded here.
+# The caret may come in a run: `reverse^^ Various reasons`, `Van Braam^^
+# According to`, `Alice Counte^^ of Reading` (a letter run the OCR ate rather
+# than a footnote digit -- the page says which, and both go to the page). 45
+# of those in 15 files, again none on a line `detect_quote_pairs` reports.
+MARKER_RE = re.compile(rf"[A-Za-z0-9)\]'\"](\\?[{MARKER_CHARS}])+"
+                       rf"(?=\s+[\"'(*A-Za-z“])")
 GLYPH_RE = re.compile(rf"[A-Za-z](\\?[{GLYPH_CHARS}])(?=[A-Za-z])")
 ANGLE_RE = re.compile(r"\\?[<>]")
 # Inline HTML and kramdown autolinks: `<br>` would otherwise read as a GLYPH

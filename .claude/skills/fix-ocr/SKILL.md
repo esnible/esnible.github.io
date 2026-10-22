@@ -419,10 +419,12 @@ python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py rows <STEM>
 
 Two shapes, both of them the glyph standing where a printed character was:
 
-- **MARKER** — a caret at a word's end, before a capital. The scan prints a
-  superscript footnote number, so this restores exactly as the `®` and `''`
-  markers above do: a Unicode superscript **digit** (`⁶`), with the digit read
-  off the page and cross-checked against the footnote list. 447 in 41 files.
+- **MARKER** — a caret at a word's end. The scan prints a superscript
+  footnote number, so this restores exactly as the `®` and `''` markers above
+  do: a Unicode superscript **digit** (`⁶`), with the digit read off the page
+  and cross-checked against the footnote list. 716 in 43 files. A footnote
+  reference falls wherever its claim ends, so what follows the caret may be a
+  new sentence or just the next word (`Joe Cribb^ supported this view`).
 - **GLYPH** — a caret or an angle bracket *between two letters*, which is a
   letter or a diacritic the OCR lost: `Öl^er` for Ölçer, `ak^e` for akçe,
   `be^hk` for beşlik, `'O^ene'` for Ozene, and in ONS_163 a whole file's worth

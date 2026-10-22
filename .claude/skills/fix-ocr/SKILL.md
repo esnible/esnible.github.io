@@ -483,8 +483,10 @@ It prints one candidate per line — `<path>:LINE  md 'types'  page 'types.'  pN
 
 ```
 # a mark glued inside a word: a short candidate token (`V`, `p`, `No`, `so`)
-# matched as a substring of a longer one -- `V.iatkin`, `quart.er`, `Hussein:ites`
-grep -nE '[A-Za-z]+[.:;,][a-z]+' "<path>" | grep -vE 'www|http|\.com|\.net|@'
+# matched as a substring of a longer one -- `V.iatkin`, `quart.er`, `Hussein:ites`.
+# The letter after the mark may be upper case: ONS_159 lost `INDO-GR.EEKS` to a
+# narrower version of this grep that required a lowercase one.
+grep -nE '[A-Za-z]+[.:;,][A-Za-z]+' "<path>" | grep -vE 'www|http|\.com|\.net|@'
 
 # a period before a lowercase word: tesseract read a speck on the scan as a
 # full stop -- `the silver. crisis`, `in order. to advertise`

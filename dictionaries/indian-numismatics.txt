@@ -9877,6 +9877,36 @@ Whitteridge
 Dowlah
 Manucci
 
+# ONS_158 — Western Kshatrapas, Bhadrayasha, the Bhadra/Madra tribes: rulers,
+# tribal names, Prakrit legend forms, sites
+Ardoskho
+Bahika
+Bahikas
+Bahlika
+Balasri
+Bhadramkara
+Bhagabhadra
+Bhalla
+Bhallava
+Bhallika
+Bhumakasa
+Chashtana
+Heliodoros
+Khaharatasa
+Khatrapasa
+Madra
+Madrakara
+Madri
+Mahabodhi
+Malavi
+Minnagar
+Odumbara
+Sadagalli
+Sandanes
+Udumbara
+Vajrasana
+Vedisri
+
 # ONS_051 — Sri-Sata coin (Tye): Satavahana names and the Prakrit legend, with the
 # diacritics the page prints and pdfmd dropped
 Pañcāla

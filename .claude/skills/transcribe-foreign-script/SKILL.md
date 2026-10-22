@@ -37,14 +37,67 @@ That same pass also invented visible structure the source doesn't have: an Engli
 python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py screen IS_004 [IS_005 ...]
 ```
 
-Reports two kinds of finding, per file:
+Reports three kinds of finding, per file:
 
 - **`COMMENT`** — an existing `<!-- OCR: ... -->` placeholder whose text mentions script/legend/transliteration/mirror/glyph keywords. 68 of the corpus's ~148 `<!-- OCR: -->` comments currently match; each is a candidate for a second look now that rendering is on the table.
 - **`RAW`** — a run of Arabic, Hebrew, Devanagari, or CJK codepoints sitting outside any HTML comment, i.e. undocumented garble nobody has flagged yet (the `IS_004` line-92 case before it was fixed).
+- **`LATIN`** — a legend `pdfmd` read as Latin letters rather than as script, so no codepoint test can see it. A lead, not a verdict: see below.
 
 A run under 2 characters is not reported — a single stray glyph in English prose is `fix-ocr`'s "delete as noise" case, not a transcription job.
 
-Exit status is `0` only when nothing is outstanding, so it scripts over the corpus the same way `detect-missing-tables screen` does. Pass `--no-raw` to judge only the comment backlog.
+Exit status is `0` only when nothing is outstanding, so it scripts over the corpus the same way `detect-missing-tables screen` does. Pass `--no-raw` to judge only the comment backlog, `--no-latin` to drop the LATIN leads.
+
+### `LATIN` — the legends a codepoint test cannot see
+
+`pdfmd` does not always leave an Arabic legend as Arabic codepoints. On plenty
+of pages it reads the script as Latin letters and punctuation instead, and
+`RAW` is then structurally blind to it. `ONS_158` is the case that forced this:
+it screened clean with five body-text legends sitting in it untranscribed, one
+of them the entire subject of its article.
+
+```
+<(^ ^,>4JU / ^\ ^^\y J / **diij-oooi ( o b v )** j ^ li / sLi / *jjSi* ( r e v )
+-> بسمرقند / و نواحي اين / شهر هر كه (obv) نكيرد / كناه / كا بود (rev)
+```
+
+**A bare "run of unpronounceable tokens" test is not usable**, and it is worth
+knowing why before anyone loosens this one. Measured over the corpus it flags
+1,642 lines, ~88% of which belong to someone else:
+
+| lines | what it actually is |
+|---:|:--- |
+| 923 | already carries real codepoints — `RAW` has it |
+| 336 | Latin-Extended: legitimate diacritics, or broken-cmap mojibake |
+| 133 | C0 control bytes from a dead font cmap — a different defect, different remedy |
+| 53 | Cyrillic bibliography — not a defect at all |
+| 194 | genuine candidates |
+
+Three narrowings cut that to **80 lines across 32 files, around four in five of
+them real**:
+
+- tokens of those other kinds never count towards a run, so a mojibake run
+  stops qualifying while a correctly accented word merely ends a run;
+- the noisy tokens must be a real share of the line (`LATIN_MIN_DENSITY`,
+  0.15), not four in eighty, which ordinary prose throws up by chance;
+- a side label or gloss — `Obv.`/`Rev.`, `legend`, `inscription`,
+  `countermark`, `(= `, "Which means" — must sit within one content line.
+  Punctuation between a legend's lines (`/`) is skipped rather than breaking
+  the run, because that is how these are printed.
+
+The gloss requirement costs recall and buys two things: precision, and the fact
+that what it keeps is the legends a render can *corroborate* — so they land as
+`script-ok` rather than `script-guess`.
+
+**`LATIN` never counts towards "to review" or the exit status**, the same way
+`detect-missing-figures` treats `UNCOVERED` and `RULED`. A file whose only
+finding is `LATIN` still screens clean. It needs no new marker: `script-ok` /
+`script-guess` / `script-deferred` retire it like any other finding.
+
+Two things it will hand you that are not Arabic legends, both worth a look of
+their own rather than a transcription: Greek legends written with LaTeX-style
+escapes (`ΒΑ\SigmaΙ\LambdaΕΩ\Sigma` for ΒΑΣΙΛΕΩΣ, in `ONS_186` and
+`ONS_192`), and plate labels, which are artwork and belong in
+`script-deferred` under the layout test below.
 
 ### Tier 1 — locate and render
 
@@ -96,7 +149,7 @@ Same shape as `detect-missing-tables`' `table-ok` / `table-deferred`, and read b
 - **`script-guess`** — body text, transcribed, plausible, but **not** independently confirmed. The `spellcheck=` field records the `spellcheck` subcommand's verdict: `pass` (all words recognized by the corpus's Arabic/Persian/numismatic dictionaries — not proof of correctness, a wrong-but-real word still passes) or `fail:<words>` (the listed words are unrecognized — not proof of error, real corpus vocabulary is sometimes still missing from the dictionaries, and Devanagari/CJK aren't meaningfully spellcheckable at all so expect `fail` there regardless of quality). Counted as `GUESSED` — printed on every `screen` run, not just `-v`, since it is unverified content, not settled business.
 - **`script-deferred`** — no text inserted. Two distinct reasons land here (say which in the comment): the content is a plate of drawings rather than body text (see Hard constraints — the `IS_004` coin-inscriptions plate above), or it's body text illegible at any available resolution. Counted as `DEFERRED`, the standing worklist of what's left.
 
-Without a marker, an inserted reading (verified or guessed) is indistinguishable from unverified garble to the screen — it is still a run of foreign-script codepoints — so it re-flags as `RAW` forever. Always mark what you resolve, guess, or defer.
+Without a marker, an inserted reading (verified or guessed) is indistinguishable from unverified garble to the screen — it is still a run of foreign-script codepoints — so it re-flags as `RAW` forever. Always mark what you resolve, guess, or defer. The same markers retire a `LATIN` lead, which is the only way to tell the screen that a noisy-looking line has been read and settled.
 
 **When the transcribed content is a reconstructed table (columns like image/native script/transliteration), leave a blank line between the table's last row and its marker.** GitHub's renderer needs a table set off by blank lines on *both* sides — `detect-missing-tables`' own governors-table fix on `IS_005` covered the "comment directly before a table" direction; a marker directly after a table with no blank line is the same bug from the other side, and `IS_006`'s 14 reconstructed tables hit it. `find_candidates()` in the script tolerates exactly one blank line here — a marker separated from its table by a blank still resolves every row in it, not just the last one — so this costs nothing but the blank line itself.
 
@@ -116,6 +169,7 @@ This is a **coarse bounding region for the whole deferred section**, not a tight
 
 ## Known limits
 
+- **A clean screen is weaker evidence than it looks.** `RAW` sees codepoints and `LATIN` sees one printed shape — a noisy run with a gloss beside it. Neither sees a legend `pdfmd` dropped entirely, a plate whose labels OCR'd as plausible English, or a Latin-rendered legend with no `Obv.`/`Rev.` or gloss anywhere near it. `ONS_158` is the standing warning: it screened clean, twice, with work in it.
 - **cspell needs both `@cspell/dict-ar` and `@cspell/dict-fa-ir` installed globally, and both wired into `cspell.config.yaml`'s `import:` and `dictionaries:` lists, to clear a correct transcription.** This corpus's legends are Mughal-era Perso-Arabic, not Modern Standard Arabic: `ar` alone recognized `عالم` but not `غازی`/`مبارک`/`اکبر` (Persian KEHEH `ک` and FARSI YEH `ی` letterforms instead of Arabic `ك`/`ي`) or `بادشاه` (a Persian word, absent from any Arabic dictionary regardless of letterform). Adding `fa-ir` closed the letterform gap; `بادشاه` itself still needed adding to `islamic-numismatics.txt` as corpus vocabulary, same as any other recurring proper term. Devanagari and CJK are not meaningfully spellcheckable by cspell at all — don't expect a dictionary fix there.
 - **`locate`'s page ranking degrades with the surrounding text's own OCR quality.** If the words immediately around a candidate are themselves garbled, there may be too few distinctive tokens to rank pages confidently — widen `--window`, or fall back to manually searching the PDF for a phrase you can read cleanly.
 - **The embedded PDF text layer (what `page.search_for()`/`page.get_text()` read) is a separate, generally worse OCR pass than the one that produced the `.md` file**, and this applies to English words too, not just foreign script — searching `IS_005`'s pages for 15 different printed section-title words found a clean match for only 2 of them. Don't expect `search_for()` on an exact phrase to succeed; if it fails, that's the corpus, not a typo in your query.

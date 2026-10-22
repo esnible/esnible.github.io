@@ -16,3 +16,6 @@ __pycache__/
 # Review sheets from .claude/skills/fix-ocr/scripts/quote_crops.py
 *-quotes.html
 *-quotes-*.jpg
+
+# npm install --no-save of cspell, for the fix-ocr skill (see its setup note)
+node_modules/

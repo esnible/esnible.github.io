@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find files whose OCR dropped sentence-ending periods, from the Markdown alone.
+"""Find the marks an OCR pass dropped, from the Markdown alone.
 
 `punct_candidates.py` repairs this class, but it costs a 300-dpi render and a
 tesseract pass over every page, so nothing runs it speculatively -- and
@@ -23,6 +23,20 @@ PDFs are born-digital (see `classify_source.py`) and carry the publisher's
 own punctuation. Another 43 files sit below it with nine candidates or
 fewer -- ordinary spots, and real ones: a crop settles each.
 
+The same pass drops the possessive apostrophe with the periods, and that one
+no other screen can see at all: `punct_candidates.py` aligns on `.,;:!?`, so
+an apostrophe is outside the marks it compares, and cspell sees two real
+words either side of the space.
+
+    ...Curator of South Asian Coins in the Museum s Department of Coins...
+    ...the thirty sultanis which Pijnacker s dragoman had to pay...
+
+486 of those across 61 files, and 38 of the 61 are files this screen already
+calls WHOLESALE -- which is what says it is the same damage and not a habit
+of the typists. They report as POSSESSIVE and are listed with the rest, but
+the rate and the verdict count the SENTENCE shape alone: both thresholds were
+measured on it, and the gap that justifies the cut is its gap.
+
     detect_dropped_punct.py scan ONS_158
     detect_dropped_punct.py scan jons/*.md
     detect_dropped_punct.py rows ONS_158          # crop_sheets.py rows
@@ -32,11 +46,12 @@ fewer -- ordinary spots, and real ones: a crop settles each.
     ONS_158: WHOLESALE  200 candidate(s), 4.71 per 1000 words
       -> run punct_candidates.py; crop sheets do not scale to this many
     ONS_226: ISOLATED   9 candidate(s), 0.52 per 1000 words
-      md line 223: 'presented in Figure 3. vii There are slight'
+      SENTENCE   md line 223: 'presented in Figure 3. vii There are slight'
+      POSSESSIVE md line 445: 'broken down as follows: Cask s'
 
-**This screen settles nothing.** It reads capitalisation, and fix-ocr forbids
-supplying a mark from context (see Hard constraints) -- only a render is
-evidence. So it writes no edits and emits no `apply_edits.py` batch: it says
+**This screen settles nothing.** It reads capitalisation and spacing, and
+fix-ocr forbids supplying a mark from context (see Hard constraints) -- only
+a render is evidence. So it writes no edits and emits no `apply_edits.py` batch: it says
 which files to point the rendering tools at, and in what order. A WHOLESALE
 file goes to `punct_candidates.py`; an ISOLATED one is a handful of crops
 through `shared/crop_sheets.py`.
@@ -96,6 +111,23 @@ WHOLESALE_COUNT = 25
 QUOTED_RE = re.compile(r"[\"“”](?:[^\"“”\n]|\n(?!\s*\n)){0,600}?"
                        r"[\"“”]")
 
+# The same files lose the possessive apostrophe with the periods: `the Museum
+# s Department`, `Pijnacker s dragoman`, `not a ship s carpenter`. No other
+# screen can see it -- `punct_candidates.py` only tracks `.,;:!?`, so the
+# apostrophe is outside the marks it aligns on at all, and cspell sees two
+# real words. 505 across 62 files, 38 of which this screen already calls
+# WHOLESALE, which is what says it is the same damage rather than a habit of
+# the typists.
+POSSESSIVE_RE = re.compile(r"\b[A-Za-z]{3,}( s)\b")
+# `Jean Elsen s.a.`, `Jean Elsen & ses Fils s.A.` -- the Belgian dealer's
+# company form, 19 of the 505 and the only false positive worth excluding by
+# rule. One more class stays in and has to be settled on the page like any
+# other candidate: a transliterated Russian title, where `s` is the
+# preposition (`Mednye monety s izobrazheniem luchnika`). An `s` inside an
+# italic span is *not* a tell -- those 50 are overwhelmingly real possessives
+# in cited article titles (`Harun al-Rashid s wife strikes coins`).
+COMPANY_RE = re.compile(r"\bs\.\s*[ap]\.", re.I)
+
 
 def resolve(arg):
     p = pathlib.Path(arg)
@@ -116,11 +148,12 @@ def readable(path):
 
 
 def findings(text):
-    """[(offset, end, opener)] for each dropped-period candidate.
+    """[(offset, end, kind)] for each dropped-mark candidate, in file order.
 
-    `offset` is where the lowercase word starts and `end` where the opener
-    finishes, so the anchor covers the whole shape however many spaces the
-    OCR left between the two words.
+    `offset` is where the shape starts and `end` where it finishes, so the
+    anchor covers the whole of it however many spaces the OCR left inside.
+    `kind` is SENTENCE (a dropped full stop) or POSSESSIVE (a dropped
+    apostrophe).
     """
     quoted = [m.span() for m in QUOTED_RE.finditer(text)]
     out = []
@@ -132,18 +165,30 @@ def findings(text):
             continue
         if any(a <= m.start() < b for a, b in quoted):
             continue
-        out.append((m.start(), m.end(2), opener))
-    return out
+        out.append((m.start(), m.end(2), "SENTENCE"))
+    for m in POSSESSIVE_RE.finditer(text):
+        if COMPANY_RE.match(text, m.start(1) + 1):
+            continue
+        out.append((m.start(), m.end(1), "POSSESSIVE"))
+    return sorted(out)
 
 
 def verdict(text):
-    """(verdict, findings, rate per 1000 words)."""
+    """(verdict, findings, rate per 1000 words).
+
+    The rate -- and so the verdict -- counts SENTENCE findings only. Both
+    thresholds were measured on that shape alone, and the POSSESSIVE shape is
+    four times rarer and spread differently, so folding it in would move the
+    rate without the empty gap that justifies the cut. It still reports, and
+    still needs the same page render to settle it.
+    """
     found = findings(text)
+    sentences = [f for f in found if f[2] == "SENTENCE"]
     words = len(text.split()) or 1
-    rate = len(found) / words * 1000
+    rate = len(sentences) / words * 1000
     if not found:
         return "CLEAN", found, rate
-    wholesale = rate >= WHOLESALE_RATE or len(found) >= WHOLESALE_COUNT
+    wholesale = rate >= WHOLESALE_RATE or len(sentences) >= WHOLESALE_COUNT
     return ("WHOLESALE" if wholesale else "ISOLATED"), found, rate
 
 
@@ -171,8 +216,8 @@ def cmd_scan(path, quiet_clean=False):
         return 1
     print("  -> settle each against a page crop (shared/crop_sheets.py); "
           "never from the capitalisation alone")
-    for off, end, _opener in found:
-        print(f"  md line {line_of(text, off)}: "
+    for off, end, kind in found:
+        print(f"  {kind:10} md line {line_of(text, off)}: "
               f"{anchor_at(text, end)[-58:]!r}")
     return 1
 
@@ -190,8 +235,8 @@ def cmd_rows(path):
     if tag == "WHOLESALE":
         print(f"# {path.stem}: lost its punctuation wholesale -- "
               f"run punct_candidates.py, not crop sheets")
-    for off, end, _opener in found:
-        label = f"{tag} line {line_of(text, off)}"
+    for off, end, kind in found:
+        label = f"{tag} {kind} line {line_of(text, off)}"
         print(f"{path.stem}\t{label}\t{anchor_at(text, end)}")
     return 1 if found else 0
 

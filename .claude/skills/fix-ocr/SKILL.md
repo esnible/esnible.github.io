@@ -455,6 +455,15 @@ python3 .claude/skills/shared/survey.py show --screen punctuation    # the workl
 
 A dropped period leaves a lowercase word butted straight against a capitalised sentence opener — `(c 155-169) The last great monarch`, `is discussed in detail Few will have`. Measured over the corpus that shape fires 0.01 times per 1000 words where the punctuation survived and 4-6 times per 1000 where it did not, so the screen's verdict is reliable: **WHOLESALE** (42 files, the scanned issues from ONS_119 and ONS_141-202) sends you to `punct_candidates.py` below; **ISOLATED** (43 files, nine candidates or fewer each) is a handful of ordinary spots that crop sheets settle one at a time. The screen proposes no edits — capitalisation is context, and Hard constraints forbid supplying a mark from context.
 
+The same pass drops the **possessive apostrophe** with the periods, and that one is invisible to everything else: `punct_candidates.py` aligns on `.,;:!?`, so an apostrophe is outside the marks it compares at all, and cspell sees two real words either side of the space.
+
+```
+...Curator of South Asian Coins in the Museum s Department of Coins...
+...the thirty sultanis which Pijnacker s dragoman had to pay...
+```
+
+486 across 61 files, 38 of which the screen already calls WHOLESALE — which is what says it is the same damage and not a habit of the typists. They report as `POSSESSIVE` beside the `SENTENCE` findings, but the rate and the verdict count `SENTENCE` alone: both thresholds were measured on that shape, and the empty gap that justifies the cut is its gap. The one false positive worth knowing is the Belgian dealer's company form, `Jean Elsen s.a.`, which the screen excludes by rule; a transliterated Russian title (`Mednye monety s izobrazheniem`) stays in and is settled on the page like any other candidate.
+
 For a WHOLESALE file, run a second, independent OCR over the renders and align it against the Markdown:
 
 ```

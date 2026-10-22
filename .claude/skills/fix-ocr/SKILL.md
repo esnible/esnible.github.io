@@ -422,13 +422,20 @@ Two shapes, both of them the glyph standing where a printed character was:
 - **MARKER** — a caret at a word's end. The scan prints a superscript
   footnote number, so this restores exactly as the `®` and `''` markers above
   do: a Unicode superscript **digit** (`⁶`), with the digit read off the page
-  and cross-checked against the footnote list. 716 in 43 files. A footnote
+  and cross-checked against the footnote list. 1,003 in 50 files. A footnote
   reference falls wherever its claim ends, so what follows the caret may be a
   new sentence or just the next word (`Joe Cribb^ supported this view`).
+  pdfmd also sets the superscript as a quote run closed by an escaped
+  asterisk — `an astronomic sign"\*` for `sign⁴`. `detect_quote_pairs` skips a
+  single quote mark unless asked, because on its own a `"` is usually just a
+  quotation; the trailing `\*` is what makes it a marker, and is what the
+  pairing never looks at. 275 of those were unreported anywhere, in 45 files.
+  Some are question marks on the page rather than markers (`just one has
+  survived"\*` is `survived?`) — the render says which.
 - **GLYPH** — a caret or an angle bracket *between two letters*, which is a
   letter or a diacritic the OCR lost: `Öl^er` for Ölçer, `ak^e` for akçe,
   `be^hk` for beşlik, `'O^ene'` for Ozene, and in ONS_163 a whole file's worth
-  of `\>` for `y` (`Arab-B\>zantine`, `Uma\>\>ad`, `b\> telephone`). 430 in 44
+  of `\>` for `y` (`Arab-B\>zantine`, `Uma\>\>ad`, `b\> telephone`). 424 in 43
   files.
 
 A hit inside a run of garble is tagged **WRECK** and reported as a lead, not

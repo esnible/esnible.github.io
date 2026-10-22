@@ -22,13 +22,13 @@ Two shapes, both of them the glyph standing where a printed character was:
 
 - **MARKER** -- a caret at the end of a word. The scan prints a superscript
   footnote number; the corpus restores one as a Unicode superscript digit
-  (`⁶`), read off the page, exactly as for the `®` and `''` markers. 716 of
-  them in 43 files.
+  (`⁶`), read off the page, exactly as for the `®` and `''` markers. 1,003 of
+  them in 50 files.
 - **GLYPH** -- a caret or an angle bracket *between two letters*, which is a
   letter or a diacritic the OCR lost: `Öl^er` for Ölçer, `ak^e` for akçe,
   `be^hk` for beşlik, `'O^ene'` for Ozene, `Weh-Andew^Sabuhr`, and in
   ONS_163 a whole file's worth of `\\>` for `y` (`Arab-B\\>zantine`,
-  `Uma\\>\\>ad`, `b\\> telephone`). 430 in 44 files.
+  `Uma\\>\\>ad`, `b\\> telephone`). 424 in 43 files.
 
 Standalone angle brackets are **not** reported unless you ask for them with
 `--angles`. Measured over the corpus, most are legitimate: comparison
@@ -43,7 +43,7 @@ to put in a worklist.
 
 A hit sitting inside a run of garble is tagged WRECK and reported as a lead
 rather than counted: it is a legend pdfmd read as Latin, and it belongs to
-`transcribe-foreign-script`, not here. 569 of the 1,715 hits are those.
+`transcribe-foreign-script`, not here. 585 of the 2,012 hits are those.
 
 **This screen settles nothing.** Which digit a marker was, and which letter
 a glyph ate, are both readable only off the scan -- see fix-ocr's Hard
@@ -85,6 +85,16 @@ GLYPH_CHARS = MARKER_CHARS + r"<>"
 MARKER_RE = re.compile(rf"[A-Za-z0-9)\]'\".,;:!?](\\?[{MARKER_CHARS}])+"
                        rf"(?=\s+[\"'(*A-Za-z“])")
 GLYPH_RE = re.compile(rf"[A-Za-z](\\?[{GLYPH_CHARS}])(?=[A-Za-z])")
+# pdfmd also sets the superscript as a quote run closed by an escaped
+# asterisk -- `an astronomic sign"\*` for `sign⁴`, `the word 'struck'\*`.
+# `detect_quote_pairs` owns runs of quote marks, but skips a single one
+# unless asked (`--include-single`), because on its own a lone `"` is
+# usually just a quotation; the trailing `\*` is what makes this one a
+# marker, and it is what the pairing never looks at. 275 of them unreported
+# anywhere, in 45 files, none on a line that screen does report. Like the
+# caret, some turn out to be question marks on the page (`these earliest
+# Indian coins'\*` is `coins?`) -- the render says which.
+STAR_MARKER_RE = re.compile(r"[A-Za-z0-9)\]]([\"'\u2018\u2019\u201c\u201d]+\\\*)")
 ANGLE_RE = re.compile(r"\\?[<>]")
 # Inline HTML and kramdown autolinks: `<br>` would otherwise read as a GLYPH
 # every time a `<br>` separates two words (`legend.<br>Central`).
@@ -148,6 +158,11 @@ def findings(text, angles=False):
             out[start] = (start,
                           "WRECK" if wrecked(text, start, end) else tag,
                           m.group(1))
+    for m in STAR_MARKER_RE.finditer(text):
+        start, end = m.span(1)
+        out.setdefault(start, (start,
+                               "WRECK" if wrecked(text, start, end) else "MARKER",
+                               m.group(1)))
     if angles:
         for m in ANGLE_RE.finditer(text):
             out.setdefault(m.start(), (m.start(), "ANGLE", m.group(0)))

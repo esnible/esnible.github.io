@@ -461,7 +461,21 @@ For a WHOLESALE file, run a second, independent OCR over the renders and align i
 python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> [--pages 2-9]
 ```
 
-It prints one candidate per line — `<path>:LINE  md 'types'  page 'types.'  pN  --clip x0 y0 x1 y1` — for every aligned word whose trailing punctuation differs. Tesseract's reading is a candidate list, not evidence. Confirm candidates against the render (the printed `--clip` is ready to paste into the render command; several per page), then apply the confirmed ones in batches with `apply_edits.py`. Tesseract's `.`/`,`/`;`/`:` readings have agreed with the render in nearly every spot-checked case, so once a page's sample agrees, confirming the rest of that page by viewing the page render is enough; any candidate where tesseract's letters also differ from the Markdown needs its own look. Decimal points inside numbers (`17 30`, `2-4 1 1`) do not show up as trailing punctuation — grep for digit-space-digit runs and render those separately.
+It prints one candidate per line — `<path>:LINE  md 'types'  page 'types.'  pN  --clip x0 y0 x1 y1` — for every aligned word whose trailing punctuation differs. Tesseract's reading is a candidate list, not evidence. Confirm candidates against the render (the printed `--clip` is ready to paste into the render command; several per page), then apply the confirmed ones in batches with `apply_edits.py`; any candidate where tesseract's letters also differ from the Markdown needs its own look. Decimal points inside numbers (`17 30`, `2-4 1 1`) do not show up as trailing punctuation — grep for digit-space-digit runs and render those separately.
+
+**Reading the page render is not enough on its own.** Over ONS_158's 1,590 candidates, every one of its 37 pages was rendered and read, and 53 bad edits still got through — because reading a page confirms that its sentences *do* end where tesseract says, and says nothing about the marks tesseract invented in between. Two mechanical sweeps after applying catch what the eye does not, and both must come back empty before the pass is done:
+
+```
+# a mark glued inside a word: a short candidate token (`V`, `p`, `No`, `so`)
+# matched as a substring of a longer one -- `V.iatkin`, `quart.er`, `Hussein:ites`
+grep -nE '[A-Za-z]+[.:;,][a-z]+' "<path>" | grep -vE 'www|http|\.com|\.net|@'
+
+# a period before a lowercase word: tesseract read a speck on the scan as a
+# full stop -- `the silver. crisis`, `in order. to advertise`
+grep -nE '[a-z]\.\s+[a-z]{2,}' "<path>"
+```
+
+Both greps hit legitimate text too (`Op. cit`, `Hung. ducats`, an e-mail, and the odd full stop the scan really does print mid-sentence), so diff them against the same grep over the pre-pass snapshot and look only at what the pass introduced. Of ONS_158's 53, 31 were specks, 18 were substring matches, and 4 were specks on pages whose single candidate looked safe.
 
 ## Beyond spellcheck
 

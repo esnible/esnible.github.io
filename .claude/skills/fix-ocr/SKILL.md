@@ -65,6 +65,26 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
    The first says whether this file is one of the 42 that lost their sentence-ending periods wholesale (see that section below); the second finds the bare `^` the quote screen cannot match. Neither writes anything: both report candidates for a render to settle, which is the only evidence Hard constraints allow.
 
+   **Read the suspects off the scan, all at once.** The PDF's own text layer is a second OCR of the same page, independent of `pdfmd`'s, and where the two disagree is where the garble is. `garble_tiles.py` cuts every such word, plus a word of context either side, out of the page image at the scan's own pixels and packs the tiles onto one or two labelled sheets, so a whole file is two or three thousand image tokens instead of a render per word:
+
+   ```
+   python3 .claude/skills/fix-ocr/scripts/garble_tiles.py sheets <STEM>     # Read each sheet it prints
+   python3 .claude/skills/fix-ocr/scripts/garble_tiles.py edits <STEM> replies.txt > edits.txt
+   python3 .claude/skills/fix-ocr/scripts/apply_edits.py <path> edits.txt   # dry run, then --write
+   ```
+
+   A tile is a cspell hit the two OCRs do not spell alike, or a real word in the Markdown against a different real word in the text layer (the `modem`/`modern` class cspell cannot see). A non-word both OCRs read identically is left out as probably printed (`--agreed` tiles it anyway), and so is a correct Markdown word whose text-layer counterpart is a non-word. Pages whose text layer is font-encoded noise fall back to tesseract's boxes from `locate_on_page.py`'s cache, built on first use. Born-digital files are refused.
+
+   Tiles are never interpolated. They are cut straight from the embedded scan when it is placed square, or rendered at the scan's own dpi when it is deskewed; a scan under 200 dpi is enlarged by a whole number, nearest-neighbour, so each scan pixel is an exact block. The manifest on stdout gives each tile's ID, line, the Markdown span between «», and the text layer's reading when it differs. Write replies only for the tiles whose print differs from the Markdown span. Silence accepts the span:
+
+   ```
+   a7 Sasaman
+   a12 iam. => Diam.      # echoing the span makes `edits` refuse a reply written against an older manifest
+   a30 ?                  # unreadable: left as OCR'd, listed for the user
+   ```
+
+   The reading replaces the whole span, so carry over any markup in it (`*`, `⁶`). Every Hard constraint still applies: a case or punctuation fix is allowed because the tile is the render. Check that the tile shows the same words as the context in the manifest. A tile placed by a misaligned text layer shows a neighbouring word, and the `pdf:` reading usually gives that away. Foreign-script words are not tiled; they belong to `transcribe-foreign-script`.
+
 5. **Apply edits with the `Edit` tool**, one logical fix at a time. For each edit:
    - Quote enough surrounding context that `old_string` is unique.
    - When the **same misreading recurs identically** (e.g., a name misread the same way ten times), fix all occurrences in one call with `replace_all` — the audit trail is identical either way. Unrelated fixes still go one per call.

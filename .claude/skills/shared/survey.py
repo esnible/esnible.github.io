@@ -58,6 +58,17 @@ SCREENS = {
     "lists": {
         "rows": ["restore-lists/scripts/detect_lists.py", "rows", "@stem"],
     },
+    # The two Markdown-only screens. They need no render, so they cost
+    # milliseconds against the minutes the five above spend rasterising --
+    # but they are measured here all the same, because a screen nobody
+    # has a row for is a screen nobody runs. Both report candidates for
+    # the rendering tools and write nothing themselves.
+    "punctuation": {
+        "rows": ["fix-ocr/scripts/detect_dropped_punct.py", "rows", "@md"],
+    },
+    "markers": {
+        "rows": ["fix-ocr/scripts/detect_marker_noise.py", "rows", "@md"],
+    },
 }
 
 

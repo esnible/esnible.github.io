@@ -3,10 +3,37 @@
 
 Some issues' PDF text layers dropped nearly every sentence-ending period, so
 neither cspell nor the text layer can find them. This renders each PDF page,
-runs tesseract on it (a second, independent OCR), aligns tesseract's words
-against the Markdown's words, and reports every aligned word whose trailing
-punctuation differs -- with a render command clipped to that word so the
-candidate can be confirmed by eye.
+runs tesseract on it, aligns tesseract's words against the Markdown's words,
+and reports every aligned word whose trailing punctuation differs -- with a
+render command clipped to that word so the candidate can be confirmed by eye.
+
+Why that is not circular, given `scripts/build.sh` runs `pdfmd --ocr auto
+--lang eng+ara`: **on these files pdfmd did not OCR anything.** `--ocr auto`
+takes the PDF's embedded text layer when there is one, and every scan in this
+corpus has one. Measured on ONS_158, the Markdown's trailing-period pattern
+agrees with that embedded layer on 100.0% of aligned words (99.9% on page 13)
+and with a fresh tesseract run on only 95%. The Markdown's period density
+tracks the layer's everywhere it was checked -- ONS_158 22.0 -> 28.1,
+ONS_159 13.5 -> 17.0, ONS_171 14.6 -> 15.9, and for files whose layer is good,
+ONS_200 64.3 -> 65.8 and ONS_190 70.6 -> 70.3 per 1000 words.
+
+So the comparison here is not tesseract against itself. It is tesseract
+against whatever OCR the scanner's operator ran years ago, and tesseract wins
+by a wide margin: 64.3 periods per 1000 words against the layer's 22.0 on
+ONS_158, 38.8 against 13.5 on ONS_159, on page text whose *words* the two
+agree about 98% of the time. 64.3 is close to the 72.8 an undamaged file in
+this corpus has, which is the sense in which the marks are recoverable at
+all.
+
+Neither the language nor the resolution explains the gap, so neither is worth
+tuning: `-l eng` and `-l eng+ara` return identical period counts on three of
+four sampled pages, and tesseract recovers 68.0 per 1000 at every DPI from
+150 to 400 (58.1 even at 100).
+
+The practical consequence is for the build, not for this script: a corpus
+rebuilt so that scanned pages are re-OCR'd rather than read from their
+embedded layer would not need the `punctuation` screen's WHOLESALE class at
+all.
 
     python3 punct_candidates.py jons/ONS_146.md
     python3 punct_candidates.py jons/ONS_146.md --pages 2-9

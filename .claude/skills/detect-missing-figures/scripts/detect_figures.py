@@ -17,6 +17,9 @@ page in the Markdown is reported as MISSING.
 
 Verdicts per page with figure-like ink:
     MISSING   no marker for this page -- render it and look
+    FLAGGED   a `figure-unchecked` marker: somebody saw a figure here during
+              another skill's pass and left a breadcrumb. It never suppresses
+              MISSING, because a rect-less marker would cover the whole page
     COVERED   a figure / script-* / table-* marker names this page
     UNCOVERED a region of a COVERED page that no marker's `rect=` overlaps --
               only computed when every marker on the page carries one, and
@@ -73,9 +76,17 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
 MD_DIR = REPO_ROOT / "jons"
 
 MARKER_RE = re.compile(
-    r"<!--\s*(figure|script-ok|script-guess|script-deferred|script-removed"
-    r"|table-ok|table-deferred)"
+    r"<!--\s*(figure|script-ok|script-guess|script-unchecked|script-deferred"
+    r"|script-removed|table-ok|table-deferred)"
     r"\s+page=(\d+)(?:\s+rect=([0-9.,+-]+))?")
+# `figure-unchecked` is deliberately NOT in MARKER_RE. A marker with no
+# `rect=` covers its whole page (see `marked_pages`), so routing this one
+# through there would silence the screen on exactly the page somebody has
+# just said needs looking at. It is a breadcrumb, not a claim: a figure seen
+# on a render during some other skill's pass, with none of this screen's work
+# done on it. It is reported per page and never suppresses MISSING.
+UNCHECKED_RE = re.compile(r"<!--\s*figure-unchecked\s+page=(\d+)"
+                          r"(?:[^>]*?--\s*(.*?))?\s*-->")
 
 DPI = 50            # 1 px ~ 1.4 pt: plenty for finding blobs, fast
 INK = 110           # gray level below which a pixel is ink
@@ -228,7 +239,11 @@ def screen(stem, verbose, md_override=None):
     if not md_path.exists():
         print(f"{stem}: no Markdown at {md_path}")
         return False
-    marked = marked_pages(md_path.read_text(encoding="utf-8"))
+    md_text = md_path.read_text(encoding="utf-8")
+    marked = marked_pages(md_text)
+    flagged = {}
+    for m in UNCHECKED_RE.finditer(md_text):
+        flagged.setdefault(int(m.group(1)), (m.group(2) or "").strip())
     doc = fitz.open(pdf_path)
     rows, counts = [], {"MISSING": 0, "COVERED": 0, "UNCOVERED": 0, "RULED": 0}
     for pno in range(len(doc)):
@@ -252,14 +267,20 @@ def screen(stem, verbose, md_override=None):
         for (x0, y0, x1, y1), _, n in loose:
             rows.append(f"  {'UNCOVERED':9} p{pno}  rect={x0:.0f},{y0:.0f},{x1:.0f},{y1:.0f}  cells={n}"
                         "  -- no marker rect covers this; render it")
+    for pno, why in sorted(flagged.items()):
+        rows.append(f"  {'FLAGGED':9} p{pno}  -- "
+                    f"{why or 'figure seen on a render, not worked'}")
     if counts["MISSING"]:
         status = f"{counts['MISSING']} page(s) to review"
+    elif flagged:
+        status = f"{len(flagged)} page(s) flagged for a look"
     elif counts["UNCOVERED"]:
         status = f"{counts['UNCOVERED']} region(s) to look at"
     else:
         status = "nothing outstanding"
     print(f"{stem}: {len(doc)} page(s) | MISSING {counts['MISSING']}  COVERED {counts['COVERED']}  "
-          f"UNCOVERED {counts['UNCOVERED']}  RULED {counts['RULED']} -- {status}")
+          f"UNCOVERED {counts['UNCOVERED']}  RULED {counts['RULED']}"
+          + (f"  FLAGGED {len(flagged)}" if flagged else "") + f" -- {status}")
     for r in rows:
         print(r)
     return counts["MISSING"] > 0

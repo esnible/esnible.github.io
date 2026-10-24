@@ -98,6 +98,26 @@ campaign. 44% of the corpus's 2,378 markers carry one today.
 
    ```
    *[figure]* <!-- figure page=N -- what it shows; transcribed labels or key if any -->
+
+**`figure-unchecked` — a breadcrumb from another skill's pass.** When a
+`fix-ocr` or transcription pass has the page render open and sees a printed
+figure it is not there to work, it leaves
+
+```
+*[symbol]* <!-- figure-unchecked page=N -- what it shows; why it was only noted -->
+```
+
+It is deliberately **not** one of the markers in `MARKER_RE`. A marker with
+no `rect=` covers its whole page, so routing this one through there would
+silence this screen on exactly the page somebody has just said needs
+looking at. It is reported per page as `FLAGGED`, counts towards nothing,
+and never suppresses `MISSING`.
+
+It earns its place on the figures this screen cannot see. `ONS_161` p10
+prints the "Kosala mark" and "early geometric mark" symbols inline in a
+sentence; they are far under the ink threshold, the page is not `MISSING`,
+and the breadcrumb is the only record that anything is there at all.
+
    ```
 
    Follow it with the printed caption as its own paragraph, if there is one.

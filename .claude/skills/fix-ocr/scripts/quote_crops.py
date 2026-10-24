@@ -193,7 +193,7 @@ quotes at all). Leave a ʿayn inside a quotation
 <b>SUPERSCRIPT ordinal</b> — restore as plain <code>14th</code>; this corpus
 writes 3,599 ordinals that way and not one as <code>14ᵗʰ</code>.<br>
 <b>SUPERSCRIPT check</b> / <b>QUESTION</b> — a footnote marker restores as a
-superscript <i>digit</i> (<code>⁶</code>), read off the page and cross-checked
+superscript <i>digit</i> (<code>&lt;sup&gt;6&lt;/sup&gt;</code>), read off the page and cross-checked
 against the note list; a question mark restores as <code>?</code>. The PDF's
 own text layer repeats the OCR's reading here, so only the image settles it.
 </div>

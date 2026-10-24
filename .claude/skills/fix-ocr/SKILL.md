@@ -65,6 +65,30 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
    The first says whether this file is one of the 42 that lost their sentence-ending periods wholesale (see that section below); the second finds the bare `^` the quote screen cannot match. Neither writes anything: both report candidates for a render to settle, which is the only evidence Hard constraints allow.
 
+   **Read the suspects off the scan, all at once.** The PDF's own text layer is a second OCR of the same page, independent of `pdfmd`'s, and where the two disagree is where the garble is. `garble_tiles.py` cuts every such word, plus a word of context either side, out of the page image at the scan's own pixels and packs the tiles onto one or two labelled sheets, so a whole file is two or three thousand image tokens instead of a render per word:
+
+   ```
+   python3 .claude/skills/fix-ocr/scripts/garble_tiles.py sheets <STEM>     # Read each sheet it prints
+   python3 .claude/skills/fix-ocr/scripts/garble_tiles.py edits <STEM> replies.txt > edits.txt
+   python3 .claude/skills/fix-ocr/scripts/apply_edits.py <path> edits.txt   # dry run, then --write
+   ```
+
+   A tile is a cspell hit the two OCRs do not spell alike, or a real word in the Markdown against a different real word in the text layer (the `modem`/`modern` class cspell cannot see). A non-word both OCRs read identically is left out as probably printed, and so is a correct Markdown word whose text-layer counterpart is a non-word. Pages whose text layer is font-encoded noise fall back to tesseract's boxes from `locate_on_page.py`'s cache, built on first use. Born-digital files are refused.
+
+   **Run a second round with `--agreed --only-spell`.** On many scans `pdfmd` kept the PDF's own text layer rather than re-OCRing, so the two "OCRs" are one and their agreement proves nothing. ONS_159's first round tiled 158 words, and the second found 260 more lines of plain garble (`surpnsmg`, `stmck`, `wntten`) that both readings shared.
+
+   Tiles are the scan's own pixels: cut straight from the embedded image when it is placed square, or rendered at the scan's own dpi when it is deskewed, and never enlarged unless `--zoom n` asks (each pixel drawn as an exact n-by-n block, at n² the image tokens). A 72-dpi scan gives 72-dpi tiles. Any crop you cut for yourself follows the same rule: no `resize` without `Image.NEAREST` and a whole-number factor, and no image over 1568 pixels on a side, which the API would shrink with interpolation before you see it. The manifest on stdout gives each tile's ID, line, the Markdown span between «», and the text layer's reading when it differs. Write replies only for the tiles whose print differs from the Markdown span. Silence accepts the span:
+
+   ```
+   a7 Sasaman
+   a12 iam. => Diam.      # echoing the span makes `edits` refuse a reply written against an older manifest
+   a30 ?                  # unreadable: left as OCR'd, listed for the user
+   ```
+
+   The reading replaces the whole span, so carry over any markup in it (`*`, `<sup>6</sup>`). A reply may also name a line instead of a tile, `L486 ^jJï => قلوغ`, for a reading the eye found beside a tile; its `old` must be on that line once. `edits` applies every reply to a copy and writes one whole-line edit per changed line, so several readings on one line cannot collide. Every Hard constraint still applies: a case or punctuation fix is allowed because the tile is the render. Check that the tile shows the same words as the context in the manifest. A tile placed by a misaligned text layer shows a neighbouring word, and the `pdf:` reading usually gives that away.
+
+   **Write in everything you read; never leave a legible tile for another skill to look at again.** A foreign-script legend (Arabic, Persian, Greek, Pahlavi) goes in as its real codepoints, a superscript or footnote marker as `<sup>…</sup>` (never a Unicode superscript digit in new work). Unmarked foreign-script tokens are tiled for this reason, and a tile of a few glyphs is the cue to crop the whole legend at native pixels and read it. A reading nothing on the page corroborates still goes in, followed on the same line by an inline `<!-- script-guess page=N spellcheck=… reason=… -->`, so `transcribe-foreign-script`'s screen lists it for checking. Use `script-ok` when the article's own gloss or transliteration confirms it. Only a glyph the scan genuinely cannot resolve stays as OCR'd: reply `?`, or write `script-deferred` saying what was tried. The marker goes inline because an edit may not add a line, and the screen counts an inline marker against its own line.
+
 5. **Apply edits with the `Edit` tool**, one logical fix at a time. For each edit:
    - Quote enough surrounding context that `old_string` is unique.
    - When the **same misreading recurs identically** (e.g., a name misread the same way ten times), fix all occurrences in one call with `replace_all` — the audit trail is identical either way. Unrelated fixes still go one per call.
@@ -194,8 +218,9 @@ Arabic runs. What it stands for depends on where it sits:
 
 - **A superscript footnote marker, after a word or a full stop** (~93, the
   common prose case): `an agreement®`, `...the Sichuan Rupee.®`, `points
-  out®`. The corpus already writes these as Unicode superscripts -- 1788 of
-  them, `¹` alone 398 times -- so the restoration is `agreement⁶`, not `6`.
+  out®`. Restore one as `agreement<sup>6</sup>`, not `6`. (The corpus's older
+  repairs wrote 1,788 of these as Unicode superscripts, `¹` alone 398 times;
+  new work uses `<sup>`, and leaves the existing Unicode ones as they are.)
   **The digit is not fixed, so there is no blanket substitution.** ONS_109
   alone reads `®` as ⁶ three times and ⁸ once, two of them on facing pages:
   `Japanese⁶ private castings` but `0.75 tael string⁸`. Render each one. The
@@ -388,9 +413,8 @@ the class in two:
   the render before `--write`, the same rule `punct_candidates.py` follows.
 
 - **`check`** -- the other 344. Render each one. A footnote marker restores
-  as a Unicode superscript **digit** (`⁶`), which is this corpus's
-  convention with 1,817 of them already in place, and **the digit is not
-  fixed** -- read it off the page and cross-check it against the footnote
+  as `<sup>6</sup>`, the convention for new work (the 1,817 Unicode `⁶`
+  already in place stay), and **the digit is not fixed** -- read it off the page and cross-check it against the footnote
   list, exactly as for `®`.
 
 ### A superscript with no quote mark at all
@@ -421,7 +445,7 @@ Two shapes, both of them the glyph standing where a printed character was:
 
 - **MARKER** — a caret at a word's end. The scan prints a superscript
   footnote number, so this restores exactly as the `®` and `''` markers above
-  do: a Unicode superscript **digit** (`⁶`), with the digit read off the page
+  do: `<sup>6</sup>`, with the digit read off the page
   and cross-checked against the footnote list. 1,003 in 50 files. A footnote
   reference falls wherever its claim ends, so what follows the caret may be a
   new sentence or just the next word (`Joe Cribb^ supported this view`).

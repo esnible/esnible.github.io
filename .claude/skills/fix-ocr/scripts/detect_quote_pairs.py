@@ -142,8 +142,8 @@ batch:
 The suffix comes from the number (14 -> th, 33 -> rd, 21 -> st, 11-13 -> th)
 and the restoration is **plain `14th`**, which is how this corpus writes an
 ordinal: 3,599 plain `Nth` forms against not one superscript `ᵗʰ`. Superscript
-*digits* stay the convention for footnote markers (1,817 of those), so a
-marker the screen reports as `check` is restored as `⁶`, read off the render
+*digits* stay the convention for footnote markers, so a marker the screen
+reports as `check` is restored as `<sup>6</sup>`, read off the render
 like any other -- never from a blanket substitution.
 
 The emitted batch is a candidate list, not evidence. Confirm a sample of each

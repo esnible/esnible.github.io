@@ -277,6 +277,12 @@ def find_candidates(lines):
                 table_block = []
             continue
         m = MARKER_RE.search(line)
+        if m and MARKER_RE.sub("", stripped).strip():
+            # An inline marker -- a reading written into a prose line, with
+            # its marker right after it -- marks its own line. The line is
+            # still content, and still screened for anything else in it.
+            marker_bucket[m.group(1)].add(i)
+            m = None
         if m:
             target = prev_content_idx
             if target is not None:

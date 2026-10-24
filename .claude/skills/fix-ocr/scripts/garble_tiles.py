@@ -33,15 +33,17 @@ the manifest. The tile decides.
 Pixels. A page whose scan is one axis-aligned image is cut straight out of
 that image, pixel for pixel. A deskewed page (the image is placed with a
 slight rotation) is rendered at exactly the image's own resolution, which is
-the nearest thing to its pixels the PDF can give. Nothing is ever
-interpolated: a scan under 200 dpi is enlarged by a whole number, each of
-its pixels drawn as an exact block, so a 72-dpi word is big enough to look
-at but shows only what the scan holds.
+the nearest thing to its pixels the PDF can give. Nothing is enlarged
+or interpolated unless asked: a 72-dpi scan gives 72-dpi tiles. `--zoom n`
+draws each scan pixel as an exact n-by-n block, at n-squared the image
+tokens; it adds nothing the scan does not hold. Sheets are kept under the
+1568-pixel side the API would otherwise shrink them to.
 
 Replies, one per line, `ID reading`:
 
     a7 Sasaman
     b12 1,000 Muhammad      # a reading may be several words
+    b13 added6 => added<sup>6</sup>   # superscripts as <sup>, not Unicode digits
     c3 ?                    # unreadable: left alone, listed for the user
     a9 Sasa man => Sasaman  # echo the span: refused if the manifest disagrees
     L486 ^jJï => قلوغ        # a reading beside a tile, by line: `old` must be
@@ -81,7 +83,7 @@ LABEL_W = 44            # the ID column to the left of each tile
 GAP = 4                 # pixels between tiles
 LABEL_PT = 16           # the ID's type size
 MARK_H = 3              # the bar under the suspect span, below the crop
-MIN_DPI = 200           # below this a scan's tiles are enlarged, n-by-n
+ZOOM = 1                # whole-number enlargement; `--zoom` sets it, 1 is the scan
 WEAK = 0.6              # a page matching less than this is read by tesseract
 TALL = 2.0              # a crop taller than this many lines is not a word
 INK = 0.004             # a crop with less dark ink than this missed the word
@@ -267,18 +269,18 @@ class Scan:
         return self._images[page_no]
 
     def zoom(self, page_no):
-        """The whole-number factor that brings a page's x-height up to a
-        size a reader can resolve: 1 for any scan of 150 dpi or more."""
-        got = self.native(page_no)
-        return 1 if got is None else max(1, round(MIN_DPI / got[5]))
+        """The whole-number enlargement to draw a page's tiles at: 1, the
+        scan's own pixels, unless `--zoom` asked for more."""
+        return ZOOM
 
     def tile(self, page_no, box, mark):
         """A PIL image of `box` (PDF points) at native pixels, with `mark`
         (x0, x1 in points) underlined in a strip below the crop.
 
-        A low-resolution scan is enlarged by a whole number with
-        nearest-neighbour sampling: each scan pixel becomes an exact n-by-n
-        block, so the tile is bigger but holds no value the scan did not.
+        `--zoom n` enlarges by a whole number with nearest-neighbour
+        sampling: each scan pixel becomes an exact n-by-n block. It holds
+        no value the scan did not, but costs n-squared the image tokens, so
+        it is never the default.
         """
         got = self.native(page_no)
         if got is None:
@@ -675,11 +677,16 @@ def main(argv=None):
     ap.add_argument("--no-tesseract", action="store_true",
                     help="never fall back to tesseract's boxes for pages whose\n"
                          "text layer does not match the Markdown")
+    ap.add_argument("--zoom", type=int, default=1,
+                    help="draw each scan pixel n-by-n (nearest-neighbour);\n"
+                         "costs n-squared the tokens (default 1)")
     ap.add_argument("--anyway", action="store_true",
                     help="tile a born-digital file regardless")
     ap.add_argument("--out", type=Path, help=f"default {OUT_ROOT}/<STEM>")
     args = ap.parse_args(argv)
     stem = Path(args.stem).stem
+    global ZOOM
+    ZOOM = max(1, args.zoom)
     outdir = args.out or OUT_ROOT / stem
 
     if args.cmd == "edits":
@@ -714,7 +721,7 @@ def main(argv=None):
                   if scan.native(p)})
     zooms = sorted({scan.zoom(c["page"]) for c in cands} - {1})
     print(f"native {', '.join(map(str, res))} dpi"
-          + (f" (shown x{', x'.join(map(str, zooms))}, nearest-neighbour)" if zooms else "")
+          + (f" (shown x{zooms[0]}, nearest-neighbour)" if zooms else " (shown at native pixels)")
           + f"; manifest {outdir / (stem + '.json')}")
     for s in sheets:
         w, h = Image.open(s).size

@@ -24,8 +24,7 @@ screen can have the other's half. Nothing but this one reports the singletons.
 Two shapes, both of them the glyph standing where a printed character was:
 
 - **MARKER** -- a caret at the end of a word. The scan prints a superscript
-  footnote number; the corpus restores one as a Unicode superscript digit
-  (`⁶`), read off the page, exactly as for the `®` and `''` markers. 1,003 of
+  footnote number; new work restores one as `<sup>6</sup>`, read off the page, exactly as for the `®` and `''` markers. 1,003 of
   them in 50 files.
 - **GLYPH** -- a caret or an angle bracket *between two letters*, which is a
   letter or a diacritic the OCR lost: `Öl^er` for Ölçer, `ak^e` for akçe,

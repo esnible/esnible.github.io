@@ -22,8 +22,9 @@ A word is a candidate when the evidence disagrees about it:
 A non-word both engines read identically is probably printed that way (a
 rare name, a transliteration) and is left out unless `--agreed` is given. So is a real word in the Markdown
 whose text-layer counterpart is a non-word: the garble is on the other side.
-Words in non-Latin script are left out and counted: that is
-transcribe-foreign-script's job.
+Foreign-script words are tiled too, unless their line already carries a
+`script-ok`/`script-guess`/`script-deferred` marker: the reader writes the
+reading in, flagged, rather than leaving it for a later pass to look again.
 
 **The text layer is a locator and a second opinion, never an authority.**
 Its boxes say where to cut; its reading is shown beside the Markdown's in
@@ -43,11 +44,13 @@ Replies, one per line, `ID reading`:
     b12 1,000 Muhammad      # a reading may be several words
     c3 ?                    # unreadable: left alone, listed for the user
     a9 Sasa man => Sasaman  # echo the span: refused if the manifest disagrees
+    L486 ^jJï => قلوغ        # a reading beside a tile, by line: `old` must be
+                            # on that line once
 
 The reading replaces the tile's highlighted span -- the exact Markdown text
 the manifest prints between the guillemets -- so markup in that span must be
-carried over. `edits` turns replies into `old => new` lines with enough
-context to match once, for `apply_edits.py`, which checks and applies them
+carried over. `edits` turns replies into whole-line `old => new` edits,
+one per changed line, for `apply_edits.py`, which checks and applies them
 all or nothing.
 """
 import argparse
@@ -409,8 +412,16 @@ def candidates(stem, agreed=False, tesseract=True):
     pending = []
     for k, (s, e, tok, line) in enumerate(toks):
         if foreign(tok):
-            stats["foreign"] += 1
-            continue
+            # A reading already marked script-ok/guess/deferred has been
+            # looked at; raw foreign-script OCR has not, and is tiled like
+            # any other garble.
+            ls = text.rfind("\n", 0, s) + 1
+            le = text.find("\n", s)
+            if "<!-- script-" in text[ls:le if le >= 0 else len(text)]:
+                stats["foreign"] += 1
+                continue
+            if k not in spell:
+                spell.add(k)
         pdf = (" ".join(w[5] for w in scan.words[slice(*where[k])])
                if k in where else None)
         if k in exact:
@@ -570,61 +581,84 @@ def show(m):
 
 # --- replies --------------------------------------------------------------
 
-def unique_old(text, s, e):
-    """Grow [s, e) along its own line until it occurs once in the file."""
-    ls = text.rfind("\n", 0, s) + 1
-    le = text.find("\n", e)
-    le = len(text) if le < 0 else le
-    a, b = s, e
-    while text.count(text[a:b]) > 1:
-        if a == ls and b == le:
-            return None
-        na = text.rfind(" ", ls, a - 1) + 1 if a > ls else ls
-        nb = text.find(" ", b + 1) if b < le else le
-        a, b = max(ls, na), (le if nb < 0 else nb)
-    return a, b
-
-
 def edits(stem, replies, outdir):
+    """`old => new` lines for apply_edits.py, one per changed Markdown line.
+
+    Every reply is applied to a copy of the file first, last span first so
+    the manifest's offsets stay good, and each changed line is then written
+    out whole. Two readings on one line therefore make one edit, not two
+    that overlap. Besides tile IDs a reply may name a line directly,
+    `L486 ^jJï => قلوغ`, for a reading the eye found next to a tile: its
+    `old` must occur on that line exactly once.
+    """
     text = (REPO_ROOT / "jons" / f"{stem}.md").read_text(encoding="utf-8")
     man = {m["id"]: m for m in json.loads((outdir / f"{stem}.json").read_text())}
-    out, unread, seen = [], [], set()
+    starts = [0] + [m.end() for m in re.finditer("\n", text)]
+    spans, unread, bad = {}, [], 0
     for raw in replies:
-        line = raw.split(" #", 1)[0].strip()
-        if not line or line.startswith("#"):
+        line = raw.rstrip("\n")
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
-        tid, _, reading = line.partition(" ")
-        if tid not in man:
-            print(f"# unknown id {tid}", file=sys.stderr)
-            continue
-        m = man[tid]
+        tid, _, reading = line.strip().partition(" ")
+        said = None
         # `a7 Sasa man => Sasaman` names the span it means to replace, which
         # catches a reply written against an older manifest.
         if " => " in reading:
             said, reading = reading.split(" => ", 1)
-            if said.strip() != m["md"]:
-                print(f"# {tid} is «{m['md']}» in the manifest, not «{said.strip()}»; "
-                      f"skipped", file=sys.stderr)
+            said = said.strip()
+        if re.fullmatch(r"L\d+", tid):
+            n = int(tid[1:])
+            body = text[starts[n - 1]:starts[n] - 1 if n < len(starts) else len(text)]
+            if said is None or body.count(said) != 1:
+                print(f"# {tid}: «{said}» is not on that line exactly once", file=sys.stderr)
+                bad += 1
                 continue
+            s0 = starts[n - 1] + body.index(said)
+            spans[(s0, s0 + len(said))] = (tid, reading.strip())
+            continue
+        if tid not in man:
+            print(f"# unknown id {tid}", file=sys.stderr)
+            bad += 1
+            continue
+        m = man[tid]
+        if said is not None and said != m["md"]:
+            print(f"# {tid} is «{m['md']}» in the manifest, not «{said}»; skipped",
+                  file=sys.stderr)
+            bad += 1
+            continue
         if reading.strip() == "?":
             unread.append(m)
             continue
         if text[m["start"]:m["end"]] != m["md"]:
             print(f"# {tid}: the file changed since the sheets were cut", file=sys.stderr)
+            bad += 1
             continue
-        if (m["start"], m["end"]) in seen:
+        spans[(m["start"], m["end"])] = (tid, reading.strip())
+
+    order = sorted(spans)
+    for (s0, e0), (s1, _e1) in zip(order, order[1:]):
+        if s1 < e0:
+            sys.exit(f"{spans[(s0, e0)][0]} and {spans[(s1, _e1)][0]} overlap; "
+                     f"merge them into one reply")
+    new = text
+    for s0, e0 in reversed(order):
+        new = new[:s0] + spans[(s0, e0)][1] + new[e0:]
+    a, b = text.split("\n"), new.split("\n")
+    if len(a) != len(b):
+        sys.exit("a reading holds a line break; nothing written")
+    out = []
+    for n, (x, y) in enumerate(zip(a, b), 1):
+        if x == y:
             continue
-        seen.add((m["start"], m["end"]))
-        span = unique_old(text, m["start"], m["end"])
-        if span is None:
-            print(f"# {tid}: line {m['line']} repeats verbatim; edit by hand", file=sys.stderr)
+        if text.count(x) != 1:
+            print(f"# L{n} repeats verbatim elsewhere; edit it by hand", file=sys.stderr)
+            bad += 1
             continue
-        a, b = span
-        old = text[a:b]
-        new = text[a:m["start"]] + reading.strip() + text[m["end"]:b]
-        out.append(f"{old} => {new}")
+        out.append(f"{x} => {y}")
     for m in unread:
         out.append(f"# unread {m['id']} L{m['line']} {m['md']}")
+    if bad:
+        print(f"# {bad} reply(ies) not used", file=sys.stderr)
     return out
 
 
@@ -667,7 +701,7 @@ def main(argv=None):
     print(f"{stem}: {stats['tokens']} words; tiles {len(cands)} "
           f"(cspell {stats['cspell']}, OCRs disagree {stats['disagree']}); "
           f"skipped: both OCRs agree {stats['agreed']}, foreign script "
-          f"{stats['foreign']}, text layer garbled {stats['pdf garble']}, "
+          f"{stats['foreign']} (already marked), text layer garbled {stats['pdf garble']}, "
           f"unplaced {stats['unplaced']}"
           + (f"; tesseract boxes on p{','.join(map(str, stats['weak']))}"
              if stats["weak"] else ""))

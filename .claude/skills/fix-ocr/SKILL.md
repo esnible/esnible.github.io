@@ -548,6 +548,10 @@ python3 .claude/skills/shared/crop_sheets.py sheets <STEM> --rows rows.tsv      
 
 Measured on ONS_157's 810 candidates, `--apply` reproduces 420 of the 450 placements a hand pass made, adds 48 the hand pass had missed, disagrees with it nowhere, and leaves 91 rows for the eye. That is three or four crop sheets against the twenty page renders the hand pass read.
 
+**Run `--apply` once.** It holds no record of a finding you looked at and rejected, so a second run puts back every mark you removed — on ONS_156 it restored all three specks (`of. archaeologists`, `an. attempted`, `would. only`) that the sweeps had just caught. Decide the flags up front, including `--emphasis`, and if you do need a second pass, re-check the sweeps against the snapshot from *before* the first one rather than the file as it now stands.
+
+`--emphasis` also places a mark after a trailing `*`, `_` or backtick. It is off by default because the mark could belong inside the markup, but on the scans sampled so far it does not: ONS_156 sets `INJ 8.`, `ONS Newsletter.`, `...from Kasur.` and `...invasion of India.` all with the full stop upright after the italic. It is worth about half the residue — 102 of ONS_156's 165 rows.
+
 **Reading the page render is not enough on its own, which is why the loop is this way round.** Over ONS_158's 1,590 candidates, every one of its 37 pages was rendered and read, and 53 bad edits still got through; ONS_157 took 4 from 20 pages read. In both cases the re-alignment is what caught them, and it costs nothing. Reading every page is the expensive half of the pass and the ineffective half. Two mechanical sweeps after applying catch what the eye does not, and both must come back empty before the pass is done:
 
 ```

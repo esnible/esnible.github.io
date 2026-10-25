@@ -185,7 +185,7 @@ def candidates(text, page_toks):
     return rows
 
 
-def placeable(rows, marks):
+def placeable(rows, marks, emphasis=False):
     """(line, col, old, new) for the rows safe to place without an eye.
 
     A row qualifies only when the Markdown token carries no trailing
@@ -197,9 +197,14 @@ def placeable(rows, marks):
     `Ghazi-.`, which is neither reading. Curly quotes are folded first so a
     genuine `tokens"` -> `tokens".` is not lost to the quote style alone.
 
-    A token ending in emphasis markup is left out whatever the mark: whether
-    the period belongs inside or outside the asterisks is a judgement the
-    alignment cannot make.
+    A token ending in emphasis markup is left out by default, because whether
+    the mark belongs inside or outside the asterisks is a judgement this
+    alignment cannot make. `--emphasis` takes those too and puts the mark
+    outside, which is what the scans show: of ONS_156's four sampled italic
+    titles -- `INJ 8.`, `ONS Newsletter.`, `...from Kasur.`, `...invasion of
+    India.` -- every one sets the full stop upright after the italic, and
+    `*title*.` is the Markdown that says so. The same letters-unchanged test
+    still applies, run against the token with its markup stripped.
     """
     def unquote(s):
         return "".join(QUOTES.get(c, c) for c in s)
@@ -209,9 +214,10 @@ def placeable(rows, marks):
         pg = trailing_punct(ptok)
         if trailing_punct(tok) or len(pg) != 1 or pg not in marks:
             continue
-        if tok.endswith(("*", "_", "`")):
+        bare = tok.rstrip("*_`")
+        if bare != tok and not emphasis:
             continue
-        if unquote(ptok) != unquote(tok) + pg:
+        if not bare or unquote(ptok) != unquote(bare) + pg:
             continue
         out.append((line, col, tok, tok + pg))
     return out
@@ -250,6 +256,8 @@ def main():
                     help="place the safe class, re-align, report only what still disagrees")
     ap.add_argument("--write", action="store_true", help="with --apply, save the file")
     ap.add_argument("--marks", default=".:", help="marks --apply may place (default '.:')")
+    ap.add_argument("--emphasis", action="store_true",
+                    help="with --apply, also place a mark outside a trailing *, _ or `")
     ap.add_argument("--sheet-rows", help="with --apply, write the residue as crop_sheets.py rows")
     args = ap.parse_args()
 
@@ -282,7 +290,7 @@ def main():
         print(f"{len(rows)} candidate(s)", file=sys.stderr)
         return
 
-    edits = placeable(rows, args.marks)
+    edits = placeable(rows, args.marks, args.emphasis)
     new_text = place(text, edits)
     if new_text.count("\n") != text.count("\n"):
         sys.exit("refusing to write: line count changed")

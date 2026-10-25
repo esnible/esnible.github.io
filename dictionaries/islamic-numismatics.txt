@@ -840,6 +840,7 @@ Murad
 Müzeleri
 Nuri
 Ölçer
+Kāthūlîkî
 Osmaniye
 Osmanli
 Osmanlı
@@ -6144,7 +6145,6 @@ Khurshudian
 Khurshudyan
 KHURSHUDYAN
 Melikian
-Olfer
 Ölfer
 Sanlamas
 Sogny

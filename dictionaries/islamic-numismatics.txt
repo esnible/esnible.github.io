@@ -6302,6 +6302,9 @@ Wertbrief
 
 # ONS_157 — German-language and other European terms
 Auktion
+Silbermünzen
+Universität
+Palästina
 Bergambacht
 déclarée
 Ingolstadt
@@ -6315,17 +6318,23 @@ turkisch
 Valeur
 Vorderen
 
-# ONS_157 — Greek bibliography OCR fragments
+# ONS_157 — transliteration syllables, place names and address fragments
+izāfet
+النبوز
+زيرو
+Collectio
+MAIUIME
+MONON
 Idan
-kabrr
-kathrr
+kabīr
+kathīr
 Kaun
 mtrd
 mtrdt
 ndur
 Taman
 umdas
-wafiya
+wāfiya
 
 # ONS_157 — Additional legitimate terms
 altun
@@ -6334,7 +6343,6 @@ Arabicum
 Arakani
 Barbus
 Bardi
-Cahf
 Chowk
 Cilician
 Daryaganj

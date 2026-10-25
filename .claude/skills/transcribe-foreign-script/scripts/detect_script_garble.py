@@ -88,7 +88,15 @@ COMMENT_KEYWORDS = re.compile(
     re.I,
 )
 OCR_COMMENT_RE = re.compile(r"<!--\s*OCR:.*?-->")
-MARKER_RE = re.compile(r"<!--\s*script-(ok|deferred|guess)\b(?:[^>]*?reason=(.*?))?\s*-->")
+# `unchecked` is the weakest of the four, and the only one that keeps a file
+# off a clean screen. See the Markers section of SKILL.md: it records a
+# reading taken off a `garble_tiles.py` word crop during a `fix-ocr` pass --
+# no page render, no cspell, no search for a corroborating transliteration --
+# written in because garble is strictly worse than a flagged reading. Garble
+# is unsearchable and tells the next reader nothing; a marked reading is both
+# searchable and visibly provisional.
+MARKER_RE = re.compile(
+    r"<!--\s*script-(ok|deferred|guess|unchecked)\b(?:[^>]*?reason=(.*?))?\s*-->")
 
 MIN_CHARS = 2  # shorter runs are lone stray glyphs -- fix-ocr's job (delete), not a transcription job
 
@@ -250,14 +258,15 @@ def _strip_fenced(lines):
 
 def find_candidates(lines):
     """Return (comment_candidates, raw_candidates, latin_candidates,
-    caret_candidates, resolved, deferred, guessed) as lists/sets of 0-based
-    line indices, each with a reason string."""
+    caret_candidates, resolved, deferred, guessed, unchecked) as lists/sets
+    of 0-based line indices, each with a reason string."""
     comment_candidates, raw_candidates = [], []
     latin_pre = []   # noisy lines, before the gloss-window test below
     caret_pre = []   # caret clusters, likewise
     content = []     # (index, stripped) for every non-blank, non-marker line
-    resolved, deferred, guessed = set(), set(), set()
-    marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed}
+    resolved, deferred, guessed, unchecked = set(), set(), set(), set()
+    marker_bucket = {"ok": resolved, "deferred": deferred, "guess": guessed,
+                     "unchecked": unchecked}
     prev_content_idx = None
     # table_block: the run of pipe-table-row indices actively being built (a
     # genuine gap -- a blank line or other content -- ends it, same as real
@@ -361,7 +370,7 @@ def find_candidates(lines):
         return out
 
     return (comment_candidates, raw_candidates, with_gloss(latin_pre),
-            with_gloss(caret_pre), resolved, deferred, guessed)
+            with_gloss(caret_pre), resolved, deferred, guessed, unchecked)
 
 
 def cmd_screen(args):
@@ -373,8 +382,11 @@ def cmd_screen(args):
             continue
         lines = md_path.read_text(encoding="utf-8").splitlines()
         (comment_c, raw_c, latin_c, caret_c,
-         resolved, deferred, guessed) = find_candidates(lines)
-        handled = resolved | deferred | guessed
+         resolved, deferred, guessed, unchecked) = find_candidates(lines)
+        # An `unchecked` line carries real script, so it must not re-flag as
+        # RAW -- but unlike the other three it is not settled, so it is added
+        # back into the count below.
+        handled = resolved | deferred | guessed | unchecked
 
         def open_items(cands):
             return [(i, why) for i, why in cands if i not in handled]
@@ -387,7 +399,13 @@ def cmd_screen(args):
         # around one in eight respectively is something else -- so neither
         # ever counts towards "to review" or the exit status. A file whose
         # only findings are leads still screens clean.
-        n_open = len(open_comment) + len(open_raw)
+        # UNCHECKED counts. A `script-guess` has been through Tier 2 -- the
+        # page was rendered, the strokes read, cspell run -- so it is a
+        # finished reading somebody may yet revise. A `script-unchecked` has
+        # been through none of that: it is a word crop read in passing, and
+        # leaving it out of the exit status would make "a later pass will
+        # confirm it" a hope rather than a worklist entry.
+        n_open = len(open_comment) + len(open_raw) + len(unchecked)
         if n_open:
             needs_attention = True
         status = "nothing outstanding" if not n_open else f"{n_open} to review"
@@ -398,13 +416,16 @@ def cmd_screen(args):
             leads += f", {len(caret_c)} caret cluster(s)"
         print(
             f"{stem}: {len(comment_c)} flagged comment(s), {len(raw_c)} raw run(s){leads} | "
-            f"RESOLVED {len(resolved)}  GUESSED {len(guessed)}  DEFERRED {len(deferred)} -- {status}"
+            f"RESOLVED {len(resolved)}  GUESSED {len(guessed)}  "
+            f"UNCHECKED {len(unchecked)}  DEFERRED {len(deferred)} -- {status}"
         )
         # GUESSED lines are content-added-but-unverified -- surface them every
         # run, not just under -v, so a "plausible guess" doesn't quietly
         # become the permanent reading nobody double-checks.
         for i in sorted(guessed):
             print(f"  GUESS    md line {i + 1}: {lines[i].strip()[:100]!r}")
+        for i in sorted(unchecked):
+            print(f"  UNCHECKED md line {i + 1}: {lines[i].strip()[:100]!r}")
         for i, why in open_comment:
             print(f"  COMMENT  md line {i + 1}: {why!r}")
         for i, why in open_raw:
@@ -454,7 +475,8 @@ def cmd_locate(args):
 # next page's text, so nearby words point at the wrong page. detect_tables.py
 # `screen` is the check for those.
 PAGE_MARKER_RE = re.compile(
-    r"<!--\s*(figure|script-ok|script-guess|script-deferred)\s+page=(\d+)")
+    r"<!--\s*(figure|script-ok|script-guess|script-unchecked|script-deferred)"
+    r"\s+page=(\d+)")
 
 
 def cmd_check_markers(args):

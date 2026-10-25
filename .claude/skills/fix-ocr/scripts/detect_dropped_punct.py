@@ -44,7 +44,7 @@ measured on it, and the gap that justifies the cut is its gap.
 `scan` prints a verdict per file and names the tool that settles it:
 
     ONS_158: WHOLESALE  200 candidate(s), 4.71 per 1000 words
-      -> run punct_candidates.py; crop sheets do not scale to this many
+      -> run punct_candidates.py --apply; crop sheets settle its residue
     ONS_226: ISOLATED   9 candidate(s), 0.52 per 1000 words
       SENTENCE   md line 223: 'presented in Figure 3. vii There are slight'
       POSSESSIVE md line 445: 'broken down as follows: Cask s'
@@ -53,8 +53,9 @@ measured on it, and the gap that justifies the cut is its gap.
 fix-ocr forbids supplying a mark from context (see Hard constraints) -- only
 a render is evidence. So it writes no edits and emits no `apply_edits.py` batch: it says
 which files to point the rendering tools at, and in what order. A WHOLESALE
-file goes to `punct_candidates.py`; an ISOLATED one is a handful of crops
-through `shared/crop_sheets.py`.
+file goes to `punct_candidates.py --apply`, which places the unambiguous
+class itself and leaves a residue small enough for crop sheets; an ISOLATED
+one is a handful of crops through `shared/crop_sheets.py` directly.
 
 Exit 0 when nothing is found, 1 otherwise (sibling-skill convention).
 """
@@ -211,8 +212,8 @@ def cmd_scan(path, quiet_clean=False):
     print(f"{path.stem}: {tag}  {len(found)} candidate(s), "
           f"{rate:.2f} per 1000 words")
     if tag == "WHOLESALE":
-        print("  -> run punct_candidates.py; crop sheets do not scale to "
-              "this many")
+        print("  -> run punct_candidates.py --apply; crop sheets settle "
+              "its residue")
         return 1
     print("  -> settle each against a page crop (shared/crop_sheets.py); "
           "never from the capitalisation alone")
@@ -234,7 +235,8 @@ def cmd_rows(path):
     tag, found, _rate = verdict(text)
     if tag == "WHOLESALE":
         print(f"# {path.stem}: lost its punctuation wholesale -- "
-              f"run punct_candidates.py, not crop sheets")
+              f"run punct_candidates.py --apply first; these rows are the "
+              f"shape it screens for, not its residue")
     for off, end, kind in found:
         label = f"{tag} {kind} line {line_of(text, off)}"
         print(f"{path.stem}\t{label}\t{anchor_at(text, end)}")

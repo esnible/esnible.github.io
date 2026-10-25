@@ -6318,6 +6318,10 @@ turkisch
 Valeur
 Vorderen
 
+# ONS_156 — Umayyad Jiroft dirham legend
+Mahdī
+بجيرفت
+
 # ONS_157 — transliteration syllables, place names and address fragments
 izāfet
 النبوز

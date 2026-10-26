@@ -2846,3 +2846,8 @@ Taizu
 Tianzuo
 Tunhuang
 Xianqing
+
+# ONS_154 — Far Eastern Numismatics Workshop and Japanese paper-money scholars
+Kenjiro
+Ohnuki
+Yamaguchi

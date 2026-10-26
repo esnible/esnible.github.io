@@ -840,6 +840,7 @@ Murad
 Müzeleri
 Nuri
 Ölçer
+Kāthūlîkî
 Osmaniye
 Osmanli
 Osmanlı
@@ -6144,7 +6145,6 @@ Khurshudian
 Khurshudyan
 KHURSHUDYAN
 Melikian
-Olfer
 Ölfer
 Sanlamas
 Sogny
@@ -6317,6 +6317,10 @@ Sprachen
 turkisch
 Valeur
 Vorderen
+
+# ONS_156 — Umayyad Jiroft dirham legend
+Mahdī
+بجيرفت
 
 # ONS_157 — transliteration syllables, place names and address fragments
 izāfet

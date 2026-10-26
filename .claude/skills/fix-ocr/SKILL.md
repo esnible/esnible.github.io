@@ -517,6 +517,24 @@ A hit inside a run of garble is tagged **WRECK** and reported as a lead, not
 counted — that is a legend for `transcribe-foreign-script`, which renders the
 whole thing rather than one glyph.
 
+**Routing a WRECK is not reading it, and the tag is not a reason to skip the
+crop.** The threshold counts wreck characters in a 40-character window; it
+says the neighbourhood is noisy, nothing about how hard the spot is. ONS_155's
+line 723 sat as a WRECK through a whole pass:
+
+```
+A possible full reading is •^\[êTTcT. The ^ could be the final letter of Dalpat.
+```
+
+Two Devanagari words in English prose, with the article's own gloss beside
+them — one crop settled it as `डलपत` and `त`, and showed a third line,
+`सञज for सिंहजी`, that the OCR had dropped altogether. What made it look like
+somebody else's problem was the tag, plus a sentence nearby that said
+"Devanagari", which is the article talking, not the scan. Before handing a
+WRECK off, check whether it is a flattened legend (dozens of tokens, no
+English around it) or a few glyphs inside a sentence. The second kind is a
+crop, and a crop you can read is a reading you owe the file.
+
 Angle brackets count only in the GLYPH shape; elsewhere most are legitimate —
 comparison operators in alloy tables (`Cu >70`, `As < 0.5`), `->` arrows in a
 flattened family tree, and ONS_226's own stated convention, `In inscriptions

@@ -10719,3 +10719,10 @@ mangur
 mazuna
 shadda
 beşlik
+
+# ONS_155 — Ottoman monetary-regulation bibliography
+Taqvīm
+meskūkāt
+otmānīyye
+Gālib
+Ǧevād

@@ -128,8 +128,9 @@ The two humps are two different defects, which is why **a naked caret on its
 own is not evidence of script**. `ONS_158`'s 137 carets were resolved one by
 one off the page: 69 were superscript footnote digits, `<sup>` markers, lost
 letters or a question mark, and only ~56 were Arabic. Isolated carets belong to
-`fix-ocr/scripts/detect_marker_noise.py`, whose `MARKER` and `GLYPH` tests own
-exactly that class.
+`fix-ocr/scripts/detect_marker_noise.py`, which reports every one of them —
+caret, guillemet and the rest of its `traces.tsv` — wherever it sits, and
+classifies it `MARKER`, `GLYPH` or `LOOSE` by position.
 
 So `CARET` requires a *cluster* — `CARET_MIN` (3) carets with no more than
 `CARET_GAP` (25) characters between neighbours — plus the same gloss window

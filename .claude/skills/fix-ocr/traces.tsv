@@ -1,0 +1,24 @@
+# Garble traces: the literal characters and short strings pdfmd leaves behind
+# where the scan printed something else. `detect_marker_noise.py` reports every
+# occurrence of every trace below, so nothing is silently out of scope. Extend
+# this file as new traces turn up -- no code change is needed.
+#
+# trace   the literal text to find. Runs collapse into one finding, and a
+#         kramdown escape in front of it (`\^`) is part of the match. Prefix
+#         with `re:` for a regular expression where a literal will not do.
+# name    what to call it, and what a `glyph-ok` marker may name instead of
+#         the literal.
+# shapes  which shapes count for this trace: any of `marker` (at a word's
+#         end), `glyph` (between two letters), `loose` (everywhere else), or
+#         `all`. A shape left out is not reported unless `--all` is passed.
+#         Narrow it only on measured grounds, and say so in the note.
+# note    why the trace is here, and what the measurement was.
+#
+# trace	name	shapes	note
+^	caret	all	pdfmd's superscript footnote marker and its eaten-diacritic glyph. 5,370 in 50 files. ONS_155 carried 18 that the marker/glyph shapes alone could not see: `fax: -^-^-33` for `++33`, `**YZD**^8.` for a footnote digit glued to the caret, `4^0` for `400`.
+¬	not-sign	all	the same two defects as the caret, in files where pdfmd chose this glyph instead. 16 in 8 files.
+«	guillemet-open	all	French and German quotation marks the corpus's own passages use -- and, just as often, garble: `al-Fa «!`, `6 abazis) « weight of new rouble`. 371 in 55 files. Balanced counts (371/369) say the pairs survive, not that each one is printed, so every occurrence is reported and the real ones are retired with `glyph-ok`.
+»	guillemet-close	all	as the opening guillemet. 369 in 54 files.
+re:["'‘’“”]+\\\*	quote-star	all	pdfmd's other superscript: a run of quote marks closed by an escaped asterisk -- `an astronomic sign"\*` for `sign`(4), `these earliest Indian coins'\*` for `coins?`. 275 in 45 files, every shape counted because the trailing `\*` identifies it wherever it sits, reported by no other screen. `detect_quote_pairs` owns runs of quote marks but skips a lone one, and the trailing `\*` is what the pairing never looks at.
+<	angle-open	glyph	between two letters an angle bracket is a letter the OCR ate (`Arab-B\>zantine`, `Uma\>\>ad`), and kramdown's `\>` escape counts. Everywhere else it is usually legitimate -- comparison operators in alloy tables (`Cu >70`, `As < 0.5`), `->` arrows in a flattened family tree, ONS_226's own stated convention -- 1,291 across 75 files, too few of them defects to put in a worklist. Pass `--all` to see them.
+>	angle-close	glyph	as the opening angle bracket.

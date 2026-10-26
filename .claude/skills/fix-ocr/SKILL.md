@@ -24,6 +24,35 @@ Within these limits, still fix letter-level OCR garble: wrong letters, doubled o
 
 The user names a Markdown file, usually under `jons/`. If no path is given, ask once.
 
+## Reading the scan without paying for it twice
+
+Every image this skill asks for — a tile sheet, a crop sheet, a page render —
+is read once and then rides along in the conversation for every turn that
+follows. On a long file that compounding is the pass's largest cost: ONS_157
+took thirty-six images, and most of them were still being carried at the end
+of a job they had finished contributing to.
+
+Two habits keep it down, and neither costs accuracy.
+
+**Send the eye-work to a subagent.** Dispatch a worker with the sheet paths
+and the question, and have it reply with a verdict list — tile ID, line, the
+reading — rather than with the pictures. The images land in the worker's
+context and are discarded with it, so a page costs what it costs once. Keep
+the deciding here: the worker reports what the scan shows, this pass decides
+what to write.
+
+**Stack the findings before looking.** `shared/crop_sheets.py` cuts five or
+six findings onto one labelled sheet, and `garble_tiles.py` does the same for
+disputed words. Reaching for a render per finding is the habit to break —
+`detect_script_garble.py render` is for the one candidate a sheet could not
+place, not for the first forty.
+
+A whole-page render still beats a stack of crops when the question is about
+the page rather than a word — which footnote number is printed, how a table
+is ruled, whether a legend is type-set or drawn. Reach for it then, and for a
+file-wide question read the page at half scale, which is legible for body
+text at a quarter of the tokens.
+
 ## Workflow
 
 1. **Read the target file** in full so you have the surrounding context for every change, and **snapshot it** (`cp <path> <scratchpad>/<STEM>.before.md`) — the Verification step compares against this snapshot, not against git, because an earlier pass (e.g. `restructure-flattened-md`) may have left the file with uncommitted changes.
@@ -505,9 +534,25 @@ For a WHOLESALE file, run a second, independent OCR over the renders and align i
 python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> [--pages 2-9]
 ```
 
-It prints one candidate per line — `<path>:LINE  md 'types'  page 'types.'  pN  --clip x0 y0 x1 y1` — for every aligned word whose trailing punctuation differs. Tesseract's reading is a candidate list, not evidence. Confirm candidates against the render (the printed `--clip` is ready to paste into the render command; several per page), then apply the confirmed ones in batches with `apply_edits.py`; any candidate where tesseract's letters also differ from the Markdown needs its own look. Decimal points inside numbers (`17 30`, `2-4 1 1`) do not show up as trailing punctuation — grep for digit-space-digit runs and render those separately.
+It prints one candidate per line — `<path>:LINE:COL  md 'types'  page 'types.'  pN  --clip x0 y0 x1 y1` — for every aligned word whose trailing punctuation differs. The `COL` matters: a token is routinely not unique on its line, and `from region to region. Some` has two slots for one finding. Tesseract's reading is a candidate list, not evidence. Decimal points inside numbers (`17 30`, `2-4 1 1`) do not show up as trailing punctuation — grep for digit-space-digit runs and render those separately, and the same for the possessive apostrophes, which this alignment does not compare at all.
 
-**Reading the page render is not enough on its own.** Over ONS_158's 1,590 candidates, every one of its 37 pages was rendered and read, and 53 bad edits still got through — because reading a page confirms that its sentences *do* end where tesseract says, and says nothing about the marks tesseract invented in between. Two mechanical sweeps after applying catch what the eye does not, and both must come back empty before the pass is done:
+**Do not read the file page by page. Let the script place the safe class and read only what it cannot settle:**
+
+```
+python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> --apply            # dry run
+python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> --apply --write --sheet-rows rows.tsv
+python3 .claude/skills/shared/crop_sheets.py sheets <STEM> --rows rows.tsv           # then Read the sheets
+```
+
+`--apply` places only what is unambiguous — the Markdown has no trailing mark, the page has exactly one `.` or `:`, and the page's word is the Markdown's with that mark on the end and nothing else changed — then re-aligns and prints the rest. **EXTRA** is the row that matters: the Markdown now has a mark the page does not, so tesseract read a speck or a mark landed in the wrong slot. **MISSING** is the classes `--apply` does not touch — marks against emphasis markers, `,` against `;`, a mark after an opening bracket. Settle both from the crop sheets, then apply with `apply_edits.py` as usual.
+
+Measured on ONS_157's 810 candidates, `--apply` reproduces 420 of the 450 placements a hand pass made, adds 48 the hand pass had missed, disagrees with it nowhere, and leaves 91 rows for the eye. That is three or four crop sheets against the twenty page renders the hand pass read.
+
+**Run `--apply` once.** It holds no record of a finding you looked at and rejected, so a second run puts back every mark you removed — on ONS_156 it restored all three specks (`of. archaeologists`, `an. attempted`, `would. only`) that the sweeps had just caught. Decide the flags up front, including `--emphasis`, and if you do need a second pass, re-check the sweeps against the snapshot from *before* the first one rather than the file as it now stands.
+
+`--emphasis` also places a mark after a trailing `*`, `_` or backtick. It is off by default because the mark could belong inside the markup, but on the scans sampled so far it does not: ONS_156 sets `INJ 8.`, `ONS Newsletter.`, `...from Kasur.` and `...invasion of India.` all with the full stop upright after the italic. It is worth about half the residue — 102 of ONS_156's 165 rows.
+
+**Reading the page render is not enough on its own, which is why the loop is this way round.** Over ONS_158's 1,590 candidates, every one of its 37 pages was rendered and read, and 53 bad edits still got through; ONS_157 took 4 from 20 pages read. In both cases the re-alignment is what caught them, and it costs nothing. Reading every page is the expensive half of the pass and the ineffective half. Two mechanical sweeps after applying catch what the eye does not, and both must come back empty before the pass is done:
 
 ```
 # a mark glued inside a word: a short candidate token (`V`, `p`, `No`, `so`)

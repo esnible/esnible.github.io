@@ -9997,3 +9997,9 @@ Vijayamanikya
 Vrisni
 Vṛisṇi
 Yabgu
+
+# ONS_153 — JNSI 1994 article titles: scholars, deities, places
+Keśavadeva
+Madhyadeśa
+Malhāra
+Masrajha

@@ -215,6 +215,21 @@ words:
   - expansionistic
   - hillfort
   - pdfmd
+  # ONS_152 — English formations and names from the Jaeckel obituary, the
+  # Indian coin-chart notice and the Bhutan article
+  - institutionalise
+  - lithopaper
+  - Linder
+  - Mariusz
+  - multicolour
+  - recultivated
+  - Rexine
+  - Turkologist
+  - Ulla
+  - undatable
+  - undenominated
+  - untranscribed
+  - Welin
 ignoreWords: []
 # Real-word OCR confusions: tokens that are valid English words on their own,
 # so the `words`/dictionary pass above never flags them, but that are never

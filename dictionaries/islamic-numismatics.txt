@@ -10782,3 +10782,7 @@ Uljay
 Yubuqur
 Zaribet
 Zaydan
+
+# ONS_153 — Ottoman San'a' copper coinage: diacritic transliterations
+maḥrūs
+manāqir

@@ -134,6 +134,10 @@ EMPH_RE = re.compile(r"^[*_]+|[*_]+$")
 # corpus uses on these run-in labels.
 OPEN_EMPH_RE = re.compile(r"([*_]{1,3})\s*$")
 CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
+# A complete emphasis run: `**...**`, `*...*`, `***...***`. Used to find the
+# pair shape below, where the run's own boundaries say exactly where the
+# heads begin and end.
+EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 
 # --- verdicts -------------------------------------------------------------
 #
@@ -155,6 +159,19 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 # GLUED-HEADING   the line is already a heading and holds a second head after
 #                 the first, or a marked run after it.
 #                 `## ONS News **From the Editor**`
+# GLUED-PAIR      one emphasis run holds two standing heads, the first at the
+#                 run's start, and the later JONS issues open a section this
+#                 way over and over: `**ONS NEWS Obituary: Terry Hardaker**
+#                 Terry Hardaker, the most significant contributor ...`. The
+#                 run's own boundaries say exactly where the heads begin and
+#                 end, so unlike the `-OPEN` shapes there is no doubt about
+#                 the cut, whatever precedes the run -- ONS_191's masthead
+#                 line `Editor: Mr S. Goron, **ONS News From the Editor**
+#                 Members in continental Europe ...` cuts correctly even
+#                 though the masthead ends in a comma. Checked against the
+#                 scan: `ONS News` and `From the Editor` are both set apart
+#                 there, at two sizes, which is why the second becomes a
+#                 sub-head. Three cuts.
 # BYLINE          a heading whose whole content is initials.  `# GPH`
 #
 # Reported, never applied:
@@ -179,7 +196,8 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 #                 (`...issued 1984) KM Obituary Nun Pere, NI 17, 73 (1984)...`)
 #                 or a contents listing whose page numbers the reject rules did
 #                 not catch.
-FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING")
+FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING",
+           "GLUED-PAIR")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
           "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-MID", "BYLINE")
 # Longest run of prose that may precede a head inside a heading line before the
@@ -291,6 +309,21 @@ def classify_line(line):
     matches = head_matches(content)
     if not matches:
         return []
+
+    # The pair shape comes first, because it explains the whole run and the
+    # per-match pass would otherwise report its two heads separately -- the
+    # first as GLUED-COMPOUND, the second as GLUED-MID -- neither of which
+    # can be repaired on its own.
+    for run in EMPH_RUN_RE.finditer(content):
+        inner = head_matches(run.group(2))
+        if len(inner) < 2 or inner[0].start() != 0:
+            continue
+        if rejected(content, inner[0]):
+            break
+        # One finding for the whole run. Its column is where the run's
+        # delimiter opens, so `apply` can find the same run in the line and
+        # recompute the split without any of it being carried in the finding.
+        return [("GLUED-PAIR", inner[0], base + run.start(), "")]
 
     # The line IS the head, marked or not -- nothing to do. `More ONS News` and
     # `MEMBERS NEWS AND REQUESTS` are legitimate compound heads and count here
@@ -567,6 +600,28 @@ def apply(md_lines, found, marker):
             block = [f"{marker} {head_text}", "", body]
         elif f["verdict"] == "GLUED-BOTH":
             block = [lead, "", f"{marker} {head_text}", "", body]
+        elif f["verdict"] == "GLUED-PAIR":
+            # `col` is where the run opens. Re-find it, split its content at
+            # the second head, and give the remainder of the run to the
+            # sub-head: in `**ONS NEWS Obituary: Terry Hardaker** Terry
+            # Hardaker, ...` the subject's name belongs with `Obituary`, not
+            # with the body that follows the run.
+            run = EMPH_RUN_RE.match(line, f["col"])
+            inner = head_matches(run.group(2))
+            first = run.group(2)[: inner[1].start()].strip()
+            second = run.group(2)[inner[1].start():].strip()
+            sub = marker + "#" if len(marker) < 6 else marker
+            # Single blank between the parts that exist. The run sometimes
+            # ends the line (ONS_218, ONS_234), leaving no body, and
+            # sometimes opens it, leaving no lead.
+            block = []
+            for part in (line[: run.start()].rstrip(), f"{marker} {first}",
+                         f"{sub} {second}", line[run.end():].lstrip()):
+                if not part.strip():
+                    continue
+                if block:
+                    block.append("")
+                block.append(part)
         else:  # GLUED-HEADING
             depth = MARKER_RE.match(line.strip()).group(1)
             sub = depth + "#" if len(depth) < 6 else depth

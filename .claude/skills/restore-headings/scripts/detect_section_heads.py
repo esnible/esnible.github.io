@@ -132,7 +132,7 @@ EMPH_RE = re.compile(r"^[*_]+|[*_]+$")
 # An emphasis delimiter closing the text before the head / opening the text
 # after it. `[*_]{1,3}` covers `*`, `**` and `***`, all three of which the
 # corpus uses on these run-in labels.
-OPEN_EMPH_RE = re.compile(r"[*_]{1,3}\s*$")
+OPEN_EMPH_RE = re.compile(r"([*_]{1,3})\s*$")
 CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 
 # --- verdicts -------------------------------------------------------------
@@ -168,6 +168,11 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 #                 cut and then decide what the remainder is. Sometimes the
 #                 remainder is a sub-head that wants promoting rather than
 #                 un-emphasising: `**OBITUARY Dr Jarmila Stepkova (1926-1997)**`
+# GLUED-RUNIN-PREFIX
+#                 the head opens the line, but something that is not its own
+#                 emphasis run sits in front of it, and the run-in repair
+#                 drops what it finds there. `*.* **Auction News** Spink will
+#                 be offering ...` would lose the full stop.
 # GLUED-MID       prose both sides and no emphasis run around the head, so
 #                 nothing on the line says it is a head at all. This is where
 #                 the remaining false positives collect -- a bibliography entry
@@ -176,7 +181,7 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 #                 not catch.
 FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
-          "GLUED-HEADING-JOINED", "GLUED-MID", "BYLINE")
+          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-MID", "BYLINE")
 # Longest run of prose that may precede a head inside a heading line before the
 # line is read as a flattened contents page rather than a heading.
 HEADING_PROSE = 40
@@ -353,6 +358,16 @@ def classify_line(line):
                           else "GLUED-END-OPEN", m, base, ""))
             continue
         if not prose_before:
+            # The run-in repair drops whatever sits in front of the head,
+            # which is right for the `**` that opened its own run and wrong
+            # for anything else. ONS_191's `*.* **Auction News** Spink will
+            # be offering ...` carries an italicised full stop the OCR left
+            # behind; cutting there silently deleted it. Only markup and
+            # whitespace may be dropped.
+            if re.sub(r"[*_\s]", "", before):
+                found.append(("GLUED-RUNIN-PREFIX", m, base,
+                              f"{before.strip()!r} sits in front of the head"))
+                continue
             found.append(("GLUED-RUNIN", m, base, ""))
             continue
         if opened and closed:
@@ -417,9 +432,30 @@ def classify_bylines(md_lines):
     return out
 
 
+CONTENTS_HEAD_RE = re.compile(r"contents", re.IGNORECASE)
+
+
 def analyse(md_lines):
     found = []
+    # A contents listing sets the issue's section heads one after another as
+    # ordinary text, and every one of them is a reference rather than the
+    # head itself. `rejected()` catches the entries that end in their page
+    # number; this catches the rest, by noticing the heading they sit under.
+    # ONS_200's `# **CONTENTS OF JOURNAL 200**` is followed by `ONS News -
+    # From the Editor A brief history of the ONS (N. Rhodes) Other ONS news
+    # New and recent publications`, which carries no page numbers at all and
+    # would otherwise be cut into two headings.
+    in_contents = False
     for row, line in enumerate(md_lines):
+        if MARKER_RE.match(line.strip()):
+            in_contents = bool(CONTENTS_HEAD_RE.search(line))
+        if in_contents:
+            for verdict, m, base, note in classify_line(line):
+                if not verdict.startswith("reject:"):
+                    found.append({"verdict": "reject:contents-section",
+                                  "row": row, "col": base + m.start(),
+                                  "text": m.group(0), "note": "", "line": line})
+            continue
         for verdict, m, base, note in classify_line(line):
             found.append({"verdict": verdict, "row": row,
                           "col": base + m.start(),
@@ -505,26 +541,49 @@ def apply(md_lines, found, marker):
         before = line[: f["col"]]
         head_text = line[f["col"]: f["col"] + len(f["text"])]
         after = line[f["col"] + len(f["text"]):]
-        # The head loses the emphasis it wore as a run-in label -- a heading
-        # marks itself -- and keeps any other punctuation it carried, so the
-        # word stream is untouched. The body keeps its own leading markup: a
-        # `- ` or `- *` after the label is a real list, and stripping the dash
-        # off `**New and Recent Publications** - * Moushegian, Kh, ...` would
-        # take the list apart.
-        lead = before.rstrip(" *_")
-        body = after.lstrip(" *_")
+        # The body keeps its own leading markup: a `- ` or `- *` after the
+        # label is a real list, and stripping the dash off
+        # `**New and Recent Publications** - * Moushegian, Kh, ...` would take
+        # the list apart.
+        # The head's own emphasis run comes off -- a heading marks itself --
+        # but *only* that run, and only the delimiter that belongs to it.
+        # Stripping `*` and `_` greedily off either side takes the neighbours'
+        # markup with it: `ONS News **From the Editor** Collectors of ...` cut
+        # at `ONS News` left `From the Editor** Collectors of ...`, and
+        # `**Obituaries** ***Ken Wiggins (1924-2000)***` left
+        # `Ken Wiggins (1924-2000)***`. Both render as literal asterisks.
+        opener = OPEN_EMPH_RE.search(before)
+        delim = opener.group(1) if opener else ""
+        lead, body = before.rstrip(), after
+        if delim and lead.endswith(delim):
+            lead = lead[: -len(delim)].rstrip()
+        if delim and body.lstrip().startswith(delim):
+            body = body.lstrip()[len(delim):]
+        body = body.lstrip()
         if f["verdict"] == "GLUED-END":
             # Nothing but markup follows the head, so it joins the heading.
-            out.extend([lead, "", f"{marker} {(head_text + after).strip(' *_')}"])
+            block = [lead, "", f"{marker} {(head_text + after).strip(' *_')}"]
         elif f["verdict"] == "GLUED-RUNIN":
-            out.extend([f"{marker} {head_text}", "", body])
+            block = [f"{marker} {head_text}", "", body]
         elif f["verdict"] == "GLUED-BOTH":
-            out.extend([lead, "", f"{marker} {head_text}", "", body])
+            block = [lead, "", f"{marker} {head_text}", "", body]
         else:  # GLUED-HEADING
             depth = MARKER_RE.match(line.strip()).group(1)
             sub = depth + "#" if len(depth) < 6 else depth
-            out.extend([before.rstrip(" *_"), "",
-                        f"{sub} {(head_text + after).strip(' *_')}"])
+            block = [lead, "", f"{sub} {(head_text + after).strip(' *_')}"]
+        # A heading needs a blank line on each side, and the line being cut
+        # does not always have one to inherit. ONS_141 runs the paragraph
+        # above straight into `**LISTS RECEIVED** 1 Stephen Album ...` with no
+        # blank between them, so the heading cut out of it would open flush
+        # against that paragraph -- `lint_structure.py` calls that an error,
+        # and kramdown renders the two as one block. Four of the first
+        # twenty-six cuts swept needed this padding.
+        if out and out[-1].strip() and block[0].strip():
+            out.append("")
+        out.extend(block)
+        if (row + 1 < len(md_lines) and md_lines[row + 1].strip()
+                and block[-1].strip()):
+            out.append("")
     return out, applied
 
 

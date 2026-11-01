@@ -190,6 +190,11 @@ EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 #                 emphasis run sits in front of it, and the run-in repair
 #                 drops what it finds there. `*.* **Auction News** Spink will
 #                 be offering ...` would lose the full stop.
+# GLUED-END-INRUN the head ends the line, but the delimiter after it closes a
+#                 run that opened earlier, not one of the head's own. Taking
+#                 it with the heading leaves that run unclosed:
+#                 `**New Members** *UK Region European Region* **Revised
+#                 Addresses Obituary**`.
 # GLUED-MID       prose both sides and no emphasis run around the head, so
 #                 nothing on the line says it is a head at all. This is where
 #                 the remaining false positives collect -- a bibliography entry
@@ -199,7 +204,8 @@ EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING",
            "GLUED-PAIR")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
-          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-MID", "BYLINE")
+          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-END-INRUN",
+          "GLUED-MID", "BYLINE")
 # Longest run of prose that may precede a head inside a heading line before the
 # line is read as a flattened contents page rather than a heading.
 HEADING_PROSE = 40
@@ -275,6 +281,26 @@ def head_matches(text):
         if head_cased(m.group(0)):
             out.append(m)
     return out
+
+
+def inside_foreign_run(before):
+    """True when an emphasis run opened earlier is still open at the head.
+
+    The head may wear a run of its own -- `**Lists Received**` -- and that
+    run's delimiters come off with it. What must not happen is cutting a head
+    out of somebody else's run: ONS_219 ends a paragraph with
+    `**New Members** *UK Region European Region* **Revised Addresses
+    Obituary**`, where the `**` after `Obituary` closes the run that opened
+    before `Revised Addresses`. Taking it with the heading leaves
+    `**Revised Addresses` unclosed, and the rest of the file in bold.
+
+    The head owns the run only when a delimiter sits immediately in front of
+    it. Otherwise an odd delimiter count means the run is someone else's.
+    """
+    if OPEN_EMPH_RE.search(before):
+        return False
+    singles = before.count("*") - 2 * before.count("**")
+    return bool(before.count("**") % 2 or singles % 2 or before.count("_") % 2)
 
 
 def _closes_sentence(text):
@@ -386,6 +412,10 @@ def classify_line(line):
             continue
         if not prose_after:
             if not prose_before:
+                continue
+            if inside_foreign_run(before):
+                found.append(("GLUED-END-INRUN", m, base,
+                              "the run around the head opened earlier"))
                 continue
             found.append(("GLUED-END" if _closes_sentence(before)
                           else "GLUED-END-OPEN", m, base, ""))
@@ -554,16 +584,30 @@ def rows(stem, found, md_lines):
     return out
 
 
-def apply(md_lines, found, marker):
+def apply(md_lines, found, marker, corroborated=()):
     """Rewrite the Markdown. Returns (new lines, count applied).
 
     Only one cut per line: a second head on a line the first cut already moved
     is re-screened on the next run, against the text as it then stands.
+
+    `corroborated` holds (1-based line, head text) pairs whose `*-OPEN`
+    verdict the scan has settled. That verdict is refused by default because
+    the prose before the head does not close a sentence, so the cut might
+    sever one -- a question about the page, which `corroborate_heads.py`
+    answers by asking whether the head stands on a short line of its own.
+    Only the named head is cut: a line can carry two, as ONS_189's line 42
+    carries both `Other News` and `Auction News`, and settling one of them
+    says nothing about the other.
     """
+    rows = {(r - 1, h) for r, h in corroborated}
     edits = {}
     for f in found:
-        if f["verdict"] in FIXABLE:
-            edits.setdefault(f["row"], f)
+        verdict = f["verdict"]
+        if verdict.endswith("-OPEN") and (f["row"], f["text"]) in rows:
+            f = {**f, "verdict": verdict[: -len("-OPEN")]}
+        elif verdict not in FIXABLE:
+            continue
+        edits.setdefault(f["row"], f)
     out, applied = [], 0
     for row, line in enumerate(md_lines):
         f = edits.get(row)
@@ -658,6 +702,12 @@ def main():
         p.add_argument("-v", "--verbose", action="store_true",
                        help="also show the matches the reject rules dropped")
         if name == "fix":
+            p.add_argument("--corroborated", metavar="ROWS.TSV",
+                           help="rows from `corroborate_heads.py rows` "
+                                "(stem<TAB>line<TAB>...): the *-OPEN findings "
+                                "whose cut the scan has settled. Only the "
+                                "lines named there are cut; everything else "
+                                "is screened as usual")
             p.add_argument("--marker", default="##",
                            help="what to prefix a cut-out head with "
                                 "(default '##')")
@@ -668,6 +718,18 @@ def main():
         stems += sorted(p.stem for p in MD_DIR.glob("*.md"))
     if not stems:
         sys.exit("no files: name a stem or pass --all")
+
+    corrob = {}
+    if getattr(args, "corroborated", None):
+        for raw in pathlib.Path(args.corroborated).read_text().splitlines():
+            if not raw.strip() or raw.lstrip().startswith("#"):
+                continue
+            parts = raw.split("\t")
+            if len(parts) < 4:
+                sys.exit(f"a corroborated row needs "
+                         f"stem<TAB>line<TAB>verdict<TAB>head: {raw!r}")
+            corrob.setdefault(parts[0].strip(), set()).add(
+                (int(parts[1]), parts[3].strip()))
 
     total = 0
     for stem in stems:
@@ -691,8 +753,9 @@ def main():
         if not found and not args.verbose and len(stems) > 1:
             continue
         open_n = report(stem, found, args.verbose)
-        if args.cmd == "fix" and open_n:
-            new, applied = apply(md_lines, found, args.marker)
+        corroborated = corrob.get(stem, ()) if args.cmd == "fix" else ()
+        if args.cmd == "fix" and (open_n or corroborated):
+            new, applied = apply(md_lines, found, args.marker, corroborated)
             if applied:
                 md.write_text("\n".join(new), encoding="utf-8")
                 print(f"  wrote {md} ({applied} line(s) changed)")

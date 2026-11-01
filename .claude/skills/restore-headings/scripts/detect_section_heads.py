@@ -777,7 +777,14 @@ def apply(md_lines, found, marker, corroborated=()):
         # against that paragraph -- `lint_structure.py` calls that an error,
         # and kramdown renders the two as one block. Four of the first
         # twenty-six cuts swept needed this padding.
-        if out and out[-1].strip() and block[0].strip():
+        # Pad before the block only when it *opens* with the heading. When it
+        # opens with text kept from the cut line, that text is the rest of
+        # the paragraph above and must stay joined to it. ONS_104's line 68
+        # is the second line of a soft-wrapped paragraph -- `...the picture
+        # painted by the total assembly is of` / `study and this report, his
+        # last major published paper ... - R. Broome --- ONS News` -- and
+        # padding in front of it split the sentence in two.
+        if out and out[-1].strip() and block[0].startswith(marker):
             out.append("")
         out.extend(block)
         if (row + 1 < len(md_lines) and md_lines[row + 1].strip()

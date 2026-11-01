@@ -48,6 +48,7 @@ Usage:
 Requires PyMuPDF. ONS_ARCHIVE_DIR must point at the PDF archive.
 """
 import argparse
+import difflib
 import os
 import pathlib
 import importlib.util
@@ -165,9 +166,16 @@ def _settle_by_ocr(doc, found, md):
                     cache[pno] = _ocr_lines(doc[pno])
                 for ln in cache[pno]:
                     flat = re.sub(r"\s+", " ", ln["text"]).strip()
-                    if flat.lower().rstrip(":") != needle:
-                        continue
                     if len(flat) > OWN_LINE_MAX:
+                        continue
+                    # OCR puts stray marks on the ends of a short line -- an
+                    # underline comes back as a leading `_`, so ONS_171's
+                    # head reads `_Lists Received` -- and misreads the odd
+                    # letter inside it. Compare on the alphanumeric core,
+                    # and allow a little slack for the letters.
+                    core = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", flat)
+                    if core.lower() != needle and difflib.SequenceMatcher(
+                            None, core.lower(), needle).ratio() < 0.90:
                         continue
                     caps = [c for c in flat if c.isalpha()]
                     marked = (caps and sum(c.isupper() for c in caps)

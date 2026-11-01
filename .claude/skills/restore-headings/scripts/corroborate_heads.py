@@ -66,7 +66,7 @@ OWN_LINE_MAX = 40          # longest a line may be and still read as a head
 GARBAGE_MAX = 40           # control characters in the first pages before the
                            # text layer is judged unusable
 OCR_DPI = 150
-OCR_WINDOWS = (2, 5)       # pages either side of the estimate to OCR, widening
+OCR_WINDOWS = (2, 6, 12)   # pages either side of the estimate to OCR, widening
 
 
 def _load(name):
@@ -159,6 +159,13 @@ def _settle_by_ocr(doc, found, md):
                     max(0, round(f["row"] / rows * doc.page_count)))
         verdict, detail = "NO-LINE-OCR", f"searched around p{guess + 1}"
         needle = re.sub(r"\s+", " ", f["text"]).lower()
+        # The nearest thing seen, whatever the verdict. A bare NO-LINE once
+        # hid five real heads whose OCR fell under the threshold -- ONS_181's
+        # `Lists Received` came back `Lise Recaaved` at 0.74 and ONS_174's
+        # `New and Recent Publications` as `Rawcand'HeceriiPblicatfons` at
+        # 0.64 -- and both are bold and set apart on the page. Say what was
+        # closest so a reader can settle it instead of believing the miss.
+        near = (0.0, None, "")
         for width in OCR_WINDOWS:
             lo, hi = max(0, guess - width), min(doc.page_count, guess + width + 1)
             for pno in range(lo, hi):
@@ -174,8 +181,11 @@ def _settle_by_ocr(doc, found, md):
                     # letter inside it. Compare on the alphanumeric core,
                     # and allow a little slack for the letters.
                     core = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", flat)
-                    if core.lower() != needle and difflib.SequenceMatcher(
-                            None, core.lower(), needle).ratio() < 0.90:
+                    ratio = difflib.SequenceMatcher(
+                        None, core.lower(), needle).ratio()
+                    if ratio > near[0]:
+                        near = (ratio, pno + 1, flat)
+                    if core.lower() != needle and ratio < 0.90:
                         continue
                     caps = [c for c in flat if c.isalpha()]
                     marked = (caps and sum(c.isupper() for c in caps)
@@ -188,6 +198,8 @@ def _settle_by_ocr(doc, found, md):
                     break
             if verdict != "NO-LINE-OCR":
                 break
+        if verdict == "NO-LINE-OCR" and near[1]:
+            detail += (f"; nearest {near[0]:.2f} p{near[1]} {near[2][:34]!r}")
         out.append((f, verdict, detail))
     return out
 

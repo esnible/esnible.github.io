@@ -48,6 +48,7 @@ Usage:
 Requires PyMuPDF. ONS_ARCHIVE_DIR must point at the PDF archive.
 """
 import argparse
+import difflib
 import os
 import pathlib
 import importlib.util
@@ -60,10 +61,12 @@ PDF_DIR = pathlib.Path(os.environ.get(
     "ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")).expanduser()
 
 OPEN_VERDICTS = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN")
-SETTLED = ("CONFIRMED", "OWN-LINE")
+SETTLED = ("CONFIRMED", "OWN-LINE", "CONFIRMED-OCR", "OWN-LINE-OCR")
 OWN_LINE_MAX = 40          # longest a line may be and still read as a head
 GARBAGE_MAX = 40           # control characters in the first pages before the
                            # text layer is judged unusable
+OCR_DPI = 150
+OCR_WINDOWS = (2, 6, 12)   # pages either side of the estimate to OCR, widening
 
 
 def _load(name):
@@ -90,7 +93,15 @@ def settle(stem, dh, ds, fitz):
         garbage = sum(1 for p in doc[:3] for ch in p.get_text()[:400]
                       if ord(ch) < 32 and ch not in "\n\t\r")
         if garbage > GARBAGE_MAX:
-            return [(f, "TEXT-LAYER-BROKEN", "") for f in found], None
+            # ONS_160 to ONS_185 have a broken ToUnicode map, so the embedded
+            # text is mojibake and every text-layer screen in this repo is
+            # blind on them. Tesseract reads the page image instead. OCR is
+            # slow (about seven seconds a page), so rather than re-reading a
+            # fifty-page issue the search starts from where the finding sits
+            # in the Markdown: both files run in the same order, so the row's
+            # position scales to a page estimate, and only a window either
+            # side of it is read.
+            return _settle_by_ocr(doc, found, md), None
         for pno, page in enumerate(doc, start=1):
             lines = dh.visual_lines(page)
             dh.mark_set_apart(lines, dh.GAP, dh.WIDTH, True)
@@ -119,6 +130,78 @@ def settle(stem, dh, ds, fitz):
         else:
             out.append((f, "MARKED" if mark else "UNMARKED", detail))
     return out, None
+
+
+def _ocr_lines(page):
+    """`visual_lines`-shaped rows from tesseract. No bold: OCR reports none,
+    so a head on one of these pages is settled by standing alone, not by
+    being marked."""
+    tp = page.get_textpage_ocr(dpi=OCR_DPI, full=True)
+    out = []
+    for block in page.get_text("dict", textpage=tp)["blocks"]:
+        if block.get("type"):
+            continue
+        for line in block["lines"]:
+            text = "".join(s["text"] for s in line["spans"]).strip()
+            if text:
+                out.append({"text": text, "bold": 0.0,
+                            "x0": line["bbox"][0], "x1": line["bbox"][2],
+                            "y0": line["bbox"][1], "y1": line["bbox"][3]})
+    del tp
+    return out
+
+
+def _settle_by_ocr(doc, found, md):
+    rows = len(md.read_text(encoding="utf-8").split("\n")) or 1
+    cache, out = {}, []
+    for f in found:
+        guess = min(doc.page_count - 1,
+                    max(0, round(f["row"] / rows * doc.page_count)))
+        verdict, detail = "NO-LINE-OCR", f"searched around p{guess + 1}"
+        needle = re.sub(r"\s+", " ", f["text"]).lower()
+        # The nearest thing seen, whatever the verdict. A bare NO-LINE once
+        # hid five real heads whose OCR fell under the threshold -- ONS_181's
+        # `Lists Received` came back `Lise Recaaved` at 0.74 and ONS_174's
+        # `New and Recent Publications` as `Rawcand'HeceriiPblicatfons` at
+        # 0.64 -- and both are bold and set apart on the page. Say what was
+        # closest so a reader can settle it instead of believing the miss.
+        near = (0.0, None, "")
+        for width in OCR_WINDOWS:
+            lo, hi = max(0, guess - width), min(doc.page_count, guess + width + 1)
+            for pno in range(lo, hi):
+                if pno not in cache:
+                    cache[pno] = _ocr_lines(doc[pno])
+                for ln in cache[pno]:
+                    flat = re.sub(r"\s+", " ", ln["text"]).strip()
+                    if len(flat) > OWN_LINE_MAX:
+                        continue
+                    # OCR puts stray marks on the ends of a short line -- an
+                    # underline comes back as a leading `_`, so ONS_171's
+                    # head reads `_Lists Received` -- and misreads the odd
+                    # letter inside it. Compare on the alphanumeric core,
+                    # and allow a little slack for the letters.
+                    core = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", flat)
+                    ratio = difflib.SequenceMatcher(
+                        None, core.lower(), needle).ratio()
+                    if ratio > near[0]:
+                        near = (ratio, pno + 1, flat)
+                    if core.lower() != needle and ratio < 0.90:
+                        continue
+                    caps = [c for c in flat if c.isalpha()]
+                    marked = (caps and sum(c.isupper() for c in caps)
+                              / len(caps) >= 0.9)
+                    verdict = "CONFIRMED-OCR" if marked else "OWN-LINE-OCR"
+                    detail = (f"p{pno + 1} ocr {'capitals' if marked else 'plain':10s}"
+                              f" len={len(flat):3d} {flat[:40]!r}")
+                    break
+                if verdict != "NO-LINE-OCR":
+                    break
+            if verdict != "NO-LINE-OCR":
+                break
+        if verdict == "NO-LINE-OCR" and near[1]:
+            detail += (f"; nearest {near[0]:.2f} p{near[1]} {near[2][:34]!r}")
+        out.append((f, verdict, detail))
+    return out
 
 
 def main():

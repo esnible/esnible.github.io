@@ -168,6 +168,11 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 #                 cut and then decide what the remainder is. Sometimes the
 #                 remainder is a sub-head that wants promoting rather than
 #                 un-emphasising: `**OBITUARY Dr Jarmila Stepkova (1926-1997)**`
+# GLUED-RUNIN-PREFIX
+#                 the head opens the line, but something that is not its own
+#                 emphasis run sits in front of it, and the run-in repair
+#                 drops what it finds there. `*.* **Auction News** Spink will
+#                 be offering ...` would lose the full stop.
 # GLUED-MID       prose both sides and no emphasis run around the head, so
 #                 nothing on the line says it is a head at all. This is where
 #                 the remaining false positives collect -- a bibliography entry
@@ -176,7 +181,7 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 #                 not catch.
 FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
-          "GLUED-HEADING-JOINED", "GLUED-MID", "BYLINE")
+          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-MID", "BYLINE")
 # Longest run of prose that may precede a head inside a heading line before the
 # line is read as a flattened contents page rather than a heading.
 HEADING_PROSE = 40
@@ -353,6 +358,16 @@ def classify_line(line):
                           else "GLUED-END-OPEN", m, base, ""))
             continue
         if not prose_before:
+            # The run-in repair drops whatever sits in front of the head,
+            # which is right for the `**` that opened its own run and wrong
+            # for anything else. ONS_191's `*.* **Auction News** Spink will
+            # be offering ...` carries an italicised full stop the OCR left
+            # behind; cutting there silently deleted it. Only markup and
+            # whitespace may be dropped.
+            if re.sub(r"[*_\s]", "", before):
+                found.append(("GLUED-RUNIN-PREFIX", m, base,
+                              f"{before.strip()!r} sits in front of the head"))
+                continue
             found.append(("GLUED-RUNIN", m, base, ""))
             continue
         if opened and closed:
@@ -417,9 +432,30 @@ def classify_bylines(md_lines):
     return out
 
 
+CONTENTS_HEAD_RE = re.compile(r"contents", re.IGNORECASE)
+
+
 def analyse(md_lines):
     found = []
+    # A contents listing sets the issue's section heads one after another as
+    # ordinary text, and every one of them is a reference rather than the
+    # head itself. `rejected()` catches the entries that end in their page
+    # number; this catches the rest, by noticing the heading they sit under.
+    # ONS_200's `# **CONTENTS OF JOURNAL 200**` is followed by `ONS News -
+    # From the Editor A brief history of the ONS (N. Rhodes) Other ONS news
+    # New and recent publications`, which carries no page numbers at all and
+    # would otherwise be cut into two headings.
+    in_contents = False
     for row, line in enumerate(md_lines):
+        if MARKER_RE.match(line.strip()):
+            in_contents = bool(CONTENTS_HEAD_RE.search(line))
+        if in_contents:
+            for verdict, m, base, note in classify_line(line):
+                if not verdict.startswith("reject:"):
+                    found.append({"verdict": "reject:contents-section",
+                                  "row": row, "col": base + m.start(),
+                                  "text": m.group(0), "note": "", "line": line})
+            continue
         for verdict, m, base, note in classify_line(line):
             found.append({"verdict": verdict, "row": row,
                           "col": base + m.start(),

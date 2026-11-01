@@ -134,6 +134,10 @@ EMPH_RE = re.compile(r"^[*_]+|[*_]+$")
 # corpus uses on these run-in labels.
 OPEN_EMPH_RE = re.compile(r"([*_]{1,3})\s*$")
 CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
+# A complete emphasis run: `**...**`, `*...*`, `***...***`. Used to find the
+# pair shape below, where the run's own boundaries say exactly where the
+# heads begin and end.
+EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 
 # --- verdicts -------------------------------------------------------------
 #
@@ -155,6 +159,19 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 # GLUED-HEADING   the line is already a heading and holds a second head after
 #                 the first, or a marked run after it.
 #                 `## ONS News **From the Editor**`
+# GLUED-PAIR      one emphasis run holds two standing heads, the first at the
+#                 run's start, and the later JONS issues open a section this
+#                 way over and over: `**ONS NEWS Obituary: Terry Hardaker**
+#                 Terry Hardaker, the most significant contributor ...`. The
+#                 run's own boundaries say exactly where the heads begin and
+#                 end, so unlike the `-OPEN` shapes there is no doubt about
+#                 the cut, whatever precedes the run -- ONS_191's masthead
+#                 line `Editor: Mr S. Goron, **ONS News From the Editor**
+#                 Members in continental Europe ...` cuts correctly even
+#                 though the masthead ends in a comma. Checked against the
+#                 scan: `ONS News` and `From the Editor` are both set apart
+#                 there, at two sizes, which is why the second becomes a
+#                 sub-head. Three cuts.
 # BYLINE          a heading whose whole content is initials.  `# GPH`
 #
 # Reported, never applied:
@@ -173,15 +190,22 @@ CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 #                 emphasis run sits in front of it, and the run-in repair
 #                 drops what it finds there. `*.* **Auction News** Spink will
 #                 be offering ...` would lose the full stop.
+# GLUED-END-INRUN the head ends the line, but the delimiter after it closes a
+#                 run that opened earlier, not one of the head's own. Taking
+#                 it with the heading leaves that run unclosed:
+#                 `**New Members** *UK Region European Region* **Revised
+#                 Addresses Obituary**`.
 # GLUED-MID       prose both sides and no emphasis run around the head, so
 #                 nothing on the line says it is a head at all. This is where
 #                 the remaining false positives collect -- a bibliography entry
 #                 (`...issued 1984) KM Obituary Nun Pere, NI 17, 73 (1984)...`)
 #                 or a contents listing whose page numbers the reject rules did
 #                 not catch.
-FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING")
+FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING",
+           "GLUED-PAIR")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
-          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-MID", "BYLINE")
+          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-END-INRUN",
+          "GLUED-MID", "BYLINE")
 # Longest run of prose that may precede a head inside a heading line before the
 # line is read as a flattened contents page rather than a heading.
 HEADING_PROSE = 40
@@ -259,6 +283,26 @@ def head_matches(text):
     return out
 
 
+def inside_foreign_run(before):
+    """True when an emphasis run opened earlier is still open at the head.
+
+    The head may wear a run of its own -- `**Lists Received**` -- and that
+    run's delimiters come off with it. What must not happen is cutting a head
+    out of somebody else's run: ONS_219 ends a paragraph with
+    `**New Members** *UK Region European Region* **Revised Addresses
+    Obituary**`, where the `**` after `Obituary` closes the run that opened
+    before `Revised Addresses`. Taking it with the heading leaves
+    `**Revised Addresses` unclosed, and the rest of the file in bold.
+
+    The head owns the run only when a delimiter sits immediately in front of
+    it. Otherwise an odd delimiter count means the run is someone else's.
+    """
+    if OPEN_EMPH_RE.search(before):
+        return False
+    singles = before.count("*") - 2 * before.count("**")
+    return bool(before.count("**") % 2 or singles % 2 or before.count("_") % 2)
+
+
 def _closes_sentence(text):
     """True when `text` ends somewhere a paragraph may be cut.
 
@@ -291,6 +335,21 @@ def classify_line(line):
     matches = head_matches(content)
     if not matches:
         return []
+
+    # The pair shape comes first, because it explains the whole run and the
+    # per-match pass would otherwise report its two heads separately -- the
+    # first as GLUED-COMPOUND, the second as GLUED-MID -- neither of which
+    # can be repaired on its own.
+    for run in EMPH_RUN_RE.finditer(content):
+        inner = head_matches(run.group(2))
+        if len(inner) < 2 or inner[0].start() != 0:
+            continue
+        if rejected(content, inner[0]):
+            break
+        # One finding for the whole run. Its column is where the run's
+        # delimiter opens, so `apply` can find the same run in the line and
+        # recompute the split without any of it being carried in the finding.
+        return [("GLUED-PAIR", inner[0], base + run.start(), "")]
 
     # The line IS the head, marked or not -- nothing to do. `More ONS News` and
     # `MEMBERS NEWS AND REQUESTS` are legitimate compound heads and count here
@@ -353,6 +412,10 @@ def classify_line(line):
             continue
         if not prose_after:
             if not prose_before:
+                continue
+            if inside_foreign_run(before):
+                found.append(("GLUED-END-INRUN", m, base,
+                              "the run around the head opened earlier"))
                 continue
             found.append(("GLUED-END" if _closes_sentence(before)
                           else "GLUED-END-OPEN", m, base, ""))
@@ -521,16 +584,30 @@ def rows(stem, found, md_lines):
     return out
 
 
-def apply(md_lines, found, marker):
+def apply(md_lines, found, marker, corroborated=()):
     """Rewrite the Markdown. Returns (new lines, count applied).
 
     Only one cut per line: a second head on a line the first cut already moved
     is re-screened on the next run, against the text as it then stands.
+
+    `corroborated` holds (1-based line, head text) pairs whose `*-OPEN`
+    verdict the scan has settled. That verdict is refused by default because
+    the prose before the head does not close a sentence, so the cut might
+    sever one -- a question about the page, which `corroborate_heads.py`
+    answers by asking whether the head stands on a short line of its own.
+    Only the named head is cut: a line can carry two, as ONS_189's line 42
+    carries both `Other News` and `Auction News`, and settling one of them
+    says nothing about the other.
     """
+    rows = {(r - 1, h) for r, h in corroborated}
     edits = {}
     for f in found:
-        if f["verdict"] in FIXABLE:
-            edits.setdefault(f["row"], f)
+        verdict = f["verdict"]
+        if verdict.endswith("-OPEN") and (f["row"], f["text"]) in rows:
+            f = {**f, "verdict": verdict[: -len("-OPEN")]}
+        elif verdict not in FIXABLE:
+            continue
+        edits.setdefault(f["row"], f)
     out, applied = [], 0
     for row, line in enumerate(md_lines):
         f = edits.get(row)
@@ -567,6 +644,28 @@ def apply(md_lines, found, marker):
             block = [f"{marker} {head_text}", "", body]
         elif f["verdict"] == "GLUED-BOTH":
             block = [lead, "", f"{marker} {head_text}", "", body]
+        elif f["verdict"] == "GLUED-PAIR":
+            # `col` is where the run opens. Re-find it, split its content at
+            # the second head, and give the remainder of the run to the
+            # sub-head: in `**ONS NEWS Obituary: Terry Hardaker** Terry
+            # Hardaker, ...` the subject's name belongs with `Obituary`, not
+            # with the body that follows the run.
+            run = EMPH_RUN_RE.match(line, f["col"])
+            inner = head_matches(run.group(2))
+            first = run.group(2)[: inner[1].start()].strip()
+            second = run.group(2)[inner[1].start():].strip()
+            sub = marker + "#" if len(marker) < 6 else marker
+            # Single blank between the parts that exist. The run sometimes
+            # ends the line (ONS_218, ONS_234), leaving no body, and
+            # sometimes opens it, leaving no lead.
+            block = []
+            for part in (line[: run.start()].rstrip(), f"{marker} {first}",
+                         f"{sub} {second}", line[run.end():].lstrip()):
+                if not part.strip():
+                    continue
+                if block:
+                    block.append("")
+                block.append(part)
         else:  # GLUED-HEADING
             depth = MARKER_RE.match(line.strip()).group(1)
             sub = depth + "#" if len(depth) < 6 else depth
@@ -578,7 +677,14 @@ def apply(md_lines, found, marker):
         # against that paragraph -- `lint_structure.py` calls that an error,
         # and kramdown renders the two as one block. Four of the first
         # twenty-six cuts swept needed this padding.
-        if out and out[-1].strip() and block[0].strip():
+        # Pad before the block only when it *opens* with the heading. When it
+        # opens with text kept from the cut line, that text is the rest of
+        # the paragraph above and must stay joined to it. ONS_104's line 68
+        # is the second line of a soft-wrapped paragraph -- `...the picture
+        # painted by the total assembly is of` / `study and this report, his
+        # last major published paper ... - R. Broome --- ONS News` -- and
+        # padding in front of it split the sentence in two.
+        if out and out[-1].strip() and block[0].startswith(marker):
             out.append("")
         out.extend(block)
         if (row + 1 < len(md_lines) and md_lines[row + 1].strip()
@@ -603,6 +709,12 @@ def main():
         p.add_argument("-v", "--verbose", action="store_true",
                        help="also show the matches the reject rules dropped")
         if name == "fix":
+            p.add_argument("--corroborated", metavar="ROWS.TSV",
+                           help="rows from `corroborate_heads.py rows` "
+                                "(stem<TAB>line<TAB>...): the *-OPEN findings "
+                                "whose cut the scan has settled. Only the "
+                                "lines named there are cut; everything else "
+                                "is screened as usual")
             p.add_argument("--marker", default="##",
                            help="what to prefix a cut-out head with "
                                 "(default '##')")
@@ -613,6 +725,18 @@ def main():
         stems += sorted(p.stem for p in MD_DIR.glob("*.md"))
     if not stems:
         sys.exit("no files: name a stem or pass --all")
+
+    corrob = {}
+    if getattr(args, "corroborated", None):
+        for raw in pathlib.Path(args.corroborated).read_text().splitlines():
+            if not raw.strip() or raw.lstrip().startswith("#"):
+                continue
+            parts = raw.split("\t")
+            if len(parts) < 4:
+                sys.exit(f"a corroborated row needs "
+                         f"stem<TAB>line<TAB>verdict<TAB>head: {raw!r}")
+            corrob.setdefault(parts[0].strip(), set()).add(
+                (int(parts[1]), parts[3].strip()))
 
     total = 0
     for stem in stems:
@@ -636,8 +760,9 @@ def main():
         if not found and not args.verbose and len(stems) > 1:
             continue
         open_n = report(stem, found, args.verbose)
-        if args.cmd == "fix" and open_n:
-            new, applied = apply(md_lines, found, args.marker)
+        corroborated = corrob.get(stem, ()) if args.cmd == "fix" else ()
+        if args.cmd == "fix" and (open_n or corroborated):
+            new, applied = apply(md_lines, found, args.marker, corroborated)
             if applied:
                 md.write_text("\n".join(new), encoding="utf-8")
                 print(f"  wrote {md} ({applied} line(s) changed)")

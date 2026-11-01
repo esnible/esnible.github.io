@@ -240,7 +240,8 @@ Reported, never applied:
 | `GLUED-END-OPEN`, `GLUED-BOTH-OPEN` | the prose before the head does not close a sentence, so the cut may sever one. A real head does reach here -- `...at these meetings will be badly missed JL **Members News**` signs off with initials and no stop -- and so does a mid-sentence mention, so a render decides. |
 | `GLUED-COMPOUND` | the head shares an emphasis run with the text after it, so the repair has to re-close the emphasis on both sides of the cut and then decide what the remainder is. Sometimes the remainder is a sub-head wanting promotion rather than un-emphasising: `**OBITUARY Dr Jarmila Štěpková (7.1.1926-12.10.1997)**`. |
 | `GLUED-HEADING-JOINED` | two heads in one heading with a conjunction between them -- `## Lists Received and Auction News` -- where the scan may well print one combined head, and a cut leaves a dangling `and`. |
-| `GLUED-MID` | prose both sides and no emphasis run around the head, so nothing on the line says it is a head at all. This is where the remaining false positives collect: a bibliography entry (`...issued 1984) KM Obituary Nun Pere, NI 17, 73 (1984)...`) or a contents listing the reject rules missed. |
+| `GLUED-END-INRUN` | the head ends the line, but the delimiter after it closes a run that opened earlier rather than one of the head's own. Taking it with the heading leaves that run unclosed and the rest of the file in bold: `**New Members** *UK Region European Region* **Revised Addresses Obituary**`. |
+| `GLUED-MID` | prose both sides and no emphasis run around the head. Not the dead end it looks: sampled, about four in five are real, and most of those are the compound shape `GLUED-PAIR` now handles. What is left is a bibliography entry (`...issued 1984) KM Obituary Nun Pere, NI 17, 73 (1984)...`) or a contents listing the reject rules missed. |
 | `BYLINE` | dropping the marker is a one-character edit, but deciding the line *is* a byline needs the page. `# AV` is as likely to be the metal as anyone's initials. |
 
 `fix` writes the first four and nothing else. It makes **one cut per line**: a
@@ -331,14 +332,61 @@ cut column being measured against the line with its `## ` stripped and then
 used against the line with it still on, which turned `## ONS News Obituaries`
 into `## ONS Ne` plus `### ws Obituaries` in three files.
 
+### Settling the `-OPEN` findings against the scan
+
+`GLUED-END-OPEN` and `GLUED-BOTH-OPEN` are refused for one reason: the prose
+before the head does not close a sentence, so the cut might sever one. That
+is a question about the page, and `corroborate_heads.py` answers it without a
+render and without a reader:
+
+```
+corroborate_heads.py report ONS_189 ONS_191      # what the scan says
+corroborate_heads.py rows   ONS_189 ONS_191 > c.tsv
+detect_section_heads.py fix --corroborated c.tsv ONS_189 ONS_191
+```
+
+It asks the PDF text layer whether the head stands on a short line of its
+own -- `CONFIRMED` when it is also marked, `OWN-LINE` when it is not, and an
+8-to-27 character line standing alone is a head whatever the mark test says.
+`rows` emits those two and nothing else; `fix --corroborated` then cuts the
+named head on the named line, and only that.
+
+Measured over the corpus: of 61 `-OPEN` findings, 25 settled this way, 21 sit
+in files whose text layer is broken (ONS_160-ONS_185), 13 matched no line,
+and the rest need a page.
+
+Three things to know before trusting it:
+
+- **The match can land on the wrong page.** `locate_in_pdf` takes the best
+  ratio anywhere in the file, so a head that also appears in the issue's own
+  contents listing can match that instead. ONS_189's `Other News` matched
+  `Other news 4` on page 32 while the real head sits on page 4. A match whose
+  line ends in a page number is reported `SUSPECT-CONTENTS`; read the report
+  rather than piping `rows` straight into `fix`.
+- **The rows go stale between passes.** They name a line number, and the
+  first cut on a line moves everything below it, so a line carrying two heads
+  needs the rows regenerated before the second pass. ONS_189's line 42 holds
+  both `Other News` and `Auction News` and took two rounds.
+- **No underline probe.** No pixmap is taken, so on the pre-ONS_131 issues --
+  which underline their heads rather than printing them bold -- `NO-LINE` and
+  `UNMARKED` mean "not settled here", not "not a head".
+
+A row names the head as well as the line, because settling one head says
+nothing about another on the same line.
+
 ### How much of the corpus this is
 
-Measured over `jons/` as it stands, across 113 files: 164 findings `fix`
-writes -- 162 cuts, because two lines carry two of them each -- and 191 it
-reports for a reader, 21 of those `BYLINE` and the rest the refused `GLUED-*`
-shapes. The same discipline as the rest of this skill applies, and for the
-same reason: read `scan` before running `fix`, and never sweep `fix` across
-the corpus.
+Measured over `jons/` as it stands: nothing left for `fix` to write, and 125
+findings reported for a reader -- 35 `GLUED-COMPOUND`, 34 `GLUED-END-OPEN`,
+27 `GLUED-MID`, 21 `BYLINE`, 5 `GLUED-HEADING-JOINED`, and one each of
+`GLUED-RUNIN-PREFIX`, `GLUED-BOTH-OPEN` and `GLUED-END-INRUN`. It reported
+164 writable findings when it was written; those were swept over six batches,
+`GLUED-PAIR` took 16 more, and `corroborate_heads.py` settled 25 of the
+`-OPEN` findings against the scan.
+
+The same discipline as the rest of this skill applies, and for the same
+reason: read `scan` before running `fix`, and never sweep `fix` across the
+corpus.
 
 **What the vocabulary cannot reach.** A section head this screen knows is one
 the newsletters print issue after issue. An article's *own* sub-heads are

@@ -374,6 +374,33 @@ Three things to know before trusting it:
 A row names the head as well as the line, because settling one head says
 nothing about another on the same line.
 
+#### When the text layer is broken
+
+ONS_160 to ONS_185 carry a broken `ToUnicode` map: `page.get_text()` returns
+control characters and scrambled letters, and every text-layer screen in this
+repo is blind on them -- `detect_headings.py`, `crop_sheets.py`'s anchor
+matching, and the check above. Those files hold 21 of the 61 `-OPEN`
+findings, a third of them, so they are not a corner case.
+
+The fallback reads the page image with tesseract, through PyMuPDF's
+`get_textpage_ocr`. Two things follow from that:
+
+- **OCR reports no bold**, so the mark test is reduced to capitals and the
+  verdict is almost always `OWN-LINE-OCR`. That is the signal Phase A found
+  decisive anyway. Checked against a render: ONS_160 page 6 sets
+  `New and Recent Publications` bold on a line of its own, exactly where the
+  OCR placed it, and the OCR called it `plain`.
+- **OCR is slow**, about seven seconds a page, so re-reading a fifty-page
+  issue for one finding is not worth it. The search starts from where the
+  finding sits in the Markdown instead: both files run in the same order, so
+  the row's position scales to a page estimate, and only a window either side
+  of it is read, widening once if the head is not found. A finding the window
+  misses reports `NO-LINE-OCR` and wants a render.
+
+An OCR verdict is weaker evidence than a clean text layer, but not by much
+for this question: a false positive would need tesseract to invent the head's
+exact wording on a short line of its own.
+
 ### How much of the corpus this is
 
 Measured over `jons/` as it stands: nothing left for `fix` to write, and 125

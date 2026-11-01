@@ -28,6 +28,14 @@ detect_headings.py fix  IS_001            # rewrite the Markdown
 detect_headings.py rows IS_001            # the findings a render has to settle
 ```
 
+There is a **second screen** in this skill, `detect_section_heads.py`, which
+asks a different question and needs no PDF. Two defects are invisible to
+"find a line set apart on the page, then ask what the Markdown did with it":
+a standing section head (`Lists Received`, `Other News`) glued into the
+paragraph beside it, and a byline promoted to a heading (`# GPH`). See
+"Two defects the set-apart question cannot reach", below. On a file whose
+text layer is broken it is the only screen that works at all.
+
 `scan` exits non-zero when there is something to fix.
 
 `rows` writes `file<TAB>label<TAB>page<TAB>anchor` for the findings `fix`
@@ -153,6 +161,195 @@ a head means choosing both its wording and its position, and the wording comes
 from the garbled OCR layer (`B I B L I O G R A P H Y`). Read the render and add
 it by hand. `FOLDED-PLAIN` needs `--include-plain`, because a wrong call there
 puts a paragraph break into running text.
+
+## Two defects the set-apart question cannot reach
+
+Everything above starts from the scan: find a line **set apart on the page**,
+then ask what the Markdown did with it. Two common defects are invisible to
+that question, and `detect_section_heads.py` -- a second screen in this skill,
+which needs no PDF -- is what finds them.
+
+```
+detect_section_heads.py scan ONS_152            # report, change nothing
+detect_section_heads.py scan --all              # sweep jons/
+detect_section_heads.py scan ONS_152 -v         # show the rejected matches too
+detect_section_heads.py rows ONS_152            # the findings a render settles
+detect_section_heads.py fix  ONS_152            # rewrite the Markdown
+```
+
+**A standing section head glued into a neighbouring block.** The newsletters
+run the same section heads issue after issue -- `Lists Received`, `Other
+News`, `Auction News`, `From the Editor`, `New and Recent Publications` -- and
+`pdfmd` routinely glues one to the tail of the paragraph above it or to the
+head of the bold run-in below it. `detect_headings.py` does not report these:
+the Markdown line the head folded into matches the page's own head line only
+in part, so the fuzzy match lands on the paragraph instead. On ONS_152 it
+detected 23 set-apart lines and reported `FOLDED 1 OVERSET 8 LOST 7 OK 3`, and
+not one finding was `Other News`, `Lists Received` or `Auction News`, all three
+of which are plainly bold and set apart on that page.
+
+**A byline promoted to a heading.** A short right-justified set of initials at
+the foot of an article becomes an `# H1`: `# GPH` (ONS_152's conference
+reporter), `# M.B.` (ONS_153's, Muriel Broome signing her husband's obituary).
+The page *does* set those apart, so `detect_headings.py` matches them against
+the Markdown's `# GPH`, finds a heading, and reports `OK`. It has no test for
+the reverse error -- a line correctly read as set apart, but which is a byline
+rather than a head. Seven other files set the same `GPH` as running text
+(ONS_129's `...April 25-26, 1992. GPH`), which is what the rest of the corpus
+does.
+
+### Why a closed vocabulary instead of a measurement
+
+These are the only two findings in the skill that need no render to detect,
+and the reason is the vocabulary. `Lists Received` written that way, in this
+corpus, is a section head; it is not a phrase that turns up in a sentence. So
+the screen can work from the Markdown alone and reserve the render for
+settling the handful of candidates it is not sure about.
+
+That is only true of heads whose wording is distinctive. `Articles`, `Notes`,
+`References`, `Introduction` and `Bibliography` are all common heads here too
+and all deliberately **out** of the vocabulary: each is an ordinary English
+word that appears in running prose ("the articles in this issue"), so no
+casing or position test separates head from mention and the screen would be
+mostly false positives. Those stay with `detect_headings.py`, where the
+evidence is the page.
+
+Three rules keep the vocabulary from turning into coincidence:
+
+| Rule | What it drops |
+|:--- |:--- |
+| **head-casing** -- every significant word of the match starts with a capital | `he wrote many articles and several book reviews, mainly in Dutch`, `a short obituary was published by K. M. MacKenzie`, and the contents lines set in sentence case (`ONS news - meetings: Oxford, Leiden`) |
+| **reject rules** | a head named rather than used (`found under "Members News" on page 2`), a contents entry (it ends in its page number, or carries dot leaders), and a bibliography's own sub-head, which puts the colon inside the emphasis run (`**Obituaries:**` among ONS_152's seven) -- a heading, but at `###` under the section it divides, not the newsletter's own section level |
+| **position** | see below -- a cut is applied only where there is exactly one place to put it |
+
+### Where the head sits decides the verdict
+
+`prose` here means alphanumeric text outside the markup.
+
+| Verdict | Shape | Cuts |
+|:--- |:--- |---:|
+| `GLUED-END` | prose before, nothing after, and the prose closes a sentence | 1 |
+| `GLUED-RUNIN` | nothing before, prose after | 1 |
+| `GLUED-BOTH` | prose both sides, head set off in an emphasis run of its own | 2 |
+| `GLUED-HEADING` | already a heading, and it holds a second head after the first | 1 |
+
+Reported, never applied:
+
+| Verdict | Refused because |
+|:--- |:--- |
+| `GLUED-END-OPEN`, `GLUED-BOTH-OPEN` | the prose before the head does not close a sentence, so the cut may sever one. A real head does reach here -- `...at these meetings will be badly missed JL **Members News**` signs off with initials and no stop -- and so does a mid-sentence mention, so a render decides. |
+| `GLUED-COMPOUND` | the head shares an emphasis run with the text after it, so the repair has to re-close the emphasis on both sides of the cut and then decide what the remainder is. Sometimes the remainder is a sub-head wanting promotion rather than un-emphasising: `**OBITUARY Dr Jarmila Štěpková (7.1.1926-12.10.1997)**`. |
+| `GLUED-HEADING-JOINED` | two heads in one heading with a conjunction between them -- `## Lists Received and Auction News` -- where the scan may well print one combined head, and a cut leaves a dangling `and`. |
+| `GLUED-MID` | prose both sides and no emphasis run around the head, so nothing on the line says it is a head at all. This is where the remaining false positives collect: a bibliography entry (`...issued 1984) KM Obituary Nun Pere, NI 17, 73 (1984)...`) or a contents listing the reject rules missed. |
+| `BYLINE` | dropping the marker is a one-character edit, but deciding the line *is* a byline needs the page. `# AV` is as likely to be the metal as anyone's initials. |
+
+`fix` writes the first four and nothing else. It makes **one cut per line**: a
+second head on a line the first cut moved is re-screened on the next run,
+against the text as it then stands.
+
+### The byline shape, and the two shapes next to it
+
+Dotted initials (`# M.B.`, `# B.N.H.`) are distinctive enough to stand alone.
+Bare capitals (`# GPH`, `# SLG`) have exactly the shape of a catalogue's
+column heads and rarity grades, so three further tests apply, and between them
+they cut 249 candidates to 21:
+
+- **vocabulary** -- the column heads (`REF`, `SIZE`, `MINT`, `AH`, `RY`, ...),
+  the rarity grades (77 `RRR` headings and 57 `RR` across the corpus), the
+  bibliography sigla, and the short all-capitals strings that are words rather
+  than initials (`NEWS`, `NOTE`, `COIN`).
+- **uniqueness within the file** -- a byline is a signature and appears once. A
+  flattened table's cell text repeats; ONS_247 sets `RRR` as a heading dozens
+  of times.
+- **density within the file** -- above four bare-capital candidates the file is
+  a catalogue, and every candidate in it is table debris. ONS_247 reports 54
+  and ONS_245 52; ONS_152 and ONS_153 reported one each, and both were real
+  bylines.
+
+Two neighbouring shapes stay out of scope deliberately, because their fix is
+different:
+
+- **flattened table headers as headings** -- `# REF`, `# SIZE`, `# AH` and
+  similar, around 120 of them concentrated in ONS_166 and ONS_174-ONS_219.
+  They come from catalogue tables `pdfmd` flattened and belong to
+  `restructure-flattened-md`.
+- **bibliography sigla as headings** -- ONS_219 alone has eight (`HDSL`,
+  `HYCD`, `MDBL`, `SHM`, `SSM`, `SZP`, `YCBS`, `YS`), the abbreviation keys of
+  a reference list. Same visual shape as a byline, different fix.
+
+### Settling the review findings
+
+`rows` emits the three-column form, with no page -- this screen never opens the
+PDF, so it does not know one, and `crop_sheets.py` then searches every page for
+the anchor. That is what these findings want anyway: which page the line sits
+on is part of the question.
+
+```
+detect_section_heads.py rows ONS_166 > rows.tsv
+python3 .claude/skills/shared/crop_sheets.py sheets --rows rows.tsv --out ONS_166-sec
+```
+
+A `BYLINE`'s own text is two to four characters, far too little for a fuzzy
+word match, so its anchor is the line above it -- the tail of the article the
+initials sign.
+
+### Checking the findings against the scan
+
+Every one of the 45 findings `fix` would write across eleven files --
+ONS_150, 151, 155, 157, 159, 164, 166, 183, 190, 194 and 200 -- was checked
+against the scan, four ways, and all 45 are real heads. No false positive was
+found.
+
+| How it was settled | n |
+|:--- |---:|
+| the text layer has the head on a line of its own, marked (underlined, capitals or bold) | 25 |
+| the text layer has it on a line of its own, unmarked -- a 12-to-27-character line standing alone is a head whatever the mark test says | 4 |
+| the text layer folded it the same way the Markdown did, and the head's own words are visible in the folded line (`...had ever Lists Received`, `By Nick Rhodes From the Editor`) | 8 |
+| the text layer extracts as garbage, so the page was rendered and read | 8 |
+
+The third row is the reason this screen exists. Where the PDF's own text layer
+lost the line break, `detect_headings.py` cannot see the head set apart in
+either direction, at any threshold -- there is no set-apart line in the
+geometry to find. The fourth row is worse: ONS_159, ONS_166 and ONS_183 have a
+broken `ToUnicode` map, so `page.get_text()` returns control
+characters and scrambled letters. Every text-layer screen in this repo is blind on those files --
+`detect_headings.py`, and `crop_sheets.py`'s anchor matching with it -- while
+`pdfmd --ocr auto` re-OCR'd the page image and read the words correctly. On a
+file like that this Markdown-only screen is the only one that works.
+
+`fix` only moves structure, so the word stream is the audit, the same one
+`detect_headings.py` uses:
+
+```python
+w = lambda t: re.findall(r'[A-Za-z0-9]+', t)
+w(old) == w(new)   # False means text was lost, duplicated, or split mid-word
+```
+
+Over the whole corpus that is 163 cuts in 86 files with the word stream
+preserved in every one. It is worth running, not a formality: it caught the
+cut column being measured against the line with its `## ` stripped and then
+used against the line with it still on, which turned `## ONS News Obituaries`
+into `## ONS Ne` plus `### ws Obituaries` in three files.
+
+### How much of the corpus this is
+
+Measured over `jons/` as it stands, across 113 files: 164 findings `fix`
+writes -- 162 cuts, because two lines carry two of them each -- and 191 it
+reports for a reader, 21 of those `BYLINE` and the rest the refused `GLUED-*`
+shapes. The same discipline as the rest of this skill applies, and for the
+same reason: read `scan` before running `fix`, and never sweep `fix` across
+the corpus.
+
+**What the vocabulary cannot reach.** A section head this screen knows is one
+the newsletters print issue after issue. An article's *own* sub-heads are
+arbitrary -- ONS_152's bibliography divides into `Numismatic Monographs:`,
+`Articles on Islamic numismatics:`, `Annual Work Reports:` and four more, each
+bold and set apart on the page, two of them folded into the end of the
+paragraph above. No vocabulary reaches those, and `detect_headings.py`
+reported only two of the seven, both as `LOST`, because the fuzzy match wants
+the head to account for most of its Markdown line and these lines are long
+paragraphs. They were restored by hand. Between the two screens there is
+still a gap here, and it is the harder half of the problem.
 
 ## Matching the two OCR layers
 

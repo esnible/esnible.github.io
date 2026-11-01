@@ -132,7 +132,7 @@ EMPH_RE = re.compile(r"^[*_]+|[*_]+$")
 # An emphasis delimiter closing the text before the head / opening the text
 # after it. `[*_]{1,3}` covers `*`, `**` and `***`, all three of which the
 # corpus uses on these run-in labels.
-OPEN_EMPH_RE = re.compile(r"[*_]{1,3}\s*$")
+OPEN_EMPH_RE = re.compile(r"([*_]{1,3})\s*$")
 CLOSE_EMPH_RE = re.compile(r"\s*[*_]{1,3}")
 
 # --- verdicts -------------------------------------------------------------
@@ -505,14 +505,25 @@ def apply(md_lines, found, marker):
         before = line[: f["col"]]
         head_text = line[f["col"]: f["col"] + len(f["text"])]
         after = line[f["col"] + len(f["text"]):]
-        # The head loses the emphasis it wore as a run-in label -- a heading
-        # marks itself -- and keeps any other punctuation it carried, so the
-        # word stream is untouched. The body keeps its own leading markup: a
-        # `- ` or `- *` after the label is a real list, and stripping the dash
-        # off `**New and Recent Publications** - * Moushegian, Kh, ...` would
-        # take the list apart.
-        lead = before.rstrip(" *_")
-        body = after.lstrip(" *_")
+        # The body keeps its own leading markup: a `- ` or `- *` after the
+        # label is a real list, and stripping the dash off
+        # `**New and Recent Publications** - * Moushegian, Kh, ...` would take
+        # the list apart.
+        # The head's own emphasis run comes off -- a heading marks itself --
+        # but *only* that run, and only the delimiter that belongs to it.
+        # Stripping `*` and `_` greedily off either side takes the neighbours'
+        # markup with it: `ONS News **From the Editor** Collectors of ...` cut
+        # at `ONS News` left `From the Editor** Collectors of ...`, and
+        # `**Obituaries** ***Ken Wiggins (1924-2000)***` left
+        # `Ken Wiggins (1924-2000)***`. Both render as literal asterisks.
+        opener = OPEN_EMPH_RE.search(before)
+        delim = opener.group(1) if opener else ""
+        lead, body = before.rstrip(), after
+        if delim and lead.endswith(delim):
+            lead = lead[: -len(delim)].rstrip()
+        if delim and body.lstrip().startswith(delim):
+            body = body.lstrip()[len(delim):]
+        body = body.lstrip()
         if f["verdict"] == "GLUED-END":
             # Nothing but markup follows the head, so it joins the heading.
             block = [lead, "", f"{marker} {(head_text + after).strip(' *_')}"]

@@ -219,7 +219,7 @@ Three rules keep the vocabulary from turning into coincidence:
 | Rule | What it drops |
 |:--- |:--- |
 | **head-casing** -- every significant word of the match starts with a capital | `he wrote many articles and several book reviews, mainly in Dutch`, `a short obituary was published by K. M. MacKenzie`, and the contents lines set in sentence case (`ONS news - meetings: Oxford, Leiden`) |
-| **reject rules** | a head named rather than used (`found under "Members News" on page 2`), a contents entry (it ends in its page number, or carries dot leaders), and a bibliography's run-in label, which puts the colon inside the emphasis run (`**Obituaries:** Aichner, Ernst: 'In memoriam...'`) |
+| **reject rules** | a head named rather than used (`found under "Members News" on page 2`), a contents entry (it ends in its page number, or carries dot leaders), and a bibliography's own sub-head, which puts the colon inside the emphasis run (`**Obituaries:**` among ONS_152's seven) -- a heading, but at `###` under the section it divides, not the newsletter's own section level |
 | **position** | see below -- a cut is applied only where there is exactly one place to put it |
 
 ### Where the head sits decides the verdict
@@ -333,12 +333,23 @@ into `## ONS Ne` plus `### ws Obituaries` in three files.
 
 ### How much of the corpus this is
 
-Measured over `jons/` as it stands, across 115 files: 165 findings `fix`
-writes -- 163 cuts, because two lines carry two of them each -- and 191 it
+Measured over `jons/` as it stands, across 113 files: 164 findings `fix`
+writes -- 162 cuts, because two lines carry two of them each -- and 191 it
 reports for a reader, 21 of those `BYLINE` and the rest the refused `GLUED-*`
 shapes. The same discipline as the rest of this skill applies, and for the
 same reason: read `scan` before running `fix`, and never sweep `fix` across
 the corpus.
+
+**What the vocabulary cannot reach.** A section head this screen knows is one
+the newsletters print issue after issue. An article's *own* sub-heads are
+arbitrary -- ONS_152's bibliography divides into `Numismatic Monographs:`,
+`Articles on Islamic numismatics:`, `Annual Work Reports:` and four more, each
+bold and set apart on the page, two of them folded into the end of the
+paragraph above. No vocabulary reaches those, and `detect_headings.py`
+reported only two of the seven, both as `LOST`, because the fuzzy match wants
+the head to account for most of its Markdown line and these lines are long
+paragraphs. They were restored by hand. Between the two screens there is
+still a gap here, and it is the harder half of the problem.
 
 ## Matching the two OCR layers
 

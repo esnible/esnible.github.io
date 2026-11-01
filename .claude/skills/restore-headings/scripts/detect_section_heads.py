@@ -219,12 +219,17 @@ def rejected(line, m):
         return "quoted"
     if after.lstrip().startswith(('"', "”", "’")) and '"' in before:
         return "quoted"
-    # A run-in label, not a section head: the corpus sets a
-    # bibliography's sub-headings this way, with the colon inside the
-    # emphasis run -- `**Numismatic reviews by Peter Jaeckel:**`,
-    # `**Editorial work:**`, `**Obituaries:** Aichner, Ernst: 'In memoriam
-    # Dr. Peter Jaeckel' ...`, four parallel labels in one bibliography. A
-    # section head does not carry a colon.
+    # A bibliography's own sub-head, which is a heading but not this
+    # screen's kind of heading. ONS_152's `## Bibliography` runs seven of
+    # them, each with the colon inside the emphasis run -- `**Numismatic
+    # Monographs:**`, `**Editorial work:**`, `**Obituaries:**` -- and on the
+    # page each is bold on a line of its own, exactly as `Bibliography`
+    # itself is. They belong at `###` under the section they divide, which
+    # is `detect_headings.py`'s job and a reader's; promoting one to the
+    # newsletter's own section level would say that the issue has an
+    # Obituaries section here, when what it has is a list of obituary
+    # notices published elsewhere. The colon is the tell: a standing section
+    # head never carries one.
     if re.match(r"\s*:\s*[*_]{1,3}", after) and OPEN_EMPH_RE.search(before):
         return "runin-label"
     # A contents listing: the entry ends in its page number. `Obituary - Lance

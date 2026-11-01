@@ -515,16 +515,28 @@ def apply(md_lines, found, marker):
         body = after.lstrip(" *_")
         if f["verdict"] == "GLUED-END":
             # Nothing but markup follows the head, so it joins the heading.
-            out.extend([lead, "", f"{marker} {(head_text + after).strip(' *_')}"])
+            block = [lead, "", f"{marker} {(head_text + after).strip(' *_')}"]
         elif f["verdict"] == "GLUED-RUNIN":
-            out.extend([f"{marker} {head_text}", "", body])
+            block = [f"{marker} {head_text}", "", body]
         elif f["verdict"] == "GLUED-BOTH":
-            out.extend([lead, "", f"{marker} {head_text}", "", body])
+            block = [lead, "", f"{marker} {head_text}", "", body]
         else:  # GLUED-HEADING
             depth = MARKER_RE.match(line.strip()).group(1)
             sub = depth + "#" if len(depth) < 6 else depth
-            out.extend([before.rstrip(" *_"), "",
-                        f"{sub} {(head_text + after).strip(' *_')}"])
+            block = [lead, "", f"{sub} {(head_text + after).strip(' *_')}"]
+        # A heading needs a blank line on each side, and the line being cut
+        # does not always have one to inherit. ONS_141 runs the paragraph
+        # above straight into `**LISTS RECEIVED** 1 Stephen Album ...` with no
+        # blank between them, so the heading cut out of it would open flush
+        # against that paragraph -- `lint_structure.py` calls that an error,
+        # and kramdown renders the two as one block. Four of the first
+        # twenty-six cuts swept needed this padding.
+        if out and out[-1].strip() and block[0].strip():
+            out.append("")
+        out.extend(block)
+        if (row + 1 < len(md_lines) and md_lines[row + 1].strip()
+                and block[-1].strip()):
+            out.append("")
     return out, applied
 
 

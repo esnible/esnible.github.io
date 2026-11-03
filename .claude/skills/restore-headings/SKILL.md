@@ -374,6 +374,31 @@ Three things to know before trusting it:
 A row names the head as well as the line, because settling one head says
 nothing about another on the same line.
 
+**What it cannot settle, and why.** The question it asks is whether the
+head's text is set apart *somewhere in the PDF* -- not whether *this
+occurrence* is a head. For an `-OPEN` finding the two coincide, because
+that finding already sits where a head would sit. For `GLUED-MID` they come
+apart, and the answers are worse than useless: run against the 20 `GLUED-MID`
+findings it returned `CONFIRMED` or `OWN-LINE` for ONS_151, ONS_179, ONS_204
+and both of ONS_245's, every one of which is a citation or a contents entry
+whose words also appear as a real head elsewhere in the same issue. ONS_151's
+match even named the wrong page -- the real line is on page 1, the match
+reported page 2.
+
+What settles a `GLUED-MID` is a crop anchored on the finding's *own*
+surrounding words, which is what `crop_sheets.py` does, or the page read
+directly:
+
+```
+detect_section_heads.py rows ONS_151 > rows.tsv
+python3 .claude/skills/shared/crop_sheets.py sheets --rows rows.tsv --out mid
+```
+
+Read against the scan, the 27 `GLUED-MID` findings came out about half real.
+Do not take a rate from a sample of this bucket: an earlier sample of twelve
+gave four in five, because it was drawn while the compound `**ONS NEWS
+<Head>**` shape was still in it and `GLUED-PAIR` has since taken that out.
+
 #### When the text layer is broken
 
 ONS_160 to ONS_185 carry a broken `ToUnicode` map: `page.get_text()` returns

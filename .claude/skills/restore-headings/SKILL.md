@@ -267,6 +267,25 @@ they cut 249 candidates to 21:
   and ONS_245 52; ONS_152 and ONS_153 reported one each, and both were real
   bylines.
 
+**What the bucket turned out to hold.** Read against the scans, 21 `BYLINE`
+candidates gave **two** bylines: IS_003's `B.N.H.` and ONS_165's `SB`, each
+right-justified at the foot of the piece it signs. The rest were other
+things entirely, and three further rejects came out of reading them:
+
+| What it really was | Example |
+|:--- |:--- |
+| a cell of a flattened table, next to another short heading | ONS_201's die study runs `# AQ` into `# AQ cGl cG2 cG3`; ONS_172 puts `# OQCL` between `# MOR.2.2` and `# MOR.8.6` |
+| a siglum under the paper's own key | ONS_179 sets `## Abbreviations used in the paper`, then `## BN` for `Bibliotheque Nationale catalogue` |
+| a mint or province name, correctly a heading | ONS_146's `### DERA` stands over a plate of Dera rupees; ONS_205 and ONS_225 head mint catalogues with `FARS` |
+| a legend quoted in the text | ONS_239's `## KUOB`, explained on the next line as `i.e. K(oronik'on) UOB (472)` |
+| garble OCR'd out of a coin photograph | ONS_118's `# NGF` and ONS_197's `# PR` and `# IA` each sit between two paragraphs where the scan has figures, and appear nowhere in the PDF's text layer |
+
+The first two are now rejected by rule (`siglum-section`, `heading-run`).
+The last three need the page, and the last one needs the PDF rather than the
+Markdown: absence from the text layer is what identifies it, and this screen
+never opens the PDF. A `BYLINE` finding is reported, never applied, and
+`fix --corroborated` writes one only when a row names it.
+
 Two neighbouring shapes stay out of scope deliberately, because their fix is
 different:
 

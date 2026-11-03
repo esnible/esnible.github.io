@@ -267,6 +267,25 @@ they cut 249 candidates to 21:
   and ONS_245 52; ONS_152 and ONS_153 reported one each, and both were real
   bylines.
 
+**What the bucket turned out to hold.** Read against the scans, 21 `BYLINE`
+candidates gave **two** bylines: IS_003's `B.N.H.` and ONS_165's `SB`, each
+right-justified at the foot of the piece it signs. The rest were other
+things entirely, and three further rejects came out of reading them:
+
+| What it really was | Example |
+|:--- |:--- |
+| a cell of a flattened table, next to another short heading | ONS_201's die study runs `# AQ` into `# AQ cGl cG2 cG3`; ONS_172 puts `# OQCL` between `# MOR.2.2` and `# MOR.8.6` |
+| a siglum under the paper's own key | ONS_179 sets `## Abbreviations used in the paper`, then `## BN` for `Bibliotheque Nationale catalogue` |
+| a mint or province name, correctly a heading | ONS_146's `### DERA` stands over a plate of Dera rupees; ONS_205 and ONS_225 head mint catalogues with `FARS` |
+| a legend quoted in the text | ONS_239's `## KUOB`, explained on the next line as `i.e. K(oronik'on) UOB (472)` |
+| garble OCR'd out of a coin photograph | ONS_118's `# NGF` and ONS_197's `# PR` and `# IA` each sit between two paragraphs where the scan has figures, and appear nowhere in the PDF's text layer |
+
+The first two are now rejected by rule (`siglum-section`, `heading-run`).
+The last three need the page, and the last one needs the PDF rather than the
+Markdown: absence from the text layer is what identifies it, and this screen
+never opens the PDF. A `BYLINE` finding is reported, never applied, and
+`fix --corroborated` writes one only when a row names it.
+
 Two neighbouring shapes stay out of scope deliberately, because their fix is
 different:
 
@@ -373,6 +392,31 @@ Three things to know before trusting it:
 
 A row names the head as well as the line, because settling one head says
 nothing about another on the same line.
+
+**What it cannot settle, and why.** The question it asks is whether the
+head's text is set apart *somewhere in the PDF* -- not whether *this
+occurrence* is a head. For an `-OPEN` finding the two coincide, because
+that finding already sits where a head would sit. For `GLUED-MID` they come
+apart, and the answers are worse than useless: run against the 20 `GLUED-MID`
+findings it returned `CONFIRMED` or `OWN-LINE` for ONS_151, ONS_179, ONS_204
+and both of ONS_245's, every one of which is a citation or a contents entry
+whose words also appear as a real head elsewhere in the same issue. ONS_151's
+match even named the wrong page -- the real line is on page 1, the match
+reported page 2.
+
+What settles a `GLUED-MID` is a crop anchored on the finding's *own*
+surrounding words, which is what `crop_sheets.py` does, or the page read
+directly:
+
+```
+detect_section_heads.py rows ONS_151 > rows.tsv
+python3 .claude/skills/shared/crop_sheets.py sheets --rows rows.tsv --out mid
+```
+
+Read against the scan, the 27 `GLUED-MID` findings came out about half real.
+Do not take a rate from a sample of this bucket: an earlier sample of twelve
+gave four in five, because it was drawn while the compound `**ONS NEWS
+<Head>**` shape was still in it and `GLUED-PAIR` has since taken that out.
 
 #### When the text layer is broken
 

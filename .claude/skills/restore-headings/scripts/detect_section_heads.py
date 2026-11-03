@@ -128,6 +128,10 @@ NOT_BYLINES = {
 # 54 and ONS_245 52, almost all of them rarity grades and column heads;
 # ONS_152 and ONS_153 reported one each, and both were real bylines.
 MAX_PLAIN_PER_FILE = 4
+# The heading a candidate sits under, when it names the paper's own key.
+SIGLA_SECTION_RE = re.compile(r"abbreviation|siglum|sigla|\bkey\b", re.I)
+# A neighbouring heading short enough to be a flattened table's cell.
+SHORT_HEAD_RE = re.compile(r"^#{1,6}\s+[^\n]{0,14}$")
 
 SKIP_LINE = ("|", "<!--", "> ", "```", "    ")
 MARKER_RE = re.compile(r"^(#{1,6})\s+")
@@ -277,6 +281,19 @@ def rejected(line, m):
     # head never carries one.
     if re.match(r"\s*:\s*[*_]{1,3}", after) and OPEN_EMPH_RE.search(before):
         return "runin-label"
+    # A reference to a section rather than the section's own head. A head
+    # never follows a preposition or an article: `In the New and Recent
+    # Publications section of Newsletter 153 we mentioned ...`, `see note
+    # under New and Recent Publications`, `which are detailed in ONS News.`,
+    # `In our ONS News, we provide ...`.
+    if re.search(r"\b(in|under|see|our|the|its|this|that|from|within)\s*$",
+                 before, re.IGNORECASE):
+        return "cross-reference"
+    # The head sits inside an emphasis run that opened before it, so the run
+    # is a title and the head a word inside it: `Holmes and Co., 1851, *The
+    # Bengal Obituary*, Calcutta.`
+    if inside_foreign_run(before) and re.match(r"[^*_\n]*[*_]", after):
+        return "inside-a-title"
     # A digest of another journal's contents, which the Chinese-numismatics
     # pages set entry by entry with the source page in front: `(p 48)
     # **Obituary: WU Fenggang, aged 80 years, died on 22 February 2000 in
@@ -536,24 +553,48 @@ def classify_bylines(md_lines):
       file is a catalogue, and every candidate in it is table debris for
       `restructure-flattened-md` rather than a byline for this screen.
     """
-    candidates, counts = [], {}
+    def neighbour(row, step):
+        """The nearest non-blank line in one direction."""
+        i = row + step
+        while 0 <= i < len(md_lines):
+            if md_lines[i].strip():
+                return md_lines[i].strip()
+            i += step
+        return ""
+
+    candidates, counts, section = [], {}, {}
+    heading = ""
     for row, line in enumerate(md_lines):
         stripped = line.strip()
         if not stripped.startswith("#"):
             continue
         content = MARKER_RE.sub("", stripped, count=1)
+        if len(re.sub(r"[^A-Za-z0-9]", "", content)) > 6:
+            heading = content      # the section this candidate sits under
         bare = EMPH_RE.sub("", EMPH_RE.sub("", content)).strip()
         dotted = bool(DOTTED_RE.match(bare))
         if not dotted and not PLAIN_RE.match(bare):
             continue
         candidates.append((row, bare, dotted))
+        section[row] = heading
         counts[bare] = counts.get(bare, 0) + 1
 
     plain_n = sum(1 for _, _, dotted in candidates if not dotted)
     out = []
     for row, bare, dotted in candidates:
         plain = bare.replace(".", "")
-        if plain in TABLE_HEAD_WORDS:
+        # A siglum listed under the paper's own key: ONS_179 sets
+        # `## Abbreviations used in the paper` and then `## BN` for
+        # `Bibliotheque Nationale catalogue`.
+        if SIGLA_SECTION_RE.search(section.get(row, "")):
+            out.append(("reject:siglum-section", row, bare))
+        # A cell of a flattened table rather than a line standing alone: the
+        # neighbour is another short heading. ONS_201's die study runs
+        # `# AQ` into `# AQ cGl cG2 cG3`, and ONS_172's catalogue puts
+        # `# OQCL` between `# MOR.2.2` and `# MOR.8.6`.
+        elif any(SHORT_HEAD_RE.match(neighbour(row, s)) for s in (-1, 1)):
+            out.append(("reject:heading-run", row, bare))
+        elif plain in TABLE_HEAD_WORDS:
             out.append(("reject:table-head", row, bare))
         elif plain in SIGLA_WORDS:
             out.append(("reject:siglum", row, bare))
@@ -681,6 +722,12 @@ def apply(md_lines, found, marker, corroborated=()):
         verdict = f["verdict"]
         if verdict.endswith("-OPEN") and (f["row"], f["text"]) in rows:
             f = {**f, "verdict": verdict[: -len("-OPEN")]}
+        elif verdict == "BYLINE" and (f["row"], f["text"]) in rows:
+            f = {**f, "verdict": "BYLINE-CONFIRMED"}
+        elif verdict == "GLUED-MID" and (f["row"], f["text"]) in rows:
+            # Prose on both sides and no run around the head, so the repair
+            # is the two-cut one: the head comes out between them.
+            f = {**f, "verdict": "GLUED-BOTH"}
         elif verdict not in FIXABLE:
             continue
         edits.setdefault(f["row"], f)
@@ -720,6 +767,12 @@ def apply(md_lines, found, marker, corroborated=()):
             block = [f"{marker} {head_text}", "", body]
         elif f["verdict"] == "GLUED-BOTH":
             block = [lead, "", f"{marker} {head_text}", "", body]
+        elif f["verdict"] == "BYLINE-CONFIRMED":
+            # The marker comes off and the initials stay as running text,
+            # which is what the rest of the corpus does with a signature --
+            # seven files set `GPH` that way, e.g. ONS_129's
+            # `...April 25-26, 1992. GPH`.
+            block = [MARKER_RE.sub("", line.lstrip(), count=1).strip()]
         elif f["verdict"] in ("GLUED-RUNHEAD", "GLUED-RUNHEAD-WHOLE"):
             run = next((r for r in EMPH_RUN_RE.finditer(line)
                         if r.start() == f["col"]), None)

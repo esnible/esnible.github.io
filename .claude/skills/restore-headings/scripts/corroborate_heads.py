@@ -60,7 +60,10 @@ MD_DIR = SD.parents[3] / "jons"
 PDF_DIR = pathlib.Path(os.environ.get(
     "ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")).expanduser()
 
-OPEN_VERDICTS = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN")
+# The verdicts the scan can settle. All three are refused by the screen for
+# the same underlying reason -- nothing on the Markdown line proves the head
+# is a head -- and all three become a safe cut once the page says it is.
+OPEN_VERDICTS = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-MID")
 SETTLED = ("CONFIRMED", "OWN-LINE", "CONFIRMED-OCR", "OWN-LINE-OCR")
 OWN_LINE_MAX = 40          # longest a line may be and still read as a head
 GARBAGE_MAX = 40           # control characters in the first pages before the

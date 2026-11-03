@@ -75,10 +75,13 @@ SECTION_HEADS = (
     "Obituaries",
 )
 
+# The trailing guard refuses a hyphen that continues the word: ONS_168 cites
+# `*ONS News-letter* 158, Winter 1998/99`, where `ONS News` is the first half
+# of a hyphenated `Newsletter` and not a section head at all.
 HEAD_RE = re.compile(
     r"(?<![A-Za-z0-9])(?:"
     + "|".join(re.escape(h).replace(r"\ ", r"\s+") for h in SECTION_HEADS)
-    + r")(?![A-Za-z0-9])",
+    + r")(?![A-Za-z0-9]|-[A-Za-z])",
     re.IGNORECASE,
 )
 
@@ -159,6 +162,19 @@ EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 # GLUED-HEADING   the line is already a heading and holds a second head after
 #                 the first, or a marked run after it.
 #                 `## ONS News **From the Editor**`
+# GLUED-RUNHEAD   an emphasis run opens with a standing head and carries on
+#                 with something that is not another standing head -- the
+#                 subject of an obituary, the title of a meeting report:
+#                 `**Obituary David Sellwood** (23 July 1925 - 7 April 2012)
+#                 To be the bearer of sad news ...`. The head becomes a
+#                 heading and the remainder keeps the run it was wearing, on
+#                 a block of its own. Nothing is re-delimited, so none of the
+#                 markup can come apart.
+# GLUED-RUNHEAD-WHOLE
+#                 the same, except that a colon, a dash or a conjunction
+#                 joins the head to what follows, which makes the whole run
+#                 one head: `**Obituary: Omer Diler (1945-2005)**`,
+#                 `**MEMBERS' NEWS AND REQUESTS**`.
 # GLUED-PAIR      one emphasis run holds two standing heads, the first at the
 #                 run's start, and the later JONS issues open a section this
 #                 way over and over: `**ONS NEWS Obituary: Terry Hardaker**
@@ -202,7 +218,7 @@ EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 #                 or a contents listing whose page numbers the reject rules did
 #                 not catch.
 FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING",
-           "GLUED-PAIR")
+           "GLUED-PAIR", "GLUED-RUNHEAD", "GLUED-RUNHEAD-WHOLE")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
           "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-END-INRUN",
           "GLUED-MID", "BYLINE")
@@ -261,6 +277,27 @@ def rejected(line, m):
     # head never carries one.
     if re.match(r"\s*:\s*[*_]{1,3}", after) and OPEN_EMPH_RE.search(before):
         return "runin-label"
+    # A digest of another journal's contents, which the Chinese-numismatics
+    # pages set entry by entry with the source page in front: `(p 48)
+    # **Obituary: WU Fenggang, aged 80 years, died on 22 February 2000 in
+    # Beijing.**`, `(p 40) **Obituary - LIU Jucheng** died on 7 October
+    # 2001`. The bold is a run-in label on a digest entry, not a section
+    # head, and the `(p NN)` in front is what says so.
+    # The emphasis delimiters are allowed to fall anywhere inside the
+    # reference, because the OCR scatters them: ONS_174 reads
+    # `**(p** 40) **Obituary - LIU Jucheng**`, between neighbours that read
+    # `(p41) **Gansu Numismatic Society ...**` and `(p 43) **New standards
+    # for grading antiquities**`.
+    if re.search(r"\([\s*_]*p+\.?[\s*_]*\d{1,4}[\s*_]*\)[\s*_]*$",
+                 before, re.IGNORECASE):
+        return "digest-entry"
+    # A contents listing that announces itself on its own line rather than
+    # under a heading: `**CONTENTS OF JOURNAL 189** ONS News, including
+    # Cologne, Leiden and London meetings New and recent publications ...`.
+    # Eight issues set their contents this way, and every head named in one
+    # is a reference to a section rather than the section's own head.
+    if re.search(r"contents\s+of\b", before, re.IGNORECASE):
+        return "contents-line"
     # A contents listing: the entry ends in its page number. `Obituary - Lance
     # Dane (S. Bhandare) 1`, `ONS News - meetings, members' news, ... etc 2`.
     if re.search(r"[\s.,;)]\d{1,3}[\s.,]*$", line.rstrip()):
@@ -315,13 +352,19 @@ def _closes_sentence(text):
 
 
 def classify_line(line):
-    """[(verdict, match, base, note), ...] for one Markdown line.
+    """[(verdict, match, col, note), ...] for one Markdown line.
 
-    `base` is where `content` starts inside `line`, so a match's own offset
-    can be turned back into a column of the file. Getting that wrong is how
-    an early version cut `## ONS News Obituaries` into `## ONS Ne` plus
-    `### ws Obituaries`: the match was found in the line with its `## `
-    stripped, and the column was then used against the line with it still on.
+    `col` is an absolute column of `line`, already past the leading
+    whitespace and any `#` marker. Most verdicts anchor it on the head
+    itself; `GLUED-PAIR` and `GLUED-RUNHEAD` anchor it on the emphasis run
+    they are about, because that is what their repair re-reads.
+
+    Getting this wrong has cost twice. Measuring the column against the line
+    with its `## ` stripped and then applying it to the line with the marker
+    still on cut `## ONS News Obituaries` into `## ONS Ne` plus
+    `### ws Obituaries`. Returning a base for the caller to add the head's
+    offset to, then passing a run-anchored column through the same addition,
+    counted the head's offset twice and silently applied nothing at all.
     """
     stripped = line.strip()
     if not stripped or stripped.startswith(SKIP_LINE):
@@ -366,7 +409,7 @@ def classify_line(line):
     for m in matches:
         why = rejected(content, m)
         if why:
-            found.append((f"reject:{why}", m, base, ""))
+            found.append((f"reject:{why}", m, base + m.start(), ""))
             continue
         before = content[: m.start()]
         after = content[m.end():]
@@ -383,7 +426,7 @@ def classify_line(line):
             # `# CONTENTS OF JOURNAL 208 Page Obituaries for Nicholas Rhodes
             # New Secretary General ONS meeting ...`
             if len(prose_before) > HEADING_PROSE:
-                found.append(("GLUED-MID", m, base, "inside a long heading"))
+                found.append(("GLUED-MID", m, base + m.start(), "inside a long heading"))
                 continue
             # What sits between the two heads decides whether they are two
             # heads or one. Nothing, or an emphasis delimiter, and `pdfmd` ran
@@ -392,10 +435,10 @@ def classify_line(line):
             # where a cut would leave a dangling `and`.
             gap = content[matches[matches.index(m) - 1].end(): m.start()]
             if re.sub(r"[^A-Za-z0-9]", "", gap):
-                found.append(("GLUED-HEADING-JOINED", m, base,
+                found.append(("GLUED-HEADING-JOINED", m, base + m.start(),
                               f"joined by {gap.strip()!r}"))
                 continue
-            found.append(("GLUED-HEADING", m, base, ""))
+            found.append(("GLUED-HEADING", m, base + m.start(), ""))
             continue
         prose_before = re.sub(r"[^A-Za-z0-9]", "", before)
         prose_after = re.sub(r"[^A-Za-z0-9]", "", after)
@@ -407,14 +450,48 @@ def classify_line(line):
         opened = bool(OPEN_EMPH_RE.search(before))
         closed = bool(CLOSE_EMPH_RE.match(after))
         if opened and not closed:
-            found.append(("GLUED-COMPOUND", m, base,
+            # The run opens with the head and carries on. What follows the
+            # head inside the run decides the repair, and the scan says the
+            # two shapes really are different: ONS_211 page 1 sets
+            # `Obituary` on its own line with `David Sellwood (23 July 1925 -
+            # 7 April 2012)` indented below it, while ONS_218 page 1 sets
+            # `Obituary: Lewis Arthur Shaw 1921 - 2013` as a single line.
+            # Find the run that contains the head by looking for it, not by
+            # arithmetic on the delimiter's length: `** Obituary ...**` puts
+            # whitespace between the two, and subtracting the delimiter width
+            # from the head's position then lands in the middle of nothing.
+            run = next((r for r in EMPH_RUN_RE.finditer(content)
+                        if r.start(2) <= m.start() and m.end() <= r.end(2)), None)
+            rest = (run.group(2)[m.end() - run.start(2):] if run else "")
+            lead_in = rest.lstrip()[:1]
+            if not run or not rest.strip():
+                pass
+            elif lead_in == ",":
+                # Mid-sentence: `Gupta, P. L.: *Obituary, Charles Hubert
+                # Biddulph,* Journal of the Numismatic Society of India` is a
+                # citation, not a head.
+                found.append(("GLUED-COMPOUND", m, base + m.start(),
+                              "the head runs on into a sentence"))
+                continue
+            elif lead_in in ":-–—" or re.match(
+                    r"\s*(and|AND|&)\b", rest):
+                # A colon, a dash or a conjunction keeps the run together as
+                # one head: `**Obituary: Omer Diler (1945-2005)**`,
+                # `**MEMBERS' NEWS AND REQUESTS**`.
+                found.append(("GLUED-RUNHEAD-WHOLE", m,
+                              base + run.start(), ""))
+                continue
+            else:
+                found.append(("GLUED-RUNHEAD", m, base + run.start(), ""))
+                continue
+            found.append(("GLUED-COMPOUND", m, base + m.start(),
                           "shares an emphasis run with the text after it"))
             continue
         if not prose_after:
             if not prose_before:
                 continue
             if inside_foreign_run(before):
-                found.append(("GLUED-END-INRUN", m, base,
+                found.append(("GLUED-END-INRUN", m, base + m.start(),
                               "the run around the head opened earlier"))
                 continue
             found.append(("GLUED-END" if _closes_sentence(before)
@@ -428,16 +505,16 @@ def classify_line(line):
             # behind; cutting there silently deleted it. Only markup and
             # whitespace may be dropped.
             if re.sub(r"[*_\s]", "", before):
-                found.append(("GLUED-RUNIN-PREFIX", m, base,
+                found.append(("GLUED-RUNIN-PREFIX", m, base + m.start(),
                               f"{before.strip()!r} sits in front of the head"))
                 continue
-            found.append(("GLUED-RUNIN", m, base, ""))
+            found.append(("GLUED-RUNIN", m, base + m.start(), ""))
             continue
         if opened and closed:
             found.append(("GLUED-BOTH" if _closes_sentence(before)
                           else "GLUED-BOTH-OPEN", m, base, ""))
             continue
-        found.append(("GLUED-MID", m, base, ""))
+        found.append(("GLUED-MID", m, base + m.start(), ""))
     return found
 
 
@@ -513,15 +590,14 @@ def analyse(md_lines):
         if MARKER_RE.match(line.strip()):
             in_contents = bool(CONTENTS_HEAD_RE.search(line))
         if in_contents:
-            for verdict, m, base, note in classify_line(line):
+            for verdict, m, col, note in classify_line(line):
                 if not verdict.startswith("reject:"):
                     found.append({"verdict": "reject:contents-section",
-                                  "row": row, "col": base + m.start(),
+                                  "row": row, "col": col,
                                   "text": m.group(0), "note": "", "line": line})
             continue
-        for verdict, m, base, note in classify_line(line):
-            found.append({"verdict": verdict, "row": row,
-                          "col": base + m.start(),
+        for verdict, m, col, note in classify_line(line):
+            found.append({"verdict": verdict, "row": row, "col": col,
                           "text": m.group(0), "note": note, "line": line})
     for verdict, row, bare in classify_bylines(md_lines):
         found.append({"verdict": verdict, "row": row, "col": 0,
@@ -644,6 +720,30 @@ def apply(md_lines, found, marker, corroborated=()):
             block = [f"{marker} {head_text}", "", body]
         elif f["verdict"] == "GLUED-BOTH":
             block = [lead, "", f"{marker} {head_text}", "", body]
+        elif f["verdict"] in ("GLUED-RUNHEAD", "GLUED-RUNHEAD-WHOLE"):
+            run = next((r for r in EMPH_RUN_RE.finditer(line)
+                        if r.start() == f["col"]), None)
+            if run is None:          # the line moved under us; re-screen
+                out.append(line)
+                applied -= 1
+                continue
+            delim, inner = run.group(1), run.group(2)
+            lead_txt = line[: run.start()].rstrip()
+            tail_txt = line[run.end():].lstrip()
+            if f["verdict"] == "GLUED-RUNHEAD-WHOLE":
+                parts = [lead_txt, f"{marker} {inner.strip()}", tail_txt]
+            else:
+                hm = head_matches(inner)[0]
+                parts = [lead_txt, f"{marker} {inner[: hm.end()].strip()}",
+                         (f"{delim}{inner[hm.end():].strip()}{delim}"
+                          + (f" {tail_txt}" if tail_txt else ""))]
+            block = []
+            for part in parts:
+                if not part.strip():
+                    continue
+                if block:
+                    block.append("")
+                block.append(part)
         elif f["verdict"] == "GLUED-PAIR":
             # `col` is where the run opens. Re-find it, split its content at
             # the second head, and give the remainder of the run to the

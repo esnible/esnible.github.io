@@ -75,13 +75,15 @@ SECTION_HEADS = (
     "Obituaries",
 )
 
-# The trailing guard refuses a hyphen that continues the word: ONS_168 cites
-# `*ONS News-letter* 158, Winter 1998/99`, where `ONS News` is the first half
-# of a hyphenated `Newsletter` and not a section head at all.
+# The trailing guard refuses a hyphen that continues the word, whether the
+# rest follows on the same line or over a line break: ONS_168 cites
+# `*ONS News-letter* 158, Winter 1998/99`, and ONS_112's references list
+# ends a line `...The Trilingual coins, ONS News-` with `letter 85-86,
+# Aug.-Oct. 1983` beginning the next. Neither is a section head.
 HEAD_RE = re.compile(
     r"(?<![A-Za-z0-9])(?:"
     + "|".join(re.escape(h).replace(r"\ ", r"\s+") for h in SECTION_HEADS)
-    + r")(?![A-Za-z0-9]|-[A-Za-z])",
+    + r")(?![A-Za-z0-9]|-[A-Za-z]|-\s*$)",
     re.IGNORECASE,
 )
 
@@ -224,8 +226,7 @@ EMPH_RUN_RE = re.compile(r"(?<![*_])([*_]{1,3})([^*_\n]+?)\1(?![*_])")
 FIXABLE = ("GLUED-END", "GLUED-RUNIN", "GLUED-BOTH", "GLUED-HEADING",
            "GLUED-PAIR", "GLUED-RUNHEAD", "GLUED-RUNHEAD-WHOLE")
 REVIEW = ("GLUED-END-OPEN", "GLUED-BOTH-OPEN", "GLUED-COMPOUND",
-          "GLUED-HEADING-JOINED", "GLUED-RUNIN-PREFIX", "GLUED-END-INRUN",
-          "GLUED-MID", "BYLINE")
+          "GLUED-RUNIN-PREFIX", "GLUED-END-INRUN", "GLUED-MID", "BYLINE")
 # Longest run of prose that may precede a head inside a heading line before the
 # line is read as a flattened contents page rather than a heading.
 HEADING_PROSE = 40
@@ -452,7 +453,13 @@ def classify_line(line):
             # where a cut would leave a dangling `and`.
             gap = content[matches[matches.index(m) - 1].end(): m.start()]
             if re.sub(r"[^A-Za-z0-9]", "", gap):
-                found.append(("GLUED-HEADING-JOINED", m, base + m.start(),
+                # Not a defect. ONS_197 to ONS_204 print `Lists Received and
+                # Auction News` as one heading line, which is the
+                # publisher's own combined head -- confirmed on ONS_197
+                # page 3, where it is set bold on a single line above the
+                # numbered list, and in ONS_202's text layer. The Markdown
+                # is right and a cut would leave a dangling `and`.
+                found.append(("reject:combined-head", m, base + m.start(),
                               f"joined by {gap.strip()!r}"))
                 continue
             found.append(("GLUED-HEADING", m, base + m.start(), ""))
@@ -512,7 +519,7 @@ def classify_line(line):
                               "the run around the head opened earlier"))
                 continue
             found.append(("GLUED-END" if _closes_sentence(before)
-                          else "GLUED-END-OPEN", m, base, ""))
+                          else "GLUED-END-OPEN", m, base + m.start(), ""))
             continue
         if not prose_before:
             # The run-in repair drops whatever sits in front of the head,
@@ -529,7 +536,7 @@ def classify_line(line):
             continue
         if opened and closed:
             found.append(("GLUED-BOTH" if _closes_sentence(before)
-                          else "GLUED-BOTH-OPEN", m, base, ""))
+                          else "GLUED-BOTH-OPEN", m, base + m.start(), ""))
             continue
         found.append(("GLUED-MID", m, base + m.start(), ""))
     return found
@@ -641,7 +648,14 @@ def analyse(md_lines):
             found.append({"verdict": verdict, "row": row, "col": col,
                           "text": m.group(0), "note": note, "line": line})
     for verdict, row, bare in classify_bylines(md_lines):
-        found.append({"verdict": verdict, "row": row, "col": 0,
+        # The column points at the initials themselves, past the marker, so
+        # every finding keeps the same contract: line[col:col+len(text)] is
+        # the text. The byline repair does not use it, but a column that
+        # lies is a trap -- a bare `0` here hid the `-OPEN` column bug from
+        # the invariant check that found it.
+        col = md_lines[row].find(bare)
+        found.append({"verdict": verdict, "row": row,
+                      "col": col if col >= 0 else 0,
                       "text": bare, "note": "", "line": md_lines[row]})
     found.sort(key=lambda f: (ORDER.index(f["verdict"])
                               if f["verdict"] in ORDER else len(ORDER),

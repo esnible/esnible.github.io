@@ -85,14 +85,23 @@ text at a quarter of the tokens.
 
 4. **Also scan for OCR errors cspell will NOT catch.** Spellcheck only flags non-words. Many OCR errors are real words used wrongly, or punctuation/whitespace glitches. Do a targeted re-read for the patterns in "Beyond spellcheck" below.
 
-   Two of those classes have screens, and both read the Markdown alone — no render, no PDF, milliseconds each. Run them before the re-read, because each is invisible to cspell *and* to the five rendering screens in `docs/screens.tsv`:
+   Three of those classes have screens, and all three read the Markdown alone — no render, no PDF, milliseconds each. Run them before the re-read, because each is invisible to cspell *and* to the five rendering screens in `docs/screens.tsv`:
 
    ```
    python3 .claude/skills/fix-ocr/scripts/detect_dropped_punct.py scan "<path>"
    python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py scan "<path>"
+   python3 .claude/skills/fix-ocr/scripts/detect_presentation_forms.py scan <STEM>
    ```
 
    The first says whether this file is one of the 42 that lost their sentence-ending periods wholesale (see that section below); the second finds the bare `^` the quote screen cannot match. Neither writes anything: both report candidates for a render to settle, which is the only evidence Hard constraints allow.
+
+   The third is different, and is the one screen in this skill allowed to write on its own evidence. It folds Arabic Presentation Forms — `U+FB50–FDFF`, `U+FE70–FEFF` — back to ordinary Arabic. Those codepoints encode a letter together with its contextual shape, which correct Arabic never needs; the publisher's typesetting software emits them into the PDF text layer and `pdfmd` copies them faithfully. **This is not OCR**: every affected file is born-digital and ONS_186 or later, and none of the ~190 scanned-era files has one. `apply` changes no word and makes no judgement — it replaces a letter's compatibility encoding with the letter, and asserts that the text with all Arabic removed is byte-identical before and after. Because every new issue is born-digital, new issues are the ones that keep producing these, so run it on each new file rather than treating the corpus sweep as finished:
+
+   ```
+   python3 .claude/skills/fix-ocr/scripts/detect_presentation_forms.py apply <STEM>
+   ```
+
+   Do **not** reach for `unicodedata.normalize("NFKC", text)` instead. It folds the same characters correctly and also turns `½` into `1⁄2` — which "Currency symbols that are not currency" below exists to *restore* — and the corpus's 1,788 Unicode superscripts into digits.
 
    **Read the suspects off the scan, all at once.** The PDF's own text layer is a second OCR of the same page, independent of `pdfmd`'s, and where the two disagree is where the garble is. `garble_tiles.py` cuts every such word, plus a word of context either side, out of the page image at the scan's own pixels and packs the tiles onto one or two labelled sheets, so a whole file is two or three thousand image tokens instead of a render per word:
 

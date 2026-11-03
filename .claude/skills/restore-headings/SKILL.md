@@ -313,6 +313,32 @@ A `BYLINE`'s own text is two to four characters, far too little for a fuzzy
 word match, so its anchor is the line above it -- the tail of the article the
 initials sign.
 
+### What the last two buckets turned out to be
+
+**`GLUED-END-OPEN` was right every time.** All 12 that survived the
+text-layer and OCR routes were read on the page, and all 12 are heads --
+ONS_150, 162, 164, 167, 186, 187, 218, 224 (twice), 228, 229 and 230. The
+verdict exists because the prose before the head does not close a sentence,
+and in this corpus that turns out to mean the sentence ends in an ISBN, a
+price, an e-mail address, a row of asterisks, a contributor's name or a
+`---` -- not that the head is in doubt. None of them could be settled from a
+text layer: a finding is `-OPEN` largely because the PDF's own text layer
+glued the head too, so `locate_in_pdf` has no set-apart line to match. Crops
+anchored on the finding's own words settled all 12.
+
+One of them was not a head at all and is now rejected by rule: ONS_112's
+references list ends a line `...The Trilingual coins, ONS News-` with
+`letter 85-86, Aug.-Oct. 1983` beginning the next. The head pattern already
+refused `News-letter` written on one line; it now refuses the hyphen at a
+line break too.
+
+**`GLUED-HEADING-JOINED` was wrong every time, and is no longer a finding.**
+All five were `## Lists Received and Auction News`, and ONS_197 page 3 sets
+exactly that, bold, on a single line above the numbered list; ONS_202's text
+layer has it the same way. The publisher combined the two sections under one
+head in that era. The Markdown is right, so the shape is now
+`reject:combined-head` rather than something for a reader to look at.
+
 ### Checking the findings against the scan
 
 Every one of the 45 findings `fix` would write across eleven files --

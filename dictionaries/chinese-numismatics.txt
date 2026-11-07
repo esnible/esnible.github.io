@@ -2854,3 +2854,9 @@ Nishinomiya
 Ohkubo
 Oshima
 Sesshu
+
+# ONS_162 — "Da Zhong" and "Hung Wu" coins with the "jing" mintmark: province
+# and author names
+Hupei
+Xiankang
+Kallman

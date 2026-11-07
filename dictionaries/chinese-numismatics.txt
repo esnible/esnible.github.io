@@ -2849,3 +2849,8 @@ Xianqing
 # ONS_150 — Sandrock 'Ancient Chinese Coin Money' review: denominations and places
 tiao
 Yangtse
+# ONS_151 — Hakodate porcelain tokens: Japanese places and names
+Nishinomiya
+Ohkubo
+Oshima
+Sesshu

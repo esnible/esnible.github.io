@@ -663,9 +663,33 @@ After cspell-driven fixes, re-scan the file for patterns cspell cannot detect be
 ```
 grep -nE ' amd | tbe | tne | arid | Mc\. [A-Z]| am [aeiou]| 1n | 0f ' "<path>"
 grep -nE '[a-z] m [a-z]{2,}' "<path>"
+grep -nE '\b(ot|ol|tor)\b' "<path>"
+grep -nE '(^|[^@.[:alnum:]])com([^.[:alnum:]/]|$)' "<path>"
 ```
 
 (`arid` for `and`, `Mc.` for `Mr.` before a surname, `1n`/`0f` for `in`/`of`.)
+
+**`f` read as `t` or `l`: `ot`/`ol` for `of`, `tor` for `for`.** The single
+largest real-word class in this corpus and invisible to cspell, which has all
+four in its bundled dictionaries -- `tor` is a rocky peak, `com` an
+abbreviation. ONS_162 carried 37 `ot`, 11 `ol` and 12 `tor` through a full
+fix-ocr pass without one of them surfacing. Every instance in that file was
+`of` or `for`.
+
+`com` belongs with them -- it is `coin` -- but only away from an address:
+ten of ONS_162's twenty were `.com` or `@...com`. Match it as
+`(?<![@.\w])\bcom\b(?![.\w/])`.
+
+**A digit inside a short word.** `f1g` for `fig`. cspell skips any token
+containing a digit, so a one-character substitution inside a word is silent
+however obvious it looks. Cheap to screen:
+
+```
+grep -nE '\b[a-z]{1,4}[0-9][a-z]{1,4}\b' "<path>"
+```
+
+ONS_162 had two hits and both were real. Expect few, and expect them to have
+survived everything else.
 
 **A standalone `m` between two words is `in`.** It is the corpus's commonest
 real-word confusion after `modem`, and it hides from everything: cspell has

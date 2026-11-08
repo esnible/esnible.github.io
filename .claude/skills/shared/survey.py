@@ -80,6 +80,9 @@ SCREENS = {
     "markers": {
         "rows": ["fix-ocr/scripts/detect_marker_noise.py", "rows", "@md"],
     },
+    "glyphs": {
+        "rows": ["fix-ocr/scripts/detect_confused_glyphs.py", "rows", "@stem"],
+    },
 }
 
 

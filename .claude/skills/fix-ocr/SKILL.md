@@ -691,6 +691,110 @@ grep -nE '\b[a-z]{1,4}[0-9][a-z]{1,4}\b' "<path>"
 ONS_162 had two hits and both were real. Expect few, and expect them to have
 survived everything else.
 
+### A diacritic read as a capital, a digit read as a letter
+
+```
+python3 .claude/skills/fix-ocr/scripts/detect_confused_glyphs.py scan <STEM>
+python3 .claude/skills/fix-ocr/scripts/detect_confused_glyphs.py rows <STEM> > rows.tsv
+python3 .claude/skills/shared/survey.py show --screen glyphs      # the worklist
+```
+
+Five shapes with one cause: the OCR read a diacritic, a digit, a bracket or a
+dash as something else, and landed somewhere no spellcheck can follow. This is
+the `glyphs` row of `docs/screens.tsv`; it reads the Markdown alone, so it
+costs milliseconds and needs no render. **15,180 findings across 199 files**,
+and on ONS_162 — a file that had already been through a full fix-ocr pass —
+61 of its 67 `CAPITAL` hits were real defects that every other screen had
+walked past.
+
+- **`CAPITAL`** — a capital letter inside a lowercase word. Nothing in
+  English prose puts a capital after a lowercase letter, so the *shape* is the
+  finding, and that is what makes it catch two unrelated defects at once. The
+  detail says which is likelier. `diacritic?` is a macron the OCR read as a
+  letter: in ONS_162 **every `ī` came through as `T` and every `ū` as `Q`** —
+  `al-JalTl` for `al-Jalīl`, `MansQr` for `Mansūr`, `UdgTr` for `Udgīr`,
+  `falQs` for `falūs`, `ghazJ` for `ghāzī`. `hyphen?` is a hyphen read away,
+  leaving a whole word standing after the capital — `IndoAfghan`,
+  `nonCeylonese`, `preAurangzeb`, `alMalik`. cspell flags some of the first
+  kind and **none** of the second, because `alMalik` is not a word it has an
+  opinion about and `IndoAfghan` tokenises into two it likes.
+
+  The `T`-for-`ī` confusion is not one file's accident. ONS_168 carries 1,547
+  findings of it (`AlT` 322 times, `TegTn` 314, `IbrahTm` 97), ONS_165 1,445,
+  and the whole `ONS_16*`-`ONS_20*` run is affected. The per-1000-word rate is
+  the verdict: the corpus median is 0.16, the 90th percentile 2.20, and a file
+  above about 2 has a *systematic* diacritic confusion rather than a few spots.
+
+  **A render settles which diacritic, and it is worth asking for.** The OCR
+  normalises inconsistently: ONS_162 printed the same name as `MansQr` four
+  times and `Mansür` sixteen, and the page turned out to print `ū` in all
+  twenty. Fixing only the flagged four would have left the file with two
+  spellings of one name — so when a render shows the mark, apply it to every
+  occurrence in that article, not just the ones the screen flagged.
+
+- **`NUMERIC`** — a token of digit-lookalike letters sitting where only a
+  number belongs. **This is the answer to "the garble is a dictionary word".**
+  `Ilaq 401/1010-1 Oil` is `1010-1011`; `Oil` is in every English dictionary
+  and no spellcheck will ever flag it, in this file or any other. What flags
+  it is not the word but the **slot**: stop asking *is this a word* and ask
+  *is a number the only thing that can go here*. Two sub-rules:
+
+  - a token mixing digits with letters that are **only** digit-lookalikes
+    (`OoIlJiSsBZqg`) — `I0I0-I012`, `J971`, `199S`, `8S-89`, `40I`. High
+    precision, no slot test needed. The lookalike set is deliberately tight:
+    adding `T`, `D` or `A` turns every British postcode (`CT21 6DD`) and half
+    the countermark table (`A12`, `2xAB`) into a finding.
+  - a token of **nothing but** lookalike letters, which needs the slot —
+    adjacent to a digit run, and not one of the ordinary English words that
+    legitimately follow a number (`is`, `in`, `ii`, `gg`, `oz`). `Oil` lives
+    here.
+
+  Decoding the token to digits gives the candidate reading, and one shape
+  corroborates itself: **a range whose right side is shorter than its left,
+  with the candidate directly after it.** `1010-1` + `Oil`→`011` rebuilds
+  `1010-1011` exactly, and the screen says `(range completes)` when it does.
+  That is the strongest evidence available without opening the page — but it
+  is still a candidate, and Hard constraints still want the render.
+
+- **`RUN`** — an undivided digit run a lost range dash welded together:
+  `AD 17191748` for `AD 1719-1748`, `monet 388404 gg.` for `388-404`,
+  `(10151042 AD)` for `(1015-1042 AD)`, `struck in 163839` for `1638-39`. The
+  screen reports the plausible splits (equal halves ascending, or a two-digit
+  continuation) and suppresses lines carrying a telephone, fax, ISBN or price
+  context, where long digit runs mean nothing of the kind. Every one of
+  ONS_162's six was real. On the scans these are almost always a hyphen that
+  fell at a **line break**, which is why the OCR lost it and why the render
+  shows it plainly.
+
+- **`WELD`** — a number and a word with the space gone: `726-727in Samarqand`,
+  `(AH1068-1118`, `the 2cash denomination` (which is `2-cash`). Units and page
+  counts are deliberately **not** in the word list: this corpus writes `33mm`,
+  `182p.` and `3.5gms` unspaced as a matter of course. Expect a fair number of
+  these to be the typist's own, not the OCR's — ONS_162's `727in`, `991AH` and
+  `AH1068` are all printed solid on the page.
+
+- **`PAREN`** — a bracket standing in for a letter: `Shaha)T` for `Shahajī`,
+  `t)pe` for `type`, `b)een` for `been`, `San)ar` for `Sanjar`. A bracket the
+  token or the line balances is somebody's real parenthesis and is skipped —
+  `mint(s)`, and ONS_162's `Shan(TiVaRa)ma`, which is printed exactly so. The
+  screen also reads the other direction: a line with an unclosed `(` and a
+  token ending in `J`, `l`, `I` or `j` is a bracket read as a letter, which is
+  how `(1920 - 1950J` turns back into `(1920 - 1950)`.
+
+**Retire a finding the scan shows is real**, with the same inline marker
+`detect_marker_noise.py` uses, so the screen stops asking and the next pass
+does not read the same spot twice:
+
+```
+reads *JaGa* or *JaGaDa.* <!-- glyph-ok JaGaDa,TiVaRa,SuGa,JaGa reason=the
+Kadamba article transliterates Telugu-Kanarese legends with interior capitals
+on purpose; confirmed on the scan beside the article's own gloss -->
+```
+
+`glyph-ok` settles every occurrence of the tokens it names on its own line,
+and a label (`glyph-ok WELD`) settles the whole class there. Name the token,
+not just the class, when only one word on the line is genuine.
+
 **A standalone `m` between two words is `in`.** It is the corpus's commonest
 real-word confusion after `modem`, and it hides from everything: cspell has
 no opinion on a one-letter token, and `rn`/`m` substitution never enters into
@@ -846,8 +950,16 @@ After all edits and dictionary updates:
    ```
    scripts/detect_mirrored_text.py scan "<path>"
    scripts/detect_quote_pairs.py scan "<path>"
+   scripts/detect_confused_glyphs.py scan <STEM>
    grep -nE '¥|€|®' "<path>" | grep -v '<!--'
    ```
+
+   `detect_confused_glyphs.py` exits non-zero while anything is outstanding,
+   so it doubles as the gate: a clean exit means no mid-word capital, no
+   letter-for-digit, no welded range and no bracket-for-a-letter is left
+   unsettled, either fixed or carrying a `glyph-ok` marker that says the scan
+   prints it. It is the one screen here that catches defects cspell cannot
+   see *because they are words* — see "A diacritic read as a capital" above.
 
    `detect_quote_pairs.py` reports five kinds of hit and none is settled
    from the text: a `QUOTES` span says the opener and closer disagree, a

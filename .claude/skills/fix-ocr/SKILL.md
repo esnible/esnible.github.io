@@ -662,9 +662,23 @@ After cspell-driven fixes, re-scan the file for patterns cspell cannot detect be
 
 ```
 grep -nE ' amd | tbe | tne | arid | Mc\. [A-Z]| am [aeiou]| 1n | 0f ' "<path>"
+grep -nE '[a-z] m [a-z]{2,}' "<path>"
 ```
 
-(`arid` for `and`, `Mc.` for `Mr.` before a surname, `1n`/`0f` for `in`/`of`.) Every hit needs judgment — `arid` is also a real word — so check each in context before editing. Extend this list when a new real-word confusion surfaces in the corpus.
+(`arid` for `and`, `Mc.` for `Mr.` before a surname, `1n`/`0f` for `in`/`of`.)
+
+**A standalone `m` between two words is `in`.** It is the corpus's commonest
+real-word confusion after `modem`, and it hides from everything: cspell has
+no opinion on a one-letter token, and `rn`/`m` substitution never enters into
+it. 530 instances across 41 files. ONS_162 alone had 13 -- `a brief pause m
+the campaign`, `diamond mines m its territories`, `the name selim m the last
+line`.
+
+It stays in this grep list rather than going into `flagWords` because two of
+those 13 were genuine and a blanket rule would have destroyed both: `the
+uncial m with two dots within it`, where the letter itself is the subject,
+and `situated at 2457 m above sea level`, where it is metres. Check what sits
+either side -- a unit or a quoted letterform is real, anything else is `in`. Every hit needs judgment — `arid` is also a real word — so check each in context before editing. Extend this list when a new real-word confusion surfaces in the corpus.
 
 Run the currency grep too, excluding the HTML comments that quote bad OCR on purpose:
 
@@ -688,6 +702,42 @@ grep -nE '\\[a-z]+' "<path>"
 ```
 
 A backslash immediately before a lowercase letter is never a valid Markdown escape (CommonMark only allows escaping punctuation, e.g. `\*`, `\_`, `\|`) and never occurs elsewhere in this corpus, so every hit is OCR noise — commonly a misread diacritic, broken italic/reference marker, or part of a longer garbled run of letters and punctuation. Delete the backslash itself outright. Judge the token(s) it's embedded in the same way as any other garble: fix what you can read, and if the surrounding run is garbled beyond repair, leave it and report it (subject to the 12-character deletion limit in Hard constraints) rather than inventing a reading.
+
+**A word split in two, where both halves are innocent.** `Bacharach, J L and
+Aw ad H E` is `Bacharach, J.L. and Awad, H.E.` -- and nothing above sees it.
+cspell passes `Aw` and `ad` because both are words; the split leaves no
+trace character; and the surrounding reference reads plausibly enough that a
+re-read slides over it. `clean-ocr-formatting` owns the obvious form
+(`Numi smat i c`), but not the two-token case.
+
+What does find it is the test this skill already mandates for unknown
+proper nouns -- *does the file spell it correctly somewhere else?* -- applied
+to pairs rather than to cspell's hit list. ONS_162 spells `Awad` correctly
+sixty lines earlier.
+
+```
+python3 - "<path>" <<'EOF'
+import re, sys
+body = re.sub(r'<!--.*?-->', '', open(sys.argv[1]).read(), flags=re.S)
+known = {w.lower() for w in re.findall(r'\b[A-Za-z]{4,}\b', body)}
+seen = set()
+for m in re.finditer(r'(?=\b([A-Za-z]{1,4}) ([A-Za-z]{1,4})\b)', body):
+    a, b = m.groups()
+    if len(a + b) >= 4 and (a + b).lower() in known and (a, b) not in seen:
+        seen.add((a, b))
+        print(f"{a} {b}  ->  {a+b}")
+EOF
+```
+
+**The lookahead is load-bearing.** With an ordinary consuming match, `and Aw`
+is tested first, eats the boundary, and `Aw ad` is never considered at all --
+which is exactly how this was missed the first time. Zero-width matching lets
+the candidate pairs overlap.
+
+Expect around twenty candidates a file and only a handful real: `may be`,
+`can not`, `web site`, `a part` are ordinary English that happens to join
+into another word, and `The re` fires on every `The reading`. Judge each.
+ONS_162's real hits were `Aw ad` -> `Awad` and `T his` -> `This`.
 
 Then re-read for the patterns grep can't pin down:
 

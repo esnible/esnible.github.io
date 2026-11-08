@@ -143,6 +143,24 @@ def cmd_run(args):
     return 0
 
 
+# The order a single file is worked in. Structure first: a list whose labels
+# the OCR destroyed cannot be numbered until it is split, and a footnote
+# marker buried in foreign-script garble is invisible until the garble goes.
+# Content last, and punctuation last of all -- punct_candidates.py --apply is
+# a run-once pass, so the structure should be settled before it is spent.
+ORDER = ["tables", "lists", "headings", "figures",
+         "quotes", "markers", "punctuation"]
+PHASE = {
+    "tables":      "structure",
+    "lists":       "structure",
+    "headings":    "structure",
+    "figures":     "structure",
+    "quotes":      "content",
+    "markers":     "content (after transcribe-foreign-script)",
+    "punctuation": "content -- run last, --apply is run-once",
+}
+
+
 def cmd_show(args):
     table = load()
     if not table:
@@ -152,14 +170,28 @@ def cmd_show(args):
         rows = [r for r in rows if r["screen"] == args.screen]
     if args.file:
         rows = [r for r in rows if r["file"] == args.file]
-    rows.sort(key=lambda r: (-int(r["rows"]), -int(r["batch"]), r["file"]))
+    if args.file and not args.screen:
+        # One file is worked in dependency order, not worst-first: structure
+        # before content. An unsplit list hides its own labels from the
+        # markers screen, and foreign-script garble hides the markers inside
+        # it, so running fix-ocr first means doing it twice. See the "Order
+        # of operations" section of docs/skill-list.md for why.
+        rows.sort(key=lambda r: (ORDER.index(r["screen"]) if r["screen"] in ORDER
+                                 else len(ORDER), r["file"]))
+    else:
+        rows.sort(key=lambda r: (-int(r["rows"]), -int(r["batch"]), r["file"]))
     print(f"{'file':22} {'screen':9} {'render':>6} {'batch':>6}  measured")
     for r in rows[:args.top]:
+        note = f"  <- {PHASE[r['screen']]}" if args.file and not args.screen \
+               and r["screen"] in PHASE else ""
         print(f"{r['file']:22} {r['screen']:9} {r['rows']:>6} {r['batch']:>6}"
-              f"  {r['measured']}")
+              f"  {r['measured']}{note}")
     print(f"-- {len(rows)} row(s) with work; "
           f"{sum(int(r['rows']) for r in rows)} need a render, "
           f"{sum(int(r['batch']) for r in rows)} are batchable")
+    if args.file and not args.screen and rows:
+        print("-- work top to bottom: structure, then script, then content "
+              "(docs/skill-list.md, \"Order of operations\")")
     return 0
 
 

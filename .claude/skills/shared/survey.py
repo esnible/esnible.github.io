@@ -16,12 +16,23 @@ screens the table says have something on it.
     survey.py run --all                  # fill in what is missing, resumably
     survey.py run ONS_181 --refresh      # re-measure one file
     survey.py show --screen figures      # the worklist for one screen
-    survey.py show --file ONS_181        # what is outstanding on one file
+    survey.py show --file ONS_181        # outstanding on one file, in the
+                                         #   order the skills go in
+    survey.py show --stale               # rows their file has outrun
+    survey.py run --stale                # re-measure just those
 
 The table is `docs/screens.tsv`: one row per file and screen, with the count
 a render has to settle, the count a batch can write by itself, and the date
 it was measured. A screen's findings move when a file is repaired, so a row
 is only as true as its date -- `--refresh` after working a file.
+
+Which is easy to forget, and the table does not say so on its face. `--stale`
+compares each row's date against the newest commit touching that file, so the
+rows nobody refreshed can be found without re-measuring anything: at the time
+of writing, 129 of 264 files had been edited since they were last measured.
+ONS_162's row still read `punctuation 195` three weeks after the punctuation
+had been fixed; the true count was 19. Git metadata is free, and re-measuring
+to discover the same thing would cost the hours `--stale` exists to save.
 """
 import argparse
 import csv
@@ -69,6 +80,16 @@ SCREENS = {
     "markers": {
         "rows": ["fix-ocr/scripts/detect_marker_noise.py", "rows", "@md"],
     },
+    "glyphs": {
+        "rows": ["fix-ocr/scripts/detect_confused_glyphs.py", "rows", "@stem"],
+    },
+    # Its own row rather than part of `glyphs`, because the two mean different
+    # things: `glyphs` reaches zero on a finished file, and this is a standing
+    # backlog of one name spelled two ways across 138 files.
+    "variants": {
+        "rows": ["fix-ocr/scripts/detect_confused_glyphs.py", "rows", "@stem",
+                 "--only", "VARIANT"],
+    },
 }
 
 
@@ -76,6 +97,7 @@ def run_screen(spec, stem):
     """Lines a screen emits, or None when it could not run."""
     cmd = [sys.executable, "-I", str(SKILLS / spec[0]), spec[1]]
     cmd.append(str(MD_DIR / f"{stem}.md") if spec[2] == "@md" else stem)
+    cmd.extend(spec[3:])          # a screen may need flags, e.g. --only VARIANT
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
     except subprocess.TimeoutExpired:
@@ -117,13 +139,54 @@ def save(table):
             out.writerow(table[key])
 
 
+def last_edited():
+    """Commit date of the newest commit touching each jons/ file.
+
+    One `git log` for the whole directory, not one per file: the corpus has
+    264 scans and a call apiece would dominate the run.
+    """
+    out = subprocess.run(
+        ["git", "log", "--name-only", "--format=%cs", "--", str(MD_DIR)],
+        cwd=ROOT, capture_output=True, text=True).stdout
+    seen, date = {}, None
+    for line in (l.strip() for l in out.splitlines()):
+        if len(line) == 10 and line[:2] == "20":
+            date = line
+        elif line.endswith(".md") and Path(line).stem not in seen:
+            # git log is newest-first, so the first sighting is the newest
+            seen[Path(line).stem] = date
+    return seen
+
+
+def stale_rows(table):
+    """Rows whose file was edited after the row was measured.
+
+    A measurement is only worth what the file has not done since. ONS_162's
+    row read `punctuation 195` three weeks after the punctuation had been
+    fixed -- the true count was 19. This is git metadata, so it costs
+    nothing; re-measuring to find out would cost the hours it is meant to
+    save.
+    """
+    edited = last_edited()
+    return [r for r in table.values()
+            if r["file"] in edited and edited[r["file"]] > r["measured"]]
+
+
 def cmd_run(args):
-    stems = args.stems
+    stems = list(args.stems)
     if args.all:
         stems = sorted(f.stem for f in MD_DIR.glob("*.md")
                        if (PDF_DIR / f"{f.stem}.pdf").exists())
+    if args.stale:
+        stale = sorted({r["file"] for r in stale_rows(load())})
+        stems = [s for s in stems if s in stale] if stems or args.all else stale
+        args.refresh = True        # a stale row is already in the table
+        if not stems:
+            print("nothing stale: every measurement is newer than its file")
+            return 0
+        print(f"-- {len(stems)} file(s) edited since they were measured")
     if not stems:
-        sys.exit("give one or more stems, or --all")
+        sys.exit("give one or more stems, or --all, or --stale")
     screens = args.screens.split(",") if args.screens else list(SCREENS)
     table = load()
     done = 0
@@ -143,23 +206,67 @@ def cmd_run(args):
     return 0
 
 
+# The order a single file is worked in. Structure first: a list whose labels
+# the OCR destroyed cannot be numbered until it is split, and a footnote
+# marker buried in foreign-script garble is invisible until the garble goes.
+# Content last, and punctuation last of all -- punct_candidates.py --apply is
+# a run-once pass, so the structure should be settled before it is spent.
+ORDER = ["tables", "lists", "headings", "figures",
+         "quotes", "markers", "punctuation"]
+PHASE = {
+    "tables":      "structure",
+    "lists":       "structure",
+    "headings":    "structure",
+    "figures":     "structure",
+    "quotes":      "content",
+    "markers":     "content (after transcribe-foreign-script)",
+    "punctuation": "content -- run last, --apply is run-once",
+}
+
+
 def cmd_show(args):
     table = load()
     if not table:
         sys.exit(f"nothing measured yet: run `survey.py run --all` ({TABLE})")
-    rows = [r for r in table.values() if int(r["rows"]) or int(r["batch"])]
+    if args.stale:
+        # every stale row, including those measured as clean: a file edited
+        # since it was measured may have acquired findings as well as lost
+        # them, and "0" from before the edit is not evidence of anything
+        rows = stale_rows(table)
+    else:
+        rows = [r for r in table.values() if int(r["rows"]) or int(r["batch"])]
     if args.screen:
         rows = [r for r in rows if r["screen"] == args.screen]
     if args.file:
         rows = [r for r in rows if r["file"] == args.file]
-    rows.sort(key=lambda r: (-int(r["rows"]), -int(r["batch"]), r["file"]))
+    if args.file and not args.screen:
+        # One file is worked in dependency order, not worst-first: structure
+        # before content. An unsplit list hides its own labels from the
+        # markers screen, and foreign-script garble hides the markers inside
+        # it, so running fix-ocr first means doing it twice. See the "Order
+        # of operations" section of docs/skill-list.md for why.
+        rows.sort(key=lambda r: (ORDER.index(r["screen"]) if r["screen"] in ORDER
+                                 else len(ORDER), r["file"]))
+    else:
+        rows.sort(key=lambda r: (-int(r["rows"]), -int(r["batch"]), r["file"]))
     print(f"{'file':22} {'screen':9} {'render':>6} {'batch':>6}  measured")
     for r in rows[:args.top]:
+        note = f"  <- {PHASE[r['screen']]}" if args.file and not args.screen \
+               and r["screen"] in PHASE else ""
         print(f"{r['file']:22} {r['screen']:9} {r['rows']:>6} {r['batch']:>6}"
-              f"  {r['measured']}")
+              f"  {r['measured']}{note}")
+    if args.stale:
+        files = sorted({r["file"] for r in rows})
+        print(f"-- {len(rows)} stale row(s) across {len(files)} file(s); "
+              f"their counts predate the edits and cannot be trusted")
+        print("-- refresh them with: survey.py run --stale")
+        return 0
     print(f"-- {len(rows)} row(s) with work; "
           f"{sum(int(r['rows']) for r in rows)} need a render, "
           f"{sum(int(r['batch']) for r in rows)} are batchable")
+    if args.file and not args.screen and rows:
+        print("-- work top to bottom: structure, then script, then content "
+              "(docs/skill-list.md, \"Order of operations\")")
     return 0
 
 
@@ -174,10 +281,15 @@ def main():
                                      + ",".join(SCREENS))
     r.add_argument("--refresh", action="store_true",
                    help="re-measure files already in the table")
+    r.add_argument("--stale", action="store_true",
+                   help="only files edited since they were measured "
+                        "(implies --refresh)")
     r.set_defaults(func=cmd_run)
     s = sub.add_parser("show", help="read the table")
     s.add_argument("--screen")
     s.add_argument("--file")
+    s.add_argument("--stale", action="store_true",
+                   help="only rows whose file was edited after measurement")
     s.add_argument("--top", type=int, default=25)
     s.set_defaults(func=cmd_show)
     args = ap.parse_args()

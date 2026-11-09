@@ -83,6 +83,13 @@ SCREENS = {
     "glyphs": {
         "rows": ["fix-ocr/scripts/detect_confused_glyphs.py", "rows", "@stem"],
     },
+    # Its own row rather than part of `glyphs`, because the two mean different
+    # things: `glyphs` reaches zero on a finished file, and this is a standing
+    # backlog of one name spelled two ways across 138 files.
+    "variants": {
+        "rows": ["fix-ocr/scripts/detect_confused_glyphs.py", "rows", "@stem",
+                 "--only", "VARIANT"],
+    },
 }
 
 
@@ -90,6 +97,7 @@ def run_screen(spec, stem):
     """Lines a screen emits, or None when it could not run."""
     cmd = [sys.executable, "-I", str(SKILLS / spec[0]), spec[1]]
     cmd.append(str(MD_DIR / f"{stem}.md") if spec[2] == "@md" else stem)
+    cmd.extend(spec[3:])          # a screen may need flags, e.g. --only VARIANT
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
     except subprocess.TimeoutExpired:

@@ -5069,10 +5069,13 @@ Adilshahï
 Banavasi
 Barïdshahi
 Bartonischek
+Barīdshāhī
 Bharuch
+Bījāpūr
 Damji
 Darur
 Dharür
+Dhārūr
 Dokdas
 Gahapati
 Goenka
@@ -5080,13 +5083,16 @@ Hangal
 Hanumana
 Huruna
 Imadshahï
+Imādshāhī
 Jadeja
 Jagdeo
 Jahangir
 Jamji
+Jālnapūr
 Khengarji
 Lakhpatji
 Lodhï
+Lodhī
 Madansinghji
 Mahabat
 Mapusa
@@ -5102,6 +5108,7 @@ Prakashe
 Qutbshah
 Qutbshahi
 Qutbshahï
+Qutbshāhī
 Rohit
 Ruhuna
 Shahajï
@@ -5115,6 +5122,7 @@ Vijayarajji
 Wickremesinhe
 Yala
 Zafamagar
+Ādilshāhī
 
 # ONS_164 — Gupta gold dinars (Shivlee Collection); Cooch Behar coin of Nara Narayana; Gosaba rupee notes; Bangalore mint
 Acharya

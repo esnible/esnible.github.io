@@ -781,6 +781,41 @@ walked past.
   token ending in `J`, `l`, `I` or `j` is a bracket read as a letter, which is
   how `(1920 - 1950J` turns back into `(1920 - 1950)`.
 
+- **`VARIANT`** — one name spelled two ways in one file, differing in its
+  diacritics. **Off by default; ask for it with `--only VARIANT`**, and it has
+  its own `variants` row in `docs/screens.tsv`. This is the other half of the
+  diacritic problem: `CAPITAL` catches a mark the OCR read as a *letter*
+  (`MansQr`), and this catches one it read as a *different mark*, or dropped.
+  ONS_162 carried `Nizamshahï` 26 times beside `Nizāmshāhī` twice, and
+  `Burhanpür` beside `Burhānpūr`; once the dictionaries hold both forms,
+  neither is a cspell unknown and nothing else in the toolchain sees it.
+  4,355 groups across 138 files.
+
+  It is a separate row from `glyphs` because the two mean different things.
+  The five labels above reach zero on a finished file. This one does not — a
+  corpus that spells one name two ways in half its files has a standing
+  backlog, and folding it into the same exit status would mean no file ever
+  screens clean again.
+
+  **The pair says only that the file disagrees with itself, never which form
+  is right**, so it reports each form at its first occurrence rather than
+  every occurrence — put them on one crop sheet and compare them side by
+  side. Two conventions in one issue can be genuine: ONS_164 prints macrons in
+  a succession table typeset separately from the prose around it, and
+  normalising that to match was the wrong fix.
+
+  **The decisive test is two forms close enough to share a crop.** ONS_162's
+  Deccan article was settled by one band: line 455 prints the macron form and
+  the umlaut form of the same dynasty name three words apart, and the page
+  sets both with identical glyphs — which is what proves the umlaut is a
+  degraded macron rather than a second convention. Reach for a pair in one
+  sentence before a pair on facing pages.
+
+  **Converting the flagged form does not license sweeping its ASCII
+  siblings.** The same article prints one `Quṭbshahi` with no macron a single
+  line from `Quṭbshāhī`, so the bare spellings are not all degraded. Read
+  them or leave them; they stay on the `variants` worklist either way.
+
 **Retire a finding the scan shows is real**, with the same inline marker
 `detect_marker_noise.py` uses, so the screen stops asking and the next pass
 does not read the same spot twice:
@@ -794,6 +829,13 @@ on purpose; confirmed on the scan beside the article's own gloss -->
 `glyph-ok` settles every occurrence of the tokens it names on its own line,
 and a label (`glyph-ok WELD`) settles the whole class there. Name the token,
 not just the class, when only one word on the line is genuine.
+
+**Describe the readings in a marker; do not quote them.** cspell reads inside
+HTML comments, so a marker that lists the forms it rejected turns every one of
+them into a fresh unknown — ONS_162's first attempt at the note above added
+twenty-one, including `macroned` and `underdots` from the prose of the reason
+string itself. Say "the page carries dots below certain consonants that this
+file drops", not the words with the dots on them.
 
 **A standalone `m` between two words is `in`.** It is the corpus's commonest
 real-word confusion after `modem`, and it hides from everything: cspell has

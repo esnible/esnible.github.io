@@ -41,15 +41,26 @@ marker settles every occurrence of the tokens it names on its own line.
 """
 
 import argparse
+import collections
 import glob
 import os
 import re
 import sys
+import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
 
-LABELS = ("CAPITAL", "NUMERIC", "RUN", "WELD", "PAREN")
+LABELS = ("CAPITAL", "NUMERIC", "RUN", "WELD", "PAREN", "VARIANT")
+
+# `VARIANT` is off by default, and the reason is the exit status. The other
+# five can all reach zero on a file -- every finding is either fixed or
+# carries a `glyph-ok` marker -- so a clean exit means something. VARIANT
+# cannot: a corpus that spells one name two ways in 138 files has a standing
+# backlog, not a defect list, and folding it into the same gate would mean no
+# file ever screens clean again. Ask for it with `--only VARIANT`; it has its
+# own `variants` row in `docs/screens.tsv`.
+DEFAULT_LABELS = ("CAPITAL", "NUMERIC", "RUN", "WELD", "PAREN")
 
 # Letters this corpus's OCR swaps with digits. Kept deliberately tight: `T`,
 # `D` and `A` are each a plausible digit shape in the abstract, but including
@@ -245,6 +256,56 @@ def scan_text(text):
                         yield got
 
 
+def _skeleton(word):
+    """The word with every diacritic stripped, lowercased."""
+    d = unicodedata.normalize("NFD", word)
+    return "".join(c for c in d if not unicodedata.combining(c)).lower()
+
+
+def scan_variants(text):
+    """One name spelled two ways in one file, differing in its diacritics.
+
+    This is the screen for the other half of the diacritic problem. CAPITAL
+    catches a mark the OCR read as a *letter* (`MansQr`); this catches a mark
+    it read as a *different mark*, or dropped -- `Nizamshahï` 26 times beside
+    `Nizāmshāhī` twice, `Burhanpür` beside `Burhānpūr`. Neither form is a
+    cspell unknown once the dictionaries carry both, so nothing else sees it.
+
+    **The pair says only that the file disagrees with itself, never which form
+    is right.** Two conventions in one issue can be genuine: ONS_164 prints
+    macrons in a succession table that was typeset separately and the typed
+    prose around it does not, and "normalising" that to match was the wrong
+    fix. So this reports the forms side by side for one render, which is also
+    why it anchors a row at each form rather than at every occurrence.
+    """
+    body = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    groups = collections.defaultdict(lambda: collections.defaultdict(list))
+    for lineno, raw in enumerate(body.split("\n"), 1):
+        for m in re.finditer(r"[^\W\d_][\w'’]{3,}", raw, re.UNICODE):
+            w = m.group(0)
+            groups[_skeleton(w)][w].append((lineno, m))
+
+    for forms in groups.values():
+        if len(forms) < 2:
+            continue
+        # a pure case difference is not this defect
+        if len({f.lower() for f in forms}) < 2:
+            continue
+        # at least one form must actually carry a diacritic
+        if not any(unicodedata.normalize("NFD", f) != f for f in forms):
+            continue
+        tally = ", ".join(f"{f} x{len(v)}" for f, v in
+                          sorted(forms.items(), key=lambda kv: -len(kv[1])))
+        raw_lines = text.split("\n")
+        for form, occs in forms.items():
+            lineno, m = occs[0]
+            settled = _glyph_ok(raw_lines[lineno - 1]) if lineno <= len(raw_lines) else set()
+            if form in settled or "VARIANT" in settled:
+                continue
+            yield ("VARIANT", lineno, form, tally,
+                   _ctx(body.split("\n")[lineno - 1], m))
+
+
 def _ctx(line, m):
     s = line[max(0, m.start() - 42):m.end() + 42]
     return re.sub(r"\s+", " ", s).strip()
@@ -262,7 +323,8 @@ def main():
     ap.add_argument("cmd", choices=["scan", "rows"])
     ap.add_argument("files", nargs="+")
     ap.add_argument("--only", action="append", default=None, choices=LABELS,
-                    help="report only these labels")
+                    help="report only these labels (VARIANT is only ever reported "
+                         "when asked for by name)")
     ap.add_argument("--skip", action="append", default=[], choices=LABELS,
                     help="suppress these labels")
     ap.add_argument("--quiet", action="store_true", help="per-file counts only")
@@ -280,8 +342,12 @@ def main():
             print(f"{path}: {e}", file=sys.stderr)
             continue
         stem = os.path.splitext(os.path.basename(path))[0]
-        found = [f for f in scan_text(text)
-                 if (args.only is None or f[0] in args.only) and f[0] not in args.skip]
+        want = args.only or [l for l in DEFAULT_LABELS if l not in args.skip]
+        gen = scan_text(text) if set(want) - {"VARIANT"} else iter(())
+        found = [f for f in gen if f[0] in want and f[0] not in args.skip]
+        if "VARIANT" in want:
+            found += [f for f in scan_variants(text) if f[0] not in args.skip]
+        found.sort(key=lambda f: (f[1], f[0]))
         words = len(re.findall(r"\b\w+\b", text)) or 1
         counts = {}
         for label, lineno, tok, detail, ctx in found:

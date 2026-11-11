@@ -126,7 +126,7 @@ map labels and tree names OCR'd as `# HEADING` lines.
 1. Map every flattened line to a PDF page and **render that page**:
 
    ```
-   python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N --dpi 140   # then Read the path it prints
+   python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N   # then Read the path it prints
    ```
 
    Crop (`--clip x0 y0 x1 y1`, PDF points) and re-render at 300+ dpi for a

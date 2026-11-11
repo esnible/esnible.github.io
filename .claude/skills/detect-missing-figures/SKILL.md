@@ -35,6 +35,13 @@ than 900px is scaled down whole, which answers *is this figure in the
 Markdown* but not *what does it say*; raise `--max-band`, or crop that one
 region at a higher `--dpi`, when the answer needs reading.
 
+Each sheet now reports what it is worth to look at --
+`6 band(s), 1500x4186 -> 561x1567 | ~1172 tok | content at 37% of drawn size`.
+A sheet much taller than twice its width is squeezed by the vision budget's
+longest-edge cap, so the words shrink to a third of the size they were drawn:
+fine for *is this in the Markdown*, useless for reading it. When the note
+fires, take its `--per-sheet` suggestion or crop the one band you need.
+
 | Verdict | Meaning |
 |---|---|
 | `MISSING` | figure-like ink, and no `figure` / `script-*` / `table-*` marker names this page |

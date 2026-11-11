@@ -52,6 +52,17 @@ except ImportError:  # older PyMuPDF only exposes the legacy `fitz` name
     except ImportError as exc:  # pragma: no cover
         sys.exit(f"missing dependency: {exc}. Needs PyMuPDF.")
 
+# Shared with crop_sheets.py: how much DPI a scan can actually supply, and what
+# a render costs once the vision budget has downscaled it. See its docstring --
+# the short version is that a full page caps out far below its native DPI, so
+# rendering one at 900 buys nothing, while over-rendering a *crop* pays full
+# price for interpolation.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "shared"))
+try:
+    import render_budget
+except ImportError:  # pragma: no cover -- keep render usable if shared/ moves
+    render_budget = None
+
 # ONS_ARCHIVE_DIR overrides the default checkout-relative path -- set it when
 # the ons-website PDFs live somewhere else on this machine (they come from
 # the private esnible/ons-website repo, not this one, so the path varies).
@@ -580,10 +591,34 @@ def cmd_render(args):
     doc = fitz.open(pdf_path)
     page = doc[args.page]
     clip = fitz.Rect(*args.clip) if args.clip else None
-    out = pathlib.Path(args.out) if args.out else default_render_path(args.stem, args.page, args.dpi, args.clip)
+
+    # No --dpi: take the cheap path -- about 2x what the scan holds, never above
+    # the point where the vision budget throws the extra pixels away again.
+    dpi = args.dpi
+    chosen = False
+    if dpi is None:
+        dpi = render_budget.suggest_dpi(page, clip) if render_budget else 300
+        chosen = True
+
+    out = pathlib.Path(args.out) if args.out else default_render_path(args.stem, args.page, dpi, args.clip)
     out.parent.mkdir(parents=True, exist_ok=True)
-    page.get_pixmap(dpi=args.dpi, clip=clip).save(str(out))
-    print(f"saved {out} (page {args.page}, dpi {args.dpi}{', clipped' if clip else ''})")
+    page.get_pixmap(dpi=dpi, clip=clip).save(str(out))
+
+    line = f"saved {out} (page {args.page}, dpi {dpi}{' auto' if chosen else ''}{', clipped' if clip else ''}"
+    if render_budget:
+        line += f" | {render_budget.summary(page, clip, dpi)})"
+    else:
+        line += ")"
+    print(line)
+    if render_budget:
+        # Explicit --dpi is always honoured; say so when it will not pay off.
+        note = None if chosen else render_budget.advise(page, clip, dpi)
+        if note is None:
+            # Either way, say when the budget -- not the DPI -- is what is
+            # limiting the view, because then the fix is --clip, not --dpi.
+            note = render_budget.crop_hint(page, clip, dpi)
+        if note:
+            print(note)
 
 
 def main():
@@ -620,7 +655,10 @@ def main():
     p = sub.add_parser("render")
     p.add_argument("stem")
     p.add_argument("--page", type=int, required=True, help="0-based PDF page index")
-    p.add_argument("--dpi", type=int, default=300)
+    p.add_argument("--dpi", type=int, default=None,
+                   help="default: about 2x the scan's own resolution, capped at the point "
+                        "where the vision budget stops using the extra pixels. An explicit "
+                        "value is always honoured, with a note when it will not pay off")
     p.add_argument("--clip", type=float, nargs=4, metavar=("X0", "Y0", "X1", "Y1"))
     p.add_argument("--out", help="default: $TMPDIR/ons-render/<STEM>/p<PAGE>-<DPI>[-<CLIP>].png -- read the path it prints")
     p.set_defaults(func=cmd_render)

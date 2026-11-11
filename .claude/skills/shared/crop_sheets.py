@@ -41,6 +41,8 @@ except ImportError as exc:                                   # pragma: no cover
     sys.exit(f"missing dependency: {exc}. Needs PyMuPDF "
              f"(see .claude/skills/requirements.txt).")
 
+import render_budget  # same directory -- what a sheet really costs to look at
+
 PDF_DIR = Path(os.environ.get(
     "ONS_ARCHIVE_DIR", "~/personal/src/ons-website/static/archive")).expanduser()
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -403,6 +405,46 @@ def draw(sheets, out_stem, dpi, quality):
     return written
 
 
+def jpeg_size(path):
+    """(width, height) from a JPEG's SOF marker, without a decoder dependency."""
+    data = Path(path).read_bytes()
+    i = 2
+    while i < len(data) - 9:
+        if data[i] != 0xFF:
+            i += 1
+            continue
+        marker = data[i + 1]
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            h = int.from_bytes(data[i + 5:i + 7], "big")
+            w = int.from_bytes(data[i + 7:i + 9], "big")
+            return w, h
+        i += 2 + int.from_bytes(data[i + 2:i + 4], "big")
+    return 0, 0
+
+
+def report(paths, bands_per_sheet):
+    """Say what each sheet will really look like once it is read.
+
+    A sheet taller than about 2.1x its width is limited by the vision budget's
+    longest-edge cap rather than its area cap, so the content is shrunk twice
+    over: it loses part of the budget *and* its width collapses. Eight bands on
+    one sheet land at ~37% of the size they were drawn -- fine for "is this in
+    the Markdown", useless for reading the words. Nothing else in the pipeline
+    makes that visible, so it is printed here.
+    """
+    for out, bands in zip(paths, bands_per_sheet):
+        w, h = jpeg_size(out)
+        tok, fw, fh, scale = render_budget.cost_px(w, h)
+        line = (f"{out.name}: {bands} band(s), {w}x{h} -> {fw}x{fh} "
+                f"| ~{tok} tok | content at {scale * 100:.0f}% of drawn size")
+        if scale < 0.6:
+            fits = max(1, int(bands * (w * render_budget.CAP_EDGE / render_budget.CAP_MP ** 0.5) / h))
+            line += (f"\n  note: too tall to read -- the words are at {scale * 100:.0f}%. "
+                     f"--per-sheet {fits} keeps them near full size, "
+                     f"or crop one band at a higher --dpi")
+        print(line)
+
+
 def pdf_for(stem):
     """The scan behind a file, whether given a stem or a jons/ path."""
     return PDF_DIR / f"{Path(stem).stem}.pdf"
@@ -484,6 +526,11 @@ def main(argv=None):
     kept = sum(1 for _s, _l, p, _f in placed if p is not None)
     print(f"{len(rows)} row(s), {kept} located -> "
           + ", ".join(f"{s} ({s.stat().st_size // 1024} KB)" for s in sheets))
+    # What each sheet is actually worth to look at -- see report()'s docstring.
+    per = [args.per_sheet] * len(sheets)
+    if sheets:
+        per[-1] = kept - args.per_sheet * (len(sheets) - 1) or args.per_sheet
+    report(sheets, per)
     return 0 if kept == len(rows) else 1
 
 

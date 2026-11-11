@@ -167,7 +167,8 @@ instead of trusting the range.
    `survey.py show --screen lists`.
 2. `rows` the file into `crop_sheets.py sheets` and read the sheet, or
    render one run with `detect_script_garble.py render <STEM> --page N
-   --clip x0 y0 x1 y1` (the printed `rect=`).
+   --clip x0 y0 x1 y1` (the printed `rect=`). Leave `--dpi` off; it picks one
+   the scan can supply and says what the render costs.
 3. Restore each list to the convention above. Read every label off the
    scan, including the ones `screen` says the Markdown dropped -- never
    number by guesswork, and never copy a label the OCR garbled (`lA`). Read

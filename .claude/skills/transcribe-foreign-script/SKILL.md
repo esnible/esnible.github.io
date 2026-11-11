@@ -165,8 +165,14 @@ For each candidate, find which PDF page it came from, then look at it:
 
 ```
 python3 .../detect_script_garble.py locate IS_004 --line 92
-python3 .../detect_script_garble.py render IS_004 --page 4 --dpi 300   # then Read the path it prints
+python3 .../detect_script_garble.py render IS_004 --page 4              # then Read the path it prints
+python3 .../detect_script_garble.py render IS_004 --page 4 --clip 300 470 570 630   # to actually read it
 ```
+
+**Leave `--dpi` off.** It now defaults to about 2x what the scan holds, capped
+where more pixels stop being used, and prints what you are really getting. When
+a legend is hard to read the answer is almost always `--clip`, not a bigger
+`--dpi` -- see *Crop; don't scale* under Known limits.
 
 Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
 
@@ -251,6 +257,30 @@ This is a **coarse bounding region for the whole deferred section**, not a tight
   `render` for a DPI the page cannot supply. Resolution does not predict how
   bad a file's punctuation is, though -- ONS_181 at 96 dpi has a better text
   layer than ONS_171 at 150.
+- **Crop; don't scale. `--dpi` is mostly not the lever it looks like.** An
+  image is downscaled to about 1.15 megapixels (longest edge 1568) before it
+  is charged for, at roughly `pixels / 750` tokens, so cost tracks *pixel
+  count up to that cap*, not the DPI asked for. Two consequences, and neither
+  is the intuitive one:
+  - **A full page saturates the cap far below its own resolution.** A
+    593x840pt page caps at ~109 dpi, so rendering it at 150, 240 or 900
+    returns an identical 900x1276 view at an identical ~1530 tokens. On
+    ONS_168, a 150 dpi scan, that means *every* full-page render shows less
+    than the scan holds, and a bigger `--dpi` cannot fix it. Only `--clip` can.
+  - **A tight crop sits under the cap, so there DPI does drive cost** -- and
+    over-rendering one pays full price for interpolation. A 270x160pt crop of
+    that scan costs 249 tokens at 150 dpi and 1533 at 450: six times the
+    price, for blur. A thin strip is worse: 55 tokens at 300 dpi against 268
+    at 900.
+
+  So **stop at about 2x native**. Some upscale earns its keep -- a vision
+  encoder's patch grid is fixed, so 8px glyphs read better at 16px even
+  though no information is added -- but 3-6x is spending tokens on
+  interpolation. `render` now does this for you: with no `--dpi` it picks
+  ~2x native capped at the saturation point, prints what the render is really
+  worth (`898x1271 | ~1522 tok | scan 150 dpi`), and tells you when an
+  explicit `--dpi` will not pay off. `.claude/skills/shared/render_budget.py`
+  holds the arithmetic.
 - **`locate`'s page ranking degrades with the surrounding text's own OCR quality.** If the words immediately around a candidate are themselves garbled, there may be too few distinctive tokens to rank pages confidently — widen `--window`, or fall back to manually searching the PDF for a phrase you can read cleanly.
 - **The embedded PDF text layer (what `page.search_for()`/`page.get_text()` read) is a separate, generally worse OCR pass than the one that produced the `.md` file**, and this applies to English words too, not just foreign script — searching `IS_005`'s pages for 15 different printed section-title words found a clean match for only 2 of them. Don't expect `search_for()` on an exact phrase to succeed; if it fails, that's the corpus, not a typo in your query.
 - **Corroboration is not always available for body text.** Many legends in this corpus have no adjacent transliteration (unlike the `IS_004` Section I/IV cases, which happened to). That's the normal `script-guess` case, not a reason to defer — see Hard constraints. Reserve `script-deferred` for body text that doesn't support a plausible reading, or for content that isn't body text at all (a plate of drawings — see the layout test in Hard constraints, which comes first and is not about corroboration).

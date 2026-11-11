@@ -53,7 +53,7 @@ If a file reports `MISSING 0` and you are content to leave `UNKNOWN`s alone, sto
 For each `MISSING`, render the page and look at it. This is not optional: it is how you learn the true row and column counts, catch a page-layout false positive, and see which cells span columns.
 
 ```
-python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N --dpi 110   # then Read the path it prints
+python3 .claude/skills/transcribe-foreign-script/scripts/detect_script_garble.py render <STEM> --page N   # then Read the path it prints
 ```
 
 Never render to a fixed scratch name such as `/tmp/p.png`: parallel agents overwrite each other's image between the write and the Read, and you end up checking the wrong page. Use `render`'s default path (named for stem, page, dpi and clip) and Read the path it prints; put any other scratch file under a folder named for your stem.
@@ -80,6 +80,13 @@ One sheet of stacked bands instead of a render per finding. A band taller
 than 900px is scaled down whole, which answers *is this grid in the
 Markdown* but not *what does it say*; raise `--max-band`, or crop that one
 region at a higher `--dpi`, when the answer needs reading.
+
+Each sheet now reports what it is worth to look at --
+`6 band(s), 1500x4186 -> 561x1567 | ~1172 tok | content at 37% of drawn size`.
+A sheet much taller than twice its width is squeezed by the vision budget's
+longest-edge cap, so the words shrink to a third of the size they were drawn:
+fine for *is this in the Markdown*, useless for reading it. When the note
+fires, take its `--per-sheet` suggestion or crop the one band you need.
 
 It also prints `bands` — the gaps between consecutive horizontal rules — and, when the rules look incomplete, a `NOTE`. Both `grids` and `cells` take `--min-frac` for per-page tuning; **never** lower it for `screen` (see *Tuning*).
 

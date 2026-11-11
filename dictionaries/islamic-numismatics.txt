@@ -11196,3 +11196,41 @@ Uluslararası
 ترماشيرين
 محفو
 المالغ
+
+# ONS_168 — Fedorov Qarakhanid supplement: transliterations restored from the
+# page renders after the OCR read every macron vowel as a capital (i as T, u as Q/O).
+# Only forms two independent readings agreed on, or one reading gave at high
+# confidence with no competing form, are listed here.
+Akhsīket
+Baihaqī
+Bektūzūn
+Bīlīk
+Bīrūnī
+Būrī
+Dabūsiya
+Dīnārī
+Haravī
+Hārūn
+Irāqī
+Ispījāb
+Juvainī
+Kushānī
+Kāshgarī
+Marghīnān
+Mu'ayīd
+Mutavallī
+Nīshāpūr
+Ordū
+Ordūkend
+Qarshī
+Rāzī
+Saljūqid
+Semnānī
+Sheljī
+Sutrūshana
+Timūrid
+Timūrids
+Tonghātegīn
+Usrūshana
+Yazdādī
+Zāmīn

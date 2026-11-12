@@ -261,7 +261,7 @@ bój)0)f')O)ggc:;in3o bóJo)(ncnggc^r)b bbfn Sgybogfngöibcnó ój,biog3oob 3<T,
 
 Lang D *Studies in the Numismatic History of Georgia in Transcaucasia* New-York, 1955 Lang D *The Last Years of the Georgian Monarchy 1658-*
 
-*1832* New York, 1957 Matthee R 'Gorgin Khan' In *Encyclopcedia Iranica* (http *//www* iranica com/articles/vl lf2/vl 112041 html) \[Mayer T *(editor) Sylloge of Coins of Caucasus and Eastern Europe* Wiesbaden, 2005 \] (In German Mayer T (bearbeitet von) Sylloge der Munzen des Kaukasus und Osteuropas Wiesbaden, 2005 ) \[Orbeliani S-S *Georgian Lexicon,* *Vo\]* 1 Tbilisi, 1966\] (In Georgian nfnögicjoóbo b^c^jbób-bóöib cïjgjjbojnBo j]i!>fnü)^C^M), I (Bj(n8o o>6ocz;()bo, 1966) \[Orbehani S-S *Georgian Lexicon,* *Vo\] 2* Tbilisi, 1993\] (In Georgian rofnögeio.s6o b-2C5bó6-bó6.s t^jg^-Jbojpibo jjófncn^C^o, 11 gm8o cnöocïjobo, 1993) \[Pakhomov Ye *Coins of Georgia* Tbilisi, 1970\] (In Russian HaxoMOB E A MOHCTW FpysHH TÖHJIHCH, 1970) \[Sharadzenidze T, Meskhishvili M (editors) *Explanatory Dutionary of Georgian Language,* Volume **VI Tbilisi,** 1960 \] (In Georgian 3ófnódg6odg m, Sgbboflgocoo 3 (fngcoóJ\|S,n)(f)göo) Jo\>(noTgc:;o gbob •\>,ó63ófnggöocno c^gJbojmBo, gnSo VI aiöoc^obo, 1960) Zeno Oriental Coins Database (http//www zeno ru/). Category Special Projects / Georgian Numismatics / "Sirma abazi" (http //www zeno ru/showgallery php''cat=1835)
+*1832* New York, 1957 Matthee R 'Gorgin Khan' In *Encyclopcedia Iranica* (http *//www* iranica com/articles/vl lf2/vl 112041 html) \[Mayer T *(editor) Sylloge of Coins of Caucasus and Eastern Europe* Wiesbaden, 2005 \] (In German Mayer T (bearbeitet von) Sylloge der Munzen des Kaukasus und Osteuropas Wiesbaden, 2005 ) \[Orbeliani S-S *Georgian Lexicon,* *Vo\]* 1 Tbilisi, 1966\] (In Georgian nfnögicjoóbo b^c^jbób-bóöib cïjgjjbojnBo j]i!>fnü)^C^M), I (Bj(n8o o>6ocz;()bo, 1966) \[Orbehani S-S *Georgian Lexicon,* *Vo\] 2* Tbilisi, 1993\] (In Georgian rofnögeio.s6o b-2C5bó6-bó6.s t^jg^-Jbojpibo jjófncn^C^o, 11 gm8o cnöocïjobo, 1993) \[Pakhomov Ye *Coins of Georgia* Tbilisi, 1970\] (In Russian HaxoMOB E A MOHCTW FpysHH TÖHJIHCH, 1970) \[Sharadzenidze T, Meskhishvili M (editors) *Explanatory Dutionary of Georgian Language,* Volume **VI Tbilisi,** 1960 \] (In Georgian 3ófnódg6odg m, Sgbboflgocoo 3 (fngcoóJ\|S,n)(f)göo) Jo\>(noTgc:;o gbob •\>,ó63ófnggöocno c^gJbojmBo, gnSo VI aiöoc^obo, 1960) Zeno Oriental Coins Database (http://www.zeno.ru/). Category Special Projects / Georgian Numismatics / "Sirma abazi" (http //www zeno ru/showgallery php''cat=1835)
 
 # Obv. *Fig.* ***1.1***
 
@@ -290,7 +290,7 @@ The sirma coins repeatedly published in the new editions of D Kapanadze's work o
 
 Only one side is presented for 4 coins out of 11 Coins available for an immediate *de visu* study
 
-One of the authors launched the Georgian Numismatics special project (http//www zeno ru/showgalleryphp''cat= 1824) within the framework of the Zeno Oriental Coins Database on January 28, 2005 and has been managing it ever since The sirma coins posted to the database by 10 September 2008 were taken into account
+One of the authors launched the Georgian Numismatics special project (http://www.zeno.ru/showgallery.php?cat=1824) within the framework of the Zeno Oriental Coins Database on January 28, 2005 and has been managing it ever since The sirma coins posted to the database by 10 September 2008 were taken into account
 
 Number of specimens from various collections not available for the immediate *de visu* study, but available via Zeno Oriental Coins Database •\*' Total number of sirma abazi coins available at Zeno Oriental Coins Database Some of them are available for immediate *de VISU* study and are represented in the cell above
 
@@ -424,7 +424,7 @@ Silver coins bearing a similar obverse design and minted m Tiflis (Kingdom of Ka
 
 *Common obverse* (^J^^ (in a separate cartouche at I2h) Within central circle or or
 And the date ^ ^ ^^ or ^ ^ ^^ or ^ ^ Ao All surrounded by an ornament made by beaded crosses'" and an outer circular border The crosses are of different shapes, the ones on Figs 5, 6, 8 and 9 are quite similar, but differ from those in
-In contrast to the author we consider the side with the couplet evoking Kanm Khan Zand s name the obverse ^ More images of Tabriz coins of this type are available at Zeno Oriental Coins Database http//www zeno ru/ nos 44554 44547 27192 42451 •?4712 \*" Pakhomov described it on Tiflis *Vh* abbasi coins as a chain of crosses \[5 p 238\]
+In contrast to the author we consider the side with the couplet evoking Kanm Khan Zand s name the obverse ^ More images of Tabriz coins of this type are available at Zeno Oriental Coins Database http://www.zeno.ru/ nos 44554 44547 27192 42451 •?4712 \*" Pakhomov described it on Tiflis *Vh* abbasi coins as a chain of crosses \[5 p 238\]
 
 Figs 7 and 10 On Fig 10 they are even sometimes so distorted that they do not resemble crosses at all anymore
 

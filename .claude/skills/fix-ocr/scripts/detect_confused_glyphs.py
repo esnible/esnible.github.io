@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find the glyph confusions that land on a word, and so hide from cspell.
 
-Five shapes, one cause: `pdfmd` read a diacritic, a digit, a bracket or a
+Six shapes, one cause: `pdfmd` read a diacritic, a digit, a bracket or a
 dash as something else, and landed on a token the spellchecker has no
 objection to -- or on a non-word whose *shape* says more than its letters do.
 
@@ -13,6 +13,15 @@ objection to -- or on a non-word whose *shape* says more than its letters do.
            `al-Jalīl` and `MansQr` for `Mansūr`), or a hyphen read away
            (`hyphen?` -- `IndoAfghan` for `Indo-Afghan`). cspell flags some of
            the first kind and none of the second.
+- DIGIT    the mirror of NUMERIC: a digit standing in for a *letter*, inside
+           a word. `R6misch` is `Römisch`, `t5wn` is `town`, `Fran9ois` is
+           `François`, `su7erain` is `suzerain`. cspell never reports these as
+           themselves -- it splits the token on the digit and reports the
+           fragment, so `R6misch` surfaces as `misch` and `KJiunak`'s
+           neighbour `$engun` as `engun`: innocuous-looking strings that get
+           written off among a scanned file's 1,600 unknowns. Nothing else
+           looked at the shape, which is why ONS_168 shipped `R6misch` and
+           `K6ln` through a full fix-ocr pass (#263).
 - NUMERIC  a token of digit-lookalike letters sitting where only a number
            belongs. `Ilaq 401/1010-1 Oil` is `1010-1011`, and `Oil` is in
            every English dictionary, so no spellcheck will ever flag it. What
@@ -51,16 +60,16 @@ import unicodedata
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
 
-LABELS = ("CAPITAL", "NUMERIC", "RUN", "WELD", "PAREN", "VARIANT")
+LABELS = ("CAPITAL", "DIGIT", "NUMERIC", "RUN", "WELD", "PAREN", "VARIANT")
 
 # `VARIANT` is off by default, and the reason is the exit status. The other
-# five can all reach zero on a file -- every finding is either fixed or
+# six can all reach zero on a file -- every finding is either fixed or
 # carries a `glyph-ok` marker -- so a clean exit means something. VARIANT
 # cannot: a corpus that spells one name two ways in 138 files has a standing
 # backlog, not a defect list, and folding it into the same gate would mean no
 # file ever screens clean again. Ask for it with `--only VARIANT`; it has its
 # own `variants` row in `docs/screens.tsv`.
-DEFAULT_LABELS = ("CAPITAL", "NUMERIC", "RUN", "WELD", "PAREN")
+DEFAULT_LABELS = ("CAPITAL", "DIGIT", "NUMERIC", "RUN", "WELD", "PAREN")
 
 # Letters this corpus's OCR swaps with digits. Kept deliberately tight: `T`,
 # `D` and `A` are each a plausible digit shape in the abstract, but including
@@ -70,6 +79,29 @@ LOOKALIKE = "OoIlJiSsBZqg"
 DIGIT_OF = {
     "O": "0", "o": "0", "I": "1", "l": "1", "J": "1", "i": "1",
     "S": "5", "s": "5", "B": "8", "Z": "2", "q": "9", "g": "9",
+}
+
+# The other direction: a digit the OCR put where a letter belongs. Measured
+# over the 264 files in `jons/`, the readings cluster hard by digit and they
+# are *not* the shape-alikes you would guess -- this corpus's scans turn
+# cedillas and umlauts into digits as readily as they turn `o` into `0`:
+#
+#   9 -> ç   carrega9ao, Fran9ois, negocia9ao        (Portuguese and French)
+#   6 -> ö   K6ln, R6misch, Hist6rico                (German and Spanish)
+#   0 -> o   m0nter, J0rgen, Kolbj0rn                (Danish and Norwegian ø)
+#   7 -> z   su7erain, az7am, A7iz
+#   5 -> s   Na5ir, Nu5rat        ... but t5wn is `town`
+#   8 -> o   t8wn, r8my, x8no
+#   4 -> t   Kwan4ung, with4he
+#   3 -> a   Kh3qan, Shilah3ra
+#   2 -> g   eni2matic
+#
+# So the detail offers candidates rather than one decode: 5 and 8 both go to
+# `o` often enough that guessing a single letter would be wrong as often as
+# right. The page settles it, as it does for every other label here.
+LETTER_OF = {
+    "0": "o|ø|O", "1": "l|i|I", "2": "z|g", "3": "a|e", "4": "t|A",
+    "5": "s|o", "6": "ö|ó|b", "7": "z|t", "8": "o|B", "9": "ç|g",
 }
 
 # All-lookalike tokens that are ordinary English next to a number, or genuine
@@ -173,6 +205,29 @@ def scan_text(text):
             if CAPITAL_STOP.search(tok) or tok in settled:
                 continue
             got = emit("CAPITAL", m, _capital_kind(tok))
+            if got:
+                yield got
+
+        # --- DIGIT: a digit where only a letter belongs ------------------
+        # Three constraints, each paid for by a measurement over `jons/`:
+        #
+        # - the digit must be *interior*, letters on both sides. A leading or
+        #   trailing digit is overwhelmingly real here -- `6DD` and `0X14` in
+        #   a postcode, `B578` and `BH126` in a catalogue, `8g`, `2nd`.
+        #   ONS_168's `4ydin` (for `Aydın`) is the price of that cut, and it
+        #   is worth paying: relaxing it floods the countermark tables.
+        # - at least two *lowercase* letters must follow it. This is what
+        #   separates a word from a catalogue label: `K6ln` and `t5wn` keep
+        #   their tail, `B2a`, `A5a`, `BH126A` and `H2O` lose theirs.
+        # - exactly one digit. Allowing a run adds 24 hits across 9 more
+        #   files and they are all WELD's job, not this one -- `A19and`,
+        #   `I984pp`, `PMC579var`, `Diam24mmWt`.
+        #
+        # What is left is 139 findings in 43 files with almost nothing false
+        # in it; the shape is narrow enough that the digit itself is the
+        # evidence.
+        for m in re.finditer(r"\b[A-Za-z]+(?<![0-9])([0-9])(?![0-9])[a-z]{2,}[A-Za-z']*\b", line):
+            got = emit("DIGIT", m, f"{m.group(1)} -> {LETTER_OF[m.group(1)]} ?")
             if got:
                 yield got
 

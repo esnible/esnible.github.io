@@ -699,10 +699,10 @@ python3 .claude/skills/fix-ocr/scripts/detect_confused_glyphs.py rows <STEM> > r
 python3 .claude/skills/shared/survey.py show --screen glyphs      # the worklist
 ```
 
-Five shapes with one cause: the OCR read a diacritic, a digit, a bracket or a
+Six shapes with one cause: the OCR read a diacritic, a digit, a bracket or a
 dash as something else, and landed somewhere no spellcheck can follow. This is
 the `glyphs` row of `docs/screens.tsv`; it reads the Markdown alone, so it
-costs milliseconds and needs no render. **15,180 findings across 199 files**,
+costs milliseconds and needs no render. **13,976 findings across 199 files**,
 and on ONS_162 — a file that had already been through a full fix-ocr pass —
 61 of its 67 `CAPITAL` hits were real defects that every other screen had
 walked past.
@@ -731,6 +731,41 @@ walked past.
   twenty. Fixing only the flagged four would have left the file with two
   spellings of one name — so when a render shows the mark, apply it to every
   occurrence in that article, not just the ones the screen flagged.
+
+- **`DIGIT`** — the mirror of `NUMERIC`: a digit standing in for a **letter**,
+  inside a word. `R6misch` is `Römisch`, `K6ln` is `Köln`, `t5wn` is `town`,
+  `Fran9ois` is `François`, `su7erain` is `suzerain`, `Kolbj0rn` is
+  `Kolbjørn`. **cspell never reports these as themselves** — it splits the
+  token on the digit and reports the *fragment*, so `R6misch` surfaces as
+  `misch` and `$engun` as `engun`: innocuous-looking strings that get written
+  off among a scanned file's 1,600 unknowns. That is how ONS_168 shipped
+  `R6misch` and `K6ln` through a full fix-ocr pass (#263). 139 findings across
+  43 files.
+
+  Three constraints keep it clean, each paid for by a measurement:
+
+  - **the digit must be interior**, letters on both sides. A leading or
+    trailing digit is overwhelmingly real here — `6DD` and `0X14` in a
+    postcode, `B578` and `BH126` in a catalogue, `8g`, `2nd`. ONS_168's
+    `4ydin` for `Aydın` is the price of that cut, and it is worth paying.
+  - **two or more lowercase letters must follow it**, which is what separates
+    a word from a catalogue label: `K6ln` and `t5wn` keep their tail, `B2a`,
+    `A5a`, `BH126A` and `H2O` lose theirs.
+  - **exactly one digit.** Allowing a run adds 24 hits across nine more files
+    and every one is `WELD`'s job — `A19and`, `I984pp`, `PMC579var`.
+
+  The detail offers candidate letters rather than one decode, because the
+  readings cluster by digit in a way you would not guess from shape: this
+  corpus's scans turn **cedillas and umlauts into digits** as readily as `o`
+  into `0` — `9`→`ç` (`Fran9ois`, `carrega9ao`), `6`→`ö`/`ó` (`K6ln`,
+  `Hist6rico`), `0`→`ø` (`J0rgen`, `m0nter`), `7`→`z`, `4`→`t`, `3`→`a`. Both
+  `5` and `8` go to `o` often enough (`t5wn`, `t8wn`) that guessing a single
+  letter would be wrong as often as right. The page settles it.
+
+  **One file is nearly a quarter of the class and is not this screen's
+  business:** ONS_Supplement_197's 31 hits are inside a Georgian-script
+  bibliography pdfmd garbled wholesale, where every token is noise. Retire the
+  block with `glyph-ok DIGIT` on the line rather than reading them one by one.
 
 - **`NUMERIC`** — a token of digit-lookalike letters sitting where only a
   number belongs. **This is the answer to "the garble is a dictionary word".**
@@ -792,7 +827,7 @@ walked past.
   4,355 groups across 138 files.
 
   It is a separate row from `glyphs` because the two mean different things.
-  The five labels above reach zero on a finished file. This one does not — a
+  The six labels above reach zero on a finished file. This one does not — a
   corpus that spells one name two ways in half its files has a standing
   backlog, and folding it into the same exit status would mean no file ever
   screens clean again.

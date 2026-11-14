@@ -19,3 +19,6 @@ __pycache__/
 
 # npm install --no-save of cspell, for the fix-ocr skill (see its setup note)
 node_modules/
+
+# some agent harness left this
+scratchpad/

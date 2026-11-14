@@ -94,7 +94,10 @@ PDF_DIR = Path(os.environ.get(
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MD_DIR = REPO_ROOT / "jons"
 
-MARKER_RE = re.compile(r" ?<!-- page-start page=(\d+)(?: [a-z]+=[-\d]+)* -->")
+# `line=` carries its sign both ways (`marker()` formats it `%+d`), so the
+# value class has to admit `+` as well as `-`: a regex that reads back only
+# half the offsets the writer emits cannot strip what it wrote.
+MARKER_RE = re.compile(r" ?<!-- page-start page=(\d+)(?: [a-z]+=[-+\d]+)* -->")
 COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
 WORD_RE = re.compile(r"[0-9A-Za-zÀ-ɏ]+")
 # A line the marker must not be appended to, and why.

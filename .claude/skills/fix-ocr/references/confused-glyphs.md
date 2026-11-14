@@ -15,7 +15,7 @@ python3 .claude/skills/shared/survey.py show --screen glyphs      # the worklist
 Six shapes with one cause: the OCR read a diacritic, a digit, a bracket or a
 dash as something else, and landed somewhere no spellcheck can follow. This is
 the `glyphs` row of `docs/screens.tsv`; it reads the Markdown alone, so it
-costs milliseconds and needs no render. **13,976 findings across 199 files**,
+costs milliseconds and needs no render. **10,321 findings across 193 files**,
 and on ONS_162 — a file that had already been through a full fix-ocr pass —
 61 of its 67 `CAPITAL` hits were real defects that every other screen had
 walked past.
@@ -92,10 +92,39 @@ walked past.
     precision, no slot test needed. The lookalike set is deliberately tight:
     adding `T`, `D` or `A` turns every British postcode (`CT21 6DD`) and half
     the countermark table (`A12`, `2xAB`) into a finding.
+
+    **One shape is excluded by rule: `<digits>g`, a gram weight.** The token
+    regex breaks `9.45g` at the decimal point, so a weight arrives here as
+    `45g` — digits plus a lookalike — and decoded to `459` it reads as a
+    number the page never printed. This was 3,508 of the class's 4,986
+    findings across 125 files and not one was a letter standing in for a
+    digit: 2,674 sat directly after a decimal point, and nearly all the rest
+    were the same weights in files that dropped the point (`5 83g`) or
+    integer grams (`weigh about 10g`). The only non-weight was ONS_121's
+    Russian title `617/1220 g.`, where `g.` abbreviates *god*, a year.
+
+    The cut is on the exact shape, not on the letter, because a stop-listed
+    letter *inside* a digit run is usually the real thing — `I955`, `S9S`,
+    `lB93`, `ll38` — and an interior `g` is too: `4g2`, `0g2`, `9g21`,
+    `7g11` and `g6` are all defects and all still fire. Note that `g` is in
+    `NUMERIC_STOP` already; that list is consulted only on the all-letters
+    branch below, which a token carrying a digit never reaches.
+
+    The postcodes are the residue the tight lookalike set does not buy back:
+    `B`, `J` and `S` are all in it, so ONS_159's `WC2N 6BJ` and `HS8 5SJ`
+    both fire. A line of contact details is the giveaway; settle those with
+    `glyph-ok NUMERIC` rather than by widening the set.
   - a token of **nothing but** lookalike letters, which needs the slot —
     adjacent to a digit run, and not one of the ordinary English words that
-    legitimately follow a number (`is`, `in`, `ii`, `gg`, `oz`). `Oil` lives
+    legitimately follow a number (`is`, `in`, `ii`, `ill`, `gg`, `oz`). `Oil` lives
     here.
+
+    `ill` is the newest entry and the one most worth knowing, because the
+    slot test can never clear it: it is this corpus's abbreviation for an
+    illustration, so a figure number always follows it — `(ill.5)`,
+    `ill. 11`, `6 ill.` — and decoded it reads `111`. 61 findings across 19
+    files, every one of them that, and none a number. It sits in the list
+    for the same reason as `ii` and `ll`.
 
   Decoding the token to digits gives the candidate reading, and one shape
   corroborates itself: **a range whose right side is shorter than its left,

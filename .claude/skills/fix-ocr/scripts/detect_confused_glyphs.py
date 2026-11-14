@@ -108,9 +108,14 @@ LETTER_OF = {
 # notation. These are what the slot test alone cannot clear.
 NUMERIC_STOP = {
     "is", "in", "it", "if", "so", "sin", "sis", "ibis", "bis", "oz", "lb",
-    "lbs", "gs", "ibid", "op", "loc", "nos", "no", "ii", "iii", "ll", "ss",
-    "gg", "i", "l", "s", "b", "o", "g", "j", "z", "obv", "ob",
+    "lbs", "gs", "ibid", "op", "loc", "nos", "no", "ii", "iii", "ill", "ll",
+    "ss", "gg", "i", "l", "s", "b", "o", "g", "j", "z", "obv", "ob",
 }
+# `ill` is this corpus's abbreviation for an illustration, and it always sits
+# in a numeric slot because a figure number follows it -- `(ill.5)`, `ill. 11`,
+# `6 ill.`. 61 findings across 19 files, every one of them that, and none a
+# number. It belongs beside `ii`, `iii` and `ll`, which are here for the same
+# reason: the slot test cannot clear a token that genuinely follows a number.
 
 # Addresses, telephone numbers and ISBNs are full of digit runs that mean
 # nothing of the kind.
@@ -241,6 +246,30 @@ def scan_text(text):
                 continue                     # a decade: `1980s`, `630s`
             if re.fullmatch(r"[A-Z]\d{1,2}[a-z]?", tok):
                 continue                     # a catalogue label: `B2`, `A5a`
+            if re.fullmatch(r"\d+g", tok):
+                # A gram weight, which this corpus writes unspaced as a matter
+                # of course -- the same reason WELD keeps units out of its word
+                # list. The token regex breaks `9.45g` at the decimal point, so
+                # the weight arrives here as `45g`: digits plus a lookalike,
+                # which the mixed branch below would emit as `459`.
+                #
+                # This shape was 3,508 of the class's 4,986 findings across 125
+                # files and not one was a letter standing in for a digit: 2,674
+                # sat directly after a decimal point, and nearly all the rest
+                # were the same weights in files that dropped the point (`5 83g`)
+                # or integer grams (`weigh about 10g`). The only non-weight was
+                # ONS_121's Russian title `617/1220 g.`, where `g.` abbreviates
+                # *god*, a year -- still not a digit.
+                #
+                # `g` is already in NUMERIC_STOP, but that list is consulted
+                # only on the all-letters branch, which a token carrying digits
+                # never reaches. The cut stays on the exact shape rather than
+                # going into the stop list for the mixed branch, because a
+                # stop-listed letter *inside* a digit run is usually the real
+                # thing -- `I955`, `S9S`, `lB93`, `ll38` -- and an interior `g`
+                # is too: all five of those (`4g2`, `0g2`, `9g21`, `7g11`, `g6`)
+                # are defects and still fire.
+                continue
             decoded = "".join(DIGIT_OF.get(c, c) for c in tok)
             if any(c.isdigit() for c in tok):
                 # mixed digits and lookalikes: high precision, no slot test

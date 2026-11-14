@@ -268,8 +268,8 @@ dash as something else, and landed somewhere no spellcheck can follow —
 `AD 17191748` for `AD 1719-1748`, `t)pe` for `type`. This is the `glyphs` row
 of `docs/screens.tsv`; it reads the Markdown alone, so it costs milliseconds
 and needs no render, and it exits non-zero while anything is outstanding,
-which is why Verification leans on it as the gate. **13,976 findings across
-199 files**, and on ONS_162 — a file that had already been through a full
+which is why Verification leans on it as the gate. **10,321 findings across
+193 files**, and on ONS_162 — a file that had already been through a full
 fix-ocr pass — 61 of its 67 `CAPITAL` hits were real defects every other
 screen had walked past.
 

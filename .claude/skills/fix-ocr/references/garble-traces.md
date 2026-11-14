@@ -119,6 +119,42 @@ counting against a clean screen. Both carry `page=` and `reason=` like the
 `script-*` markers, and for the same purpose — the next person should be able
 to tell *checked and real* from *never checked*.
 
+## A trace that stands for a drawing is a third outcome, and neither marker above fits it
+
+The two markers above are the whole settling vocabulary of this screen, and
+between them they can describe a trace that is really printed and a trace you
+could not read. They cannot describe the commonest thing a trace in a
+catalogue entry actually is: **a small device drawn or inked into the running
+text** — a tamgha after `Rev. -`, a trident or chakra beside a coin type, a
+mint mark. For those, replace the trace with the corpus's inline artwork
+marker and leave the breadcrumb `detect-missing-figures` defines:
+
+```
+Rev. - tamgha *[symbol]* <!-- figure-unchecked page=6 -- the "dancing man"
+tamgha drawn by hand at the end of the caption: a vertical stroke with raised
+arms and splayed feet. Noted while fixing OCR, not worked -->
+```
+
+**Do not reach for `glyph-deferred` here**, which is the mistake this section
+exists to stop. It fails three ways at once: the junk stays standing in the
+rendered text, the line stays on this screen's worklist as unresolved, and
+the figures screen is told nothing is there — and that last one matters most,
+because an inline device is far under that screen's ink threshold, so the
+breadcrumb is the only record that any artwork exists on the page at all. A
+drawing you have looked at is **resolved**, not deferred.
+
+The corpus has written these inline since ONS_148 — `a trident *[symbol]*
+*[symbol]*, thunderbolt *[symbol]*, wheel *[symbol]*` — and repeats the
+marker once per device, so count them before writing: ONS_159's single junk
+run `*^^^*` turned out to be three symbols and `**g.f**` two.
+
+**Read the line, not just the trace.** These devices cluster, and only some
+of them leave a character this screen can see: ONS_158's five inline tamghas
+were flagged three times, because the other two came through as `*J\\-*` and
+`*f \\*` with no trace character in them. Once a render is open for one, settle
+every junk run on the line — and record a negative too, where the scan shows
+the OCR dropped nothing.
+
 A trace quoted inside a comment is not reported, because the OCR skills quote
 bad readings in their markers on purpose and a screen that read them would
 report its own evidence as the defect. The header counts them anyway

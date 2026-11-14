@@ -93,7 +93,7 @@ text at a quarter of the tokens.
    python3 .claude/skills/fix-ocr/scripts/detect_presentation_forms.py scan <STEM>
    ```
 
-   The first says whether this file is one of the 42 that lost their sentence-ending periods wholesale (see that section below); the second finds the bare `^` the quote screen cannot match. Neither writes anything: both report candidates for a render to settle, which is the only evidence Hard constraints allow.
+   The first says whether this file is one of the 42 that lost their sentence-ending periods wholesale (see `references/dropped-punctuation.md`); the second finds the bare `^` the quote screen cannot match. Neither writes anything: both report candidates for a render to settle, which is the only evidence Hard constraints allow.
 
    The third is different, and is the one screen in this skill allowed to write on its own evidence. It folds Arabic Presentation Forms — `U+FB50–FDFF`, `U+FE70–FEFF` — back to ordinary Arabic. Those codepoints encode a letter together with its contextual shape, which correct Arabic never needs; the publisher's typesetting software emits them into the PDF text layer and `pdfmd` copies them faithfully. **This is not OCR**: every affected file is born-digital and ONS_186 or later, and none of the ~190 scanned-era files has one. `apply` changes no word and makes no judgement — it replaces a letter's compatibility encoding with the letter, and asserts that the text with all Arabic removed is byte-identical before and after. Because every new issue is born-digital, new issues are the ones that keep producing these, so run it on each new file rather than treating the corpus sweep as finished:
 
@@ -101,7 +101,7 @@ text at a quarter of the tokens.
    python3 .claude/skills/fix-ocr/scripts/detect_presentation_forms.py apply <STEM>
    ```
 
-   Do **not** reach for `unicodedata.normalize("NFKC", text)` instead. It folds the same characters correctly and also turns `½` into `1⁄2` — which "Currency symbols that are not currency" below exists to *restore* — and the corpus's 1,788 Unicode superscripts into digits.
+   Do **not** reach for `unicodedata.normalize("NFKC", text)` instead. It folds the same characters correctly and also turns `½` into `1⁄2` — which `references/suspect-symbols.md` exists to *restore* — and the corpus's 1,788 Unicode superscripts into digits.
 
    **Read the suspects off the scan, all at once.** The PDF's own text layer is a second OCR of the same page, independent of `pdfmd`'s, and where the two disagree is where the garble is. `garble_tiles.py` cuts every such word, plus a word of context either side, out of the page image at the scan's own pixels and packs the tiles onto one or two labelled sheets, so a whole file is two or three thousand image tokens instead of a render per word:
 
@@ -178,483 +178,47 @@ The OCR engine confuses visually similar characters. When deciding what an unkno
 - Sentence-initial garbage tokens like a lone `nem` at the top of a file — delete.
 - A backtick printed for *ʿayn* (`` Sa`id ``, `` `Ali ``) — write it as `'` (`Sa'id`, `'Ali`). A bare backtick in Markdown opens inline code and swallows the text up to the next one.
 
-### Mirrored text: every word spelled backwards
-
-```
-scripts/detect_mirrored_text.py scan ONS_100
-scripts/detect_mirrored_text.py scan jons/*.md
-```
-
-On a few pages pdfmd read the text layer mirrored. It still found the lines
-and still kept the words in their printed order, but transcribed each one
-letter-for-letter backwards:
-
-```
-dna \_ niJ taerg liated dna dehsilbup 5 ynaM tnereiffd
--> and ... in great detail and published as many different
-```
-
-**Why this needs a script rather than an eye.** It does not look
-recoverable. `dehsilbup` reads as pure noise, so a pass sees it, correctly
-judges it un-guessable under the Hard constraints -- too long to delete,
-forbidden to invent -- reports it as residual garble, and calls the file
-done. That is exactly how ONS_100 passed a full pass and stayed broken. The
-text was recoverable the whole time.
-
-cspell does not rescue you. It flags most of the run, which is how the pass
-knew the words were unknown, but it cannot say *why*, and a few reversed
-words are real tokens forwards -- `dna` matches DNA, and `ynaM` and `niJ`
-pass too -- so even a zero-unknowns gate leaves some behind.
-
-**Repairing it.** Word order is preserved, so the decode is per-token, not a
-reversal of the whole line. Punctuation travels with the word and has to be
-moved back by hand (`,gnitseretni` -> `interesting,`), and digits are not
-reversed at all (`th6` for `6th`, `6581` for `1856`), which is why the
-script reports rather than rewrites. Two further things to expect:
-
-- **pdfmd often lays the mirrored run out as a pipe table.** Rebuilding that
-  into prose changes the line count, so it falls outside this skill's
-  line-break invariant -- it is a `restructure-flattened-md` repair that
-  happens to be triggered here.
-- **Text next to the run may simply be missing.** Both ONS_029 and IS_029
-  lost their quotation's opening clause entirely, and ONS_053's fragment
-  lost its heading block. Restore from the render, and check the sentence
-  actually starts somewhere.
-
-Mark the repair with an `<!-- OCR: ... -->` note saying the passage was
-mirrored and naming the page it was restored from. Describe the garble
-rather than quoting it, or the quoted tokens become cspell unknowns of their
-own.
-
-### Currency symbols that are not currency
-
-A currency symbol in this corpus is far more often a misread glyph than a
-price, because the symbols the OCR engine reaches for are shapes the
-typewriter never had. Treat both of these as suspect on sight, then settle
-each one by rendering the page — the Hard constraints apply here as
-everywhere, so none of these is a from-context fix.
-
-- **`¥` is suspect everywhere.** Of 36 in the corpus, 2 were real. It stands
-  most often for **`½`**, the typewriter's half-fraction glyph: `¥%` →
-  `½` (ONS_052, confirmed against the scan), `AR ¥ unit` and `¥% unit` →
-  `½ unit` (ONS_078), `*¥2* abazi` → `½ abazi` (ONS_Supplement_197, where
-  half-abazi is a real Georgian denomination). It also stands in for a
-  letter: `Powys S¥22 5BX` → `SY22 5BX`, `Priissykkuria,¥Tünze` → `Frunze`.
-  The rest sit inside already-garbled plate, Chinese or Arabic runs, where
-  the `¥` is a symptom and the line belongs to another skill. It is genuine
-  only as a book price in a recent issue's publications notice — `¥ 1800`
-  (Bank of Japan, ONS_148), `CN¥ 368` (ONS_248).
-- **`€` cannot predate the currency.** The symbol dates from 1996 and the
-  euro itself from 1999, so it is certainly wrong in `IS_*`, `OP_*`,
-  `ONS_0*` and `ONS_1[0-3]*`, and worth a look anywhere before `ONS_14*`.
-  In ONS_124 it is a Greek lunate epsilon in a mint legend (`€MH CIC`), not
-  money at all. In issues after 1999 a euro price is ordinary — check the
-  issue date before touching one.
-
-### A registered sign is a footnote digit
-
-`®` is never the registered trademark sign in this corpus. 218 occurrences
-across 47 files, and not one of them is genuine -- the recent issues, where a
-product trademark could legitimately appear, carry it only inside mojibake
-Arabic runs. What it stands for depends on where it sits:
-
-- **A superscript footnote marker, after a word or a full stop** (~93, the
-  common prose case): `an agreement®`, `...the Sichuan Rupee.®`, `points
-  out®`. Restore one as `agreement<sup>6</sup>`, not `6`. (The corpus's older
-  repairs wrote 1,788 of these as Unicode superscripts, `¹` alone 398 times;
-  new work uses `<sup>`, and leaves the existing Unicode ones as they are.)
-  **The digit is not fixed, so there is no blanket substitution.** ONS_109
-  alone reads `®` as ⁶ three times and ⁸ once, two of them on facing pages:
-  `Japanese⁶ private castings` but `0.75 tael string⁸`. Render each one. The
-  same file's other markers are garbled in their own ways (`!` for ¹, `?` for
-  ², `\>` for ⁵), so the footnote list on the page is a useful cross-check
-  once the render gives you the digit.
-- **Debris inside a wrecked foreign-script or figure run** (~70): `ÚD®Ïv`,
-  `# DESIGN **®** **® ®**`. The `®` is a symptom of the wreck, not a defect of
-  its own -- that line belongs to `transcribe-foreign-script` or to
-  `detect-missing-figures`, and fixing the symbol alone achieves nothing.
-- **A misread `@` in an e-mail address** (8): `e-mail album®sonic net`,
-  `E-mail: ®home.com`.
-
-**Never rewrite any of these symbols inside an HTML comment.** The OCR skills
-record their own evidence there, and that includes quoting the bad reading:
-`IS_021` carries `<!-- script-ok ... reason=... (OCR had €°3 and 6-3) -->`,
-where the `€` is the point of the sentence. A blanket sweep over the file
-destroys the note. The same goes for `<!-- OCR: ... -->` placeholders.
-
-### A quotation mark the OCR split in two
-
-```
-python3 .claude/skills/fix-ocr/scripts/detect_quote_pairs.py scan "<path>"
-```
-
-A typewritten `"` scans badly, and pdfmd routinely reads one printed mark as
-two or three. ONS_111's publications notice came out `'""Chopmarks"` where
-the page prints `"Chopmarks"`, and eleven runs in that one file were the
-same defect.
-
-**Do not screen for "an illogical quote combination".** A run of two or more
-marks fires 3,657 times across 127 files, and that census is three different
-things: about a quarter are not quotes at all (see the next section), and
-plenty of the mixed ones are correct text -- the inner `'` in `("'Abd Allah
-ibn Ibrahim")` is the ʿayn of the name. What is decidable from the text
-alone is **opener ≠ closer**: pair each opening mark with its closer and
-report the spans where the two disagree, or where either is a run. That is
-664 spans across 99 files against 24,188 pairs that balance, and the script
-already drops the classes that look like the defect without being it --
-apostrophes, ʿayn, nested closings (`...the Name "Safi""`), runs after a
-digit, and spans long enough to mean the pairing desynchronised rather than
-that the quotes disagree.
-
-**Settling a whole file by eye instead of one render at a time:**
-
-```
-python3 .claude/skills/fix-ocr/scripts/quote_crops.py <STEM>
-```
-
-writes `<STEM>-quotes.html` -- one row per finding, the Markdown line with
-the run highlighted beside the band of the scan it came from, located by
-matching the words before the mark against the page's text layer. Open it
-next to the editor and work down the list; `--only quotes` (or
-`superscript`, `question`) splits a long one into batches, and `--dpi 450`
-enlarges the crops. A row whose words the OCR mangled, or whose phrase
-repeats on several pages, says so and shows no image rather than showing
-the wrong part of the scan -- so check that the Markdown and the crop are
-the same sentence before trusting either. This is the cheap way to settle a
-file when a person is doing the reading; it rewrites nothing.
-
-Before either, check what the source is:
-
-```
-python3 .claude/skills/fix-ocr/scripts/classify_source.py scan <STEM>...
-```
-
-`SCAN` is the ordinary case -- a page image with an OCR layer behind it,
-where every mark in the Markdown is a guess a render can settle.
-`BORN-DIGITAL` is not: from ONS_186 (1998) onward the PDF carries the
-publisher's own text, 57 files in all, so its punctuation was never OCR'd
-and reading it off a page render is the wrong tool -- the quote screen may
-still report runs there, but they are a different defect with a different
-remedy. `NO-TEXT-LAYER` (ONS_177, ONS_197, OP_014) is a scan nobody OCR'd
-into the PDF: nothing can locate words on those pages, so a crop sheet
-cannot be built at all. `quote_crops.py` refuses both unless passed
-`--anyway`.
-
-`detect_quote_pairs.py rows <STEM>` writes the same findings as
-`file<TAB>label<TAB>anchor` for that builder, leaving out the ordinals the
-batch writes. Use it when a file has findings from more than one screen: a
-quote run and a heading on the same page then share one band instead of
-costing two images.
-
-The locating and the stacking are not quote-specific, so they live in
-`.claude/skills/shared/crop_sheets.py`, which any screen can call with a
-label and an anchor per finding:
-
-```
-printf 'line 94 heading\tMichael Willis, Who built\n' |
-  python3 .claude/skills/shared/crop_sheets.py sheets ONS_166
-```
-
-A row may name its own file (`file<TAB>label<TAB>anchor`), which puts the
-last few findings of a dozen files onto one sheet instead of one sheet
-apiece.
-
-`--stack` is the same crops for an agent doing the reading: labelled JPEG
-sheets (`<STEM>-quotes-1.jpg`, ...) of five findings each instead of one
-HTML page, with the Markdown printed to stdout, where text is cheap. Marks
-in the same printed paragraph share a band. A file's worth of evidence then
-costs two or three images rather than a render apiece -- ONS_053's fourteen
-findings came to three sheets, and every one of them turned out to be the
-same split `"`.
-
-**The pair decides *that* it is wrong; only the render decides what it should
-be.** The marks the OCR split do not tell you what was printed, and the
-answer is not always a quotation mark at all: ONS_051's `''A Study of Holkar
-State coinage"'` is a review heading that the page prints with no quotes
-whatsoever. The Hard constraints apply here exactly as they do to any other
-punctuation fix.
-
-Three readings that are correct text, and must be left alone when you meet
-them in the output:
-
-- **a ʿayn inside a quotation** -- `("'Abd Allah ibn Ibrahim")`, `"'am"
-  instead of "sanah"` (IS_018, where the file's own `script-ok` note records
-  the عام). The script suppresses the names it knows; add to `AYN_NAMES`
-  when a new one surfaces.
-- **a nested quotation closing** -- `"...the title *yagbu* 'chief of a
-  clan'"` and `"A Coin Bearing the Name "Safi""`. Two closers side by side
-  are each doing their own job.
-- **an inch mark** -- `10 3/8" x 7 3/8''` in a book description.
-
-### A `''` that closes nothing is a question mark
-
-The screen's third verdict, and the one ONS_165's worklist turned up: a
-printed `?` scans as `''` on these pages, so a rhetorical question ends up
-looking like a stray quote run.
-
-```
-Are we really meant to believe this''   ->  ... believe this?
-as "Muhammad''", with question-mark     ->  "Muhammad?", with question-mark
-In AH 568 and 56(9 or 7'')              ->  56(9 or 7?)
-A fals of AH394''(B D Kochnev           ->  A fals of AH 394? (B. D. Kochnev
-```
-
-231 across 38 files, worst in the review articles of `ONS_15*`-`ONS_17*`,
-where the author argues with other numismatists a question at a time.
-ONS_165 alone had 15, one of them inside a sentence that goes on to say
-*with question-mark i.e. he was not sure*.
-
-**The PDF text layer repeats the error**, so `triage_percent.py`'s
-text-layer shortcut cannot settle these -- both OCR passes read the same
-`''`. Render each one. A `''` after a digit is a `SUPERSCRIPT` hit instead
-(see below) and is just as often a `?`: `(404'')` is `(404?)`, `425''` is
-`425?`.
-
-### A quote run after a digit is a superscript
-
-993 of those runs sit immediately after a digit, and they are OCR'd
-superscript ordinals and footnote markers -- the `®` class of the section
-above in another costume:
-
-```
-the 14'''  All-Russian Numismatic Conference   ->  14th
-30""  November                                 ->  30th
-the 33'"''  International Archaeometry Conf.   ->  33rd
-7'''  century Byzantine coins                  ->  7th
-```
-
-**A digit before the run does not prove an ordinal**, so there is no
-skip-after-a-digit rule either. ONS_111 p5 prints `...perpetuate his
-sovereignty 828".` -- a plain closing quote after a year -- and ONS_120 p5
-prints `"Capitalism and Material life 1400-1800", Braudel`, both verified on
-the render. `AH 40(7'' or 6'')` is a footnote marker on a date.
-
-What settles it is the word *after* the run, which is why the screen splits
-the class in two:
-
-- **`ordinal`** -- a century word, a month, `c.`/`cent` (but not `c/m`, which
-  is a countermark), `year`, `regnal`, `anniversary`, `edition`, `standard`,
-  `International`, or a connector with a century word just beyond it
-  (`19"' and 20''' centuries`). 533 runs across 28 files. The suffix comes
-  from the number -- 14 → th, 33 → rd, 21 → st, 11-13 → th -- and the
-  restoration is **plain `14th`**: this corpus writes 3,599 ordinals that
-  way and not one as `14ᵗʰ`. `ordinals` emits them as an `apply_edits.py`
-  batch:
-
-  ```
-  python3 .claude/skills/fix-ocr/scripts/detect_quote_pairs.py ordinals <STEM> > edits.txt
-  python3 .claude/skills/fix-ocr/scripts/apply_edits.py "<path>" edits.txt          # dry run
-  python3 .claude/skills/fix-ocr/scripts/apply_edits.py "<path>" edits.txt --write
-  ```
-
-  Each edit carries the word that proved it -- `16''' century => 16th
-  century`, not `16''' => 16th` -- so it fires only where the evidence is;
-  a bare edit would sweep the footnote markers of the same shape elsewhere
-  in the file, and 30 runs across 13 files are exactly that. The batch is
-  still a candidate list, not evidence: confirm a sample per page against
-  the render before `--write`, the same rule `punct_candidates.py` follows.
-
-- **`check`** -- the other 344. Render each one. A footnote marker restores
-  as `<sup>6</sup>`, the convention for new work (the 1,817 Unicode `⁶`
-  already in place stay), and **the digit is not fixed** -- read it off the page and cross-check it against the footnote
-  list, exactly as for `®`.
-
-### Garble traces: the characters pdfmd leaves behind
-
-A **trace** is a literal character or short string the OCR left standing
-where the scan printed something else — a caret for a superscript footnote
-number, a guillemet for a quotation mark it could not place, an escaped
-asterisk closing a run of quote marks. The screen above pairs on quote
-characters, so `^` reaches it only as `MARKER_TAIL`, the garble swallowed
-*after* a quote run. Where the printed superscript came through as a bare
-caret with no quote mark anywhere near it, nothing in `docs/screens.tsv` sees
-it, and the file screens clean on all five rendering screens:
-
-```
-In a forthcoming monograph^ I suggest that the reverse deities...
-Sikander 'Adil Shah surrendered to the Emperor.^ Thereafter he...
-```
-
-`transcribe-foreign-script`'s screen does know these glyphs — its
-`LATIN_NOISE_CHARS` is `^\<>±«»¬°·•` — but it wants a *run* of four such
-tokens at 15% of the line beside an `Obv.`/`Rev.` gloss, because its job is a
-legend pdfmd read as Latin. One caret in sixty words of English prose is not
-that, and LATIN is kept out of its exit status in any case.
-
-```
-python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py scan <STEM>
-python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py rows <STEM>
-python3 .claude/skills/fix-ocr/scripts/detect_marker_noise.py list
-```
-
-**The traces live in `.claude/skills/fix-ocr/traces.tsv`, not in the code.**
-Each row gives the literal (or a `re:` pattern where a literal will not do),
-a name, the shapes that count for it, and a note saying why it is there and
-what the measurement was. When a new trace turns up, add a row — that is the
-intended way to extend this screen, and it needs no code change. Today's list
-is `^`, `¬`, `«`, `»`, the quote-run-plus-`\*` superscript, and `<` `>`.
-
-Every occurrence of every listed trace is reported, classified by position:
-
-- **MARKER** — at a word's end. The scan prints a superscript footnote
-  number, so this restores exactly as the `®` and `''` markers above do:
-  `<sup>6</sup>`, with the digit read off the page and cross-checked against
-  the footnote list. 1,003 in 50 files. A footnote reference falls wherever
-  its claim ends, so what follows may be a new sentence or just the next word
-  (`Joe Cribb^ supported this view`). pdfmd also sets the superscript as a
-  quote run closed by an escaped asterisk — `an astronomic sign"\*` for
-  `sign⁴`. `detect_quote_pairs` skips a single quote mark unless asked,
-  because on its own a `"` is usually just a quotation; the trailing `\*` is
-  what makes it a marker, and is what the pairing never looks at. 275 of
-  those were unreported anywhere, in 45 files. Some are question marks on the
-  page rather than markers (`just one has survived"\*` is `survived?`) — the
-  render says which.
-- **GLYPH** — *between two letters*, which is a letter or a diacritic the OCR
-  lost: `Öl^er` for Ölçer, `ak^e` for akçe, `be^hk` for beşlik, `'O^ene'` for
-  Ozene, and in ONS_163 a whole file's worth of `\>` for `y`
-  (`Arab-B\>zantine`, `Uma\>\>ad`, `b\> telephone`). 424 in 43 files.
-- **LOOSE** — every other position. **This is where most of the garble is**,
-  and an earlier version of this screen, which knew only the two shapes
-  above, had no name for it. ONS_155 screened clean carrying 18: `fax:
-  -^-^-33` for `++33` (a digit on either side), `**YZD**^8.` for a footnote
-  digit glued to its caret, `4^0` for `400`, `(Crusaders) ^ Jerusalem` (a
-  space in front), `*almati^,*` (a comma behind). Not one was a false
-  positive the narrowness had bought. **Assume a trace is garble until the
-  scan says otherwise** — read it, do not reason about it.
-
-A hit inside a run of garble is tagged **WRECK** and reported as a lead, not
-counted — that is a legend for `transcribe-foreign-script`, which renders the
-whole thing rather than one glyph.
-
-**Routing a WRECK is not reading it, and the tag is not a reason to skip the
-crop.** The threshold counts wreck characters in a 40-character window; it
-says the neighbourhood is noisy, nothing about how hard the spot is. ONS_155's
-line 723 sat as a WRECK through a whole pass:
-
-```
-A possible full reading is •^\[êTTcT. The ^ could be the final letter of Dalpat.
-```
-
-Two Devanagari words in English prose, with the article's own gloss beside
-them — one crop settled it as `डलपत` and `त`, and showed a third line,
-`सञज for सिंहजी`, that the OCR had dropped altogether. What made it look like
-somebody else's problem was the tag, plus a sentence nearby that said
-"Devanagari", which is the article talking, not the scan. Before handing a
-WRECK off, check whether it is a flattened legend (dozens of tokens, no
-English around it) or a few glyphs inside a sentence. The second kind is a
-crop, and a crop you can read is a reading you owe the file.
-
-Angle brackets count only in the GLYPH shape; elsewhere most are legitimate —
-comparison operators in alloy tables (`Cu >70`, `As < 0.5`), `->` arrows in a
-flattened family tree, and ONS_226's own stated convention, `In inscriptions
-\< \> represents visible` — 1,291 across 75 files, too few of them defects to
-put in a worklist. `--all` reports them anyway. `--only=<name>` and
-`--skip=<name>` narrow a run to particular traces.
-
-#### Settling a trace that really is printed
-
-Some traces are genuinely on the page: the corpus's own French and German
-passages use guillemets, and ONS_226 states a convention for angle brackets.
-Once the scan has been read, say so inline so the screen stops asking and the
-next pass does not read the same spot again:
-
-```
-stamp a small indentifying «chop-mark» unto the surface
-<!-- glyph-ok « page=5 reason=the scan prints French guillemets round the
-author's own quoted term; both halves present and balanced -->
-```
-
-`glyph-ok` settles every occurrence of the traces it names on its own line.
-Name several with commas (`glyph-ok «,»`), by the literal or by the name
-`traces.tsv` gives it (`glyph-ok guillemet-open`). `glyph-deferred` is its
-sibling for one that was looked at and could not be resolved: it is reported
-as a lead rather than a verdict, so the line stays on a worklist without
-counting against a clean screen. Both carry `page=` and `reason=` like the
-`script-*` markers, and for the same purpose — the next person should be able
-to tell *checked and real* from *never checked*.
-
-A trace quoted inside a comment is not reported, because the OCR skills quote
-bad readings in their markers on purpose and a screen that read them would
-report its own evidence as the defect. The header counts them anyway
-(`19 hidden in comments`): otherwise a trace could leave this screen by being
-quoted in a marker's reason string rather than by being fixed.
+### The classes with their own screen and their own reference
+
+Six classes of defect are large enough to carry their own screen and their own
+reference file. **Run the screens first — every one of them reads the Markdown
+alone, so all six together cost milliseconds and not one render — and open a
+reference only when its screen has something to say.** On a file where four of
+them report zero, four of these are pages you never pay for.
+
+| screen | what it finds | open when non-zero |
+|---|---|---|
+| `detect_mirrored_text.py scan <STEM>` | a page pdfmd read mirrored, every word transcribed backwards: `dehsilbup` is `published`. Reads as unrecoverable noise and is not | [`references/mirrored-text.md`](references/mirrored-text.md) |
+| the `¥`, `€` and `®` grep under *Beyond spellcheck* | a symbol standing in for a shape the typewriter had: `¥` is usually `½`, `®` is always a footnote digit, `€` cannot predate 1999 | [`references/suspect-symbols.md`](references/suspect-symbols.md) |
+| `detect_quote_pairs.py scan "<path>"` | one printed `"` read as two or three; a `''` that closes nothing and is a `?`; a quote run after a digit that is an ordinal or a footnote marker | [`references/quote-pairs.md`](references/quote-pairs.md) |
+| `detect_marker_noise.py scan <STEM>` | the characters pdfmd leaves standing where the scan printed something else — `^` for a superscript, `«`, `¬`, a `\>` for a letter | [`references/garble-traces.md`](references/garble-traces.md) |
+| `detect_dropped_punct.py scan <STEM>` | the 42 files whose text layer dropped nearly every sentence-ending period, and the 43 carrying an isolated handful | [`references/dropped-punctuation.md`](references/dropped-punctuation.md) |
+| `detect_confused_glyphs.py scan <STEM>` | the confusions that land *on a word* and so hide from cspell: a diacritic read as a capital (`MansQr`), a digit read as a letter (`K6ln`), a welded range (`AD 17191748`), a bracket for a letter (`t)pe`) | [`references/confused-glyphs.md`](references/confused-glyphs.md) |
+
+Not one of the six is settled from the Markdown. Each reference says what its
+screen's findings mean and what evidence can settle them; the Hard constraints
+above still decide what you are allowed to write.
 
 ### Numbers that look like words
 - Long runs of digits in the middle of a sentence (e.g., `511868515 that the first two`) are OCR'd images or stamps. Replace with `[illegible]` only if the user has asked for that style; otherwise leave a HTML comment `<!-- OCR: 511868515 -->` near the spot and remove the noise from the prose.
 
 ## Files that lost their punctuation wholesale
 
-Some issues' PDF text layers dropped nearly every sentence-ending period (and many colons and decimal points): the file reads `…types Whereas…`, `17 30` for `17.30`, `No A7 2` for `No. A7.2`. Rendering each spot by hand does not scale to hundreds of marks, and the PDF text layer cannot help because it is missing them too.
+Some issues' PDF text layers dropped nearly every sentence-ending period (and
+many colons and decimal points): the file reads `…types Whereas…`, `17 30` for
+`17.30`. Rendering each spot by hand does not scale to hundreds of marks, and
+the PDF text layer cannot help because it is missing them too.
 
-**First, find out whether this is such a file** — the tell needs no PDF, so this is a `docs/screens.tsv` row (`punctuation`) rather than something to notice by eye:
+`detect_dropped_punct.py scan <STEM>` says whether this is such a file, and
+the verdict is reliable — the shape fires 0.01 times per 1000 words where the
+punctuation survived and 4-6 times where it did not. **WHOLESALE** (42 files)
+sends you to `punct_candidates.py`; **ISOLATED** (43 files) is a handful of
+spots that crop sheets settle one at a time.
 
-```
-python3 .claude/skills/fix-ocr/scripts/detect_dropped_punct.py scan <STEM>
-python3 .claude/skills/shared/survey.py show --screen punctuation    # the worklist
-```
-
-A dropped period leaves a lowercase word butted straight against a capitalised sentence opener — `(c 155-169) The last great monarch`, `is discussed in detail Few will have`. Measured over the corpus that shape fires 0.01 times per 1000 words where the punctuation survived and 4-6 times per 1000 where it did not, so the screen's verdict is reliable: **WHOLESALE** (42 files, the scanned issues from ONS_119 and ONS_141-202) sends you to `punct_candidates.py` below; **ISOLATED** (43 files, nine candidates or fewer each) is a handful of ordinary spots that crop sheets settle one at a time. The screen proposes no edits — capitalisation is context, and Hard constraints forbid supplying a mark from context.
-
-The same pass drops the **possessive apostrophe** with the periods, and that one is invisible to everything else: `punct_candidates.py` aligns on `.,;:!?`, so an apostrophe is outside the marks it compares at all, and cspell sees two real words either side of the space.
-
-```
-...Curator of South Asian Coins in the Museum s Department of Coins...
-...the thirty sultanis which Pijnacker s dragoman had to pay...
-```
-
-486 across 61 files, 38 of which the screen already calls WHOLESALE — which is what says it is the same damage and not a habit of the typists. They report as `POSSESSIVE` beside the `SENTENCE` findings, but the rate and the verdict count `SENTENCE` alone: both thresholds were measured on that shape, and the empty gap that justifies the cut is its gap. The one false positive worth knowing is the Belgian dealer's company form, `Jean Elsen s.a.`, which the screen excludes by rule; a transliterated Russian title (`Mednye monety s izobrazheniem`) stays in and is settled on the page like any other candidate.
-
-For a WHOLESALE file, run a second, independent OCR over the renders and align it against the Markdown:
-
-```
-python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> [--pages 2-9]
-```
-
-It prints one candidate per line — `<path>:LINE:COL  md 'types'  page 'types.'  pN  --clip x0 y0 x1 y1` — for every aligned word whose trailing punctuation differs. The `COL` matters: a token is routinely not unique on its line, and `from region to region. Some` has two slots for one finding. Tesseract's reading is a candidate list, not evidence. Decimal points inside numbers (`17 30`, `2-4 1 1`) do not show up as trailing punctuation — grep for digit-space-digit runs and render those separately, and the same for the possessive apostrophes, which this alignment does not compare at all.
-
-**Do not read the file page by page. Let the script place the safe class and read only what it cannot settle:**
-
-```
-python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> --apply            # dry run
-python3 .claude/skills/fix-ocr/scripts/punct_candidates.py <path> --apply --write --sheet-rows rows.tsv
-python3 .claude/skills/shared/crop_sheets.py sheets <STEM> --rows rows.tsv           # then Read the sheets
-```
-
-`--apply` places only what is unambiguous — the Markdown has no trailing mark, the page has exactly one `.` or `:`, and the page's word is the Markdown's with that mark on the end and nothing else changed — then re-aligns and prints the rest. **EXTRA** is the row that matters: the Markdown now has a mark the page does not, so tesseract read a speck or a mark landed in the wrong slot. **MISSING** is the classes `--apply` does not touch — marks against emphasis markers, `,` against `;`, a mark after an opening bracket. Settle both from the crop sheets, then apply with `apply_edits.py` as usual.
-
-Measured on ONS_157's 810 candidates, `--apply` reproduces 420 of the 450 placements a hand pass made, adds 48 the hand pass had missed, disagrees with it nowhere, and leaves 91 rows for the eye. That is three or four crop sheets against the twenty page renders the hand pass read.
-
-**Run `--apply` once.** It holds no record of a finding you looked at and rejected, so a second run puts back every mark you removed — on ONS_156 it restored all three specks (`of. archaeologists`, `an. attempted`, `would. only`) that the sweeps had just caught. Decide the flags up front, including `--emphasis`, and if you do need a second pass, re-check the sweeps against the snapshot from *before* the first one rather than the file as it now stands.
-
-`--emphasis` also places a mark after a trailing `*`, `_` or backtick. It is off by default because the mark could belong inside the markup, but on the scans sampled so far it does not: ONS_156 sets `INJ 8.`, `ONS Newsletter.`, `...from Kasur.` and `...invasion of India.` all with the full stop upright after the italic. It is worth about half the residue — 102 of ONS_156's 165 rows.
-
-**Reading the page render is not enough on its own, which is why the loop is this way round.** Over ONS_158's 1,590 candidates, every one of its 37 pages was rendered and read, and 53 bad edits still got through; ONS_157 took 4 from 20 pages read. In both cases the re-alignment is what caught them, and it costs nothing. Reading every page is the expensive half of the pass and the ineffective half. Two mechanical sweeps after applying catch what the eye does not, and both must come back empty before the pass is done:
-
-```
-# a mark glued inside a word: a short candidate token (`V`, `p`, `No`, `so`)
-# matched as a substring of a longer one -- `V.iatkin`, `quart.er`, `Hussein:ites`.
-# The letter after the mark may be upper case: ONS_159 lost `INDO-GR.EEKS` to a
-# narrower version of this grep that required a lowercase one.
-grep -nE '[A-Za-z]+[.:;,][A-Za-z]+' "<path>" | grep -vE 'www|http|\.com|\.net|@'
-
-# a period before a lowercase word: tesseract read a speck on the scan as a
-# full stop -- `the silver. crisis`, `in order. to advertise`
-grep -nE '[a-z]\.\s+[a-z]{2,}' "<path>"
-
-# a mark between two words in capitals: it looks exactly like a sentence end,
-# so neither grep above can see it -- ONS_159's masthead became
-# `# ORIENTAL NUMISMATIC. SOCIETY`
-grep -nE '\b[A-Z]{2,}[.:;,][[:space:]]+[A-Z]{2,}\b' "<path>"
-```
-
-The third grep is narrow on purpose. A period inserted before an ordinary
-capitalised word is **indistinguishable from a real sentence end** by any
-mechanical test, so nothing catches that one but the page: `PL. Gupta`
-survived all three greps on ONS_159 and is `P.L. Gupta` on the scan. That is
-the residual risk of leaning on the sweeps instead of reading every page, and
-it is the reason a file worked that way should say so.
-
-Both greps hit legitimate text too (`Op. cit`, `Hung. ducats`, an e-mail, and the odd full stop the scan really does print mid-sentence), so diff them against the same grep over the pre-pass snapshot and look only at what the pass introduced. Of ONS_158's 53, 31 were specks, 18 were substring matches, and 4 were specks on pages whose single candidate looked safe.
+The whole procedure — the second OCR and the alignment, what `--apply` may
+place by itself, why it must be run only once, and the three sweeps that have
+to come back empty before the pass is done — is in
+[`references/dropped-punctuation.md`](references/dropped-punctuation.md).
 
 ## Beyond spellcheck
 
@@ -695,182 +259,24 @@ survived everything else.
 
 ```
 python3 .claude/skills/fix-ocr/scripts/detect_confused_glyphs.py scan <STEM>
-python3 .claude/skills/fix-ocr/scripts/detect_confused_glyphs.py rows <STEM> > rows.tsv
 python3 .claude/skills/shared/survey.py show --screen glyphs      # the worklist
 ```
 
 Six shapes with one cause: the OCR read a diacritic, a digit, a bracket or a
-dash as something else, and landed somewhere no spellcheck can follow. This is
-the `glyphs` row of `docs/screens.tsv`; it reads the Markdown alone, so it
-costs milliseconds and needs no render. **13,976 findings across 199 files**,
-and on ONS_162 — a file that had already been through a full fix-ocr pass —
-61 of its 67 `CAPITAL` hits were real defects that every other screen had
-walked past.
+dash as something else, and landed somewhere no spellcheck can follow —
+`al-JalTl` for `al-Jalīl`, `K6ln` for `Köln`, `1010-1 Oil` for `1010-1011`,
+`AD 17191748` for `AD 1719-1748`, `t)pe` for `type`. This is the `glyphs` row
+of `docs/screens.tsv`; it reads the Markdown alone, so it costs milliseconds
+and needs no render, and it exits non-zero while anything is outstanding,
+which is why Verification leans on it as the gate. **13,976 findings across
+199 files**, and on ONS_162 — a file that had already been through a full
+fix-ocr pass — 61 of its 67 `CAPITAL` hits were real defects every other
+screen had walked past.
 
-- **`CAPITAL`** — a capital letter inside a lowercase word. Nothing in
-  English prose puts a capital after a lowercase letter, so the *shape* is the
-  finding, and that is what makes it catch two unrelated defects at once. The
-  detail says which is likelier. `diacritic?` is a macron the OCR read as a
-  letter: in ONS_162 **every `ī` came through as `T` and every `ū` as `Q`** —
-  `al-JalTl` for `al-Jalīl`, `MansQr` for `Mansūr`, `UdgTr` for `Udgīr`,
-  `falQs` for `falūs`, `ghazJ` for `ghāzī`. `hyphen?` is a hyphen read away,
-  leaving a whole word standing after the capital — `IndoAfghan`,
-  `nonCeylonese`, `preAurangzeb`, `alMalik`. cspell flags some of the first
-  kind and **none** of the second, because `alMalik` is not a word it has an
-  opinion about and `IndoAfghan` tokenises into two it likes.
-
-  The `T`-for-`ī` confusion is not one file's accident. ONS_168 carries 1,547
-  findings of it (`AlT` 322 times, `TegTn` 314, `IbrahTm` 97), ONS_165 1,445,
-  and the whole `ONS_16*`-`ONS_20*` run is affected. The per-1000-word rate is
-  the verdict: the corpus median is 0.16, the 90th percentile 2.20, and a file
-  above about 2 has a *systematic* diacritic confusion rather than a few spots.
-
-  **A render settles which diacritic, and it is worth asking for.** The OCR
-  normalises inconsistently: ONS_162 printed the same name as `MansQr` four
-  times and `Mansür` sixteen, and the page turned out to print `ū` in all
-  twenty. Fixing only the flagged four would have left the file with two
-  spellings of one name — so when a render shows the mark, apply it to every
-  occurrence in that article, not just the ones the screen flagged.
-
-- **`DIGIT`** — the mirror of `NUMERIC`: a digit standing in for a **letter**,
-  inside a word. `R6misch` is `Römisch`, `K6ln` is `Köln`, `t5wn` is `town`,
-  `Fran9ois` is `François`, `su7erain` is `suzerain`, `Kolbj0rn` is
-  `Kolbjørn`. **cspell never reports these as themselves** — it splits the
-  token on the digit and reports the *fragment*, so `R6misch` surfaces as
-  `misch` and `$engun` as `engun`: innocuous-looking strings that get written
-  off among a scanned file's 1,600 unknowns. That is how ONS_168 shipped
-  `R6misch` and `K6ln` through a full fix-ocr pass (#263). 139 findings across
-  43 files.
-
-  Three constraints keep it clean, each paid for by a measurement:
-
-  - **the digit must be interior**, letters on both sides. A leading or
-    trailing digit is overwhelmingly real here — `6DD` and `0X14` in a
-    postcode, `B578` and `BH126` in a catalogue, `8g`, `2nd`. ONS_168's
-    `4ydin` for `Aydın` is the price of that cut, and it is worth paying.
-  - **two or more lowercase letters must follow it**, which is what separates
-    a word from a catalogue label: `K6ln` and `t5wn` keep their tail, `B2a`,
-    `A5a`, `BH126A` and `H2O` lose theirs.
-  - **exactly one digit.** Allowing a run adds 24 hits across nine more files
-    and every one is `WELD`'s job — `A19and`, `I984pp`, `PMC579var`.
-
-  The detail offers candidate letters rather than one decode, because the
-  readings cluster by digit in a way you would not guess from shape: this
-  corpus's scans turn **cedillas and umlauts into digits** as readily as `o`
-  into `0` — `9`→`ç` (`Fran9ois`, `carrega9ao`), `6`→`ö`/`ó` (`K6ln`,
-  `Hist6rico`), `0`→`ø` (`J0rgen`, `m0nter`), `7`→`z`, `4`→`t`, `3`→`a`. Both
-  `5` and `8` go to `o` often enough (`t5wn`, `t8wn`) that guessing a single
-  letter would be wrong as often as right. The page settles it.
-
-  **One file is nearly a quarter of the class and is not this screen's
-  business:** ONS_Supplement_197's 31 hits are inside a Georgian-script
-  bibliography pdfmd garbled wholesale, where every token is noise. Retire the
-  block with `glyph-ok DIGIT` on the line rather than reading them one by one.
-
-- **`NUMERIC`** — a token of digit-lookalike letters sitting where only a
-  number belongs. **This is the answer to "the garble is a dictionary word".**
-  `Ilaq 401/1010-1 Oil` is `1010-1011`; `Oil` is in every English dictionary
-  and no spellcheck will ever flag it, in this file or any other. What flags
-  it is not the word but the **slot**: stop asking *is this a word* and ask
-  *is a number the only thing that can go here*. Two sub-rules:
-
-  - a token mixing digits with letters that are **only** digit-lookalikes
-    (`OoIlJiSsBZqg`) — `I0I0-I012`, `J971`, `199S`, `8S-89`, `40I`. High
-    precision, no slot test needed. The lookalike set is deliberately tight:
-    adding `T`, `D` or `A` turns every British postcode (`CT21 6DD`) and half
-    the countermark table (`A12`, `2xAB`) into a finding.
-  - a token of **nothing but** lookalike letters, which needs the slot —
-    adjacent to a digit run, and not one of the ordinary English words that
-    legitimately follow a number (`is`, `in`, `ii`, `gg`, `oz`). `Oil` lives
-    here.
-
-  Decoding the token to digits gives the candidate reading, and one shape
-  corroborates itself: **a range whose right side is shorter than its left,
-  with the candidate directly after it.** `1010-1` + `Oil`→`011` rebuilds
-  `1010-1011` exactly, and the screen says `(range completes)` when it does.
-  That is the strongest evidence available without opening the page — but it
-  is still a candidate, and Hard constraints still want the render.
-
-- **`RUN`** — an undivided digit run a lost range dash welded together:
-  `AD 17191748` for `AD 1719-1748`, `monet 388404 gg.` for `388-404`,
-  `(10151042 AD)` for `(1015-1042 AD)`, `struck in 163839` for `1638-39`. The
-  screen reports the plausible splits (equal halves ascending, or a two-digit
-  continuation) and suppresses lines carrying a telephone, fax, ISBN or price
-  context, where long digit runs mean nothing of the kind. Every one of
-  ONS_162's six was real. On the scans these are almost always a hyphen that
-  fell at a **line break**, which is why the OCR lost it and why the render
-  shows it plainly.
-
-- **`WELD`** — a number and a word with the space gone: `726-727in Samarqand`,
-  `(AH1068-1118`, `the 2cash denomination` (which is `2-cash`). Units and page
-  counts are deliberately **not** in the word list: this corpus writes `33mm`,
-  `182p.` and `3.5gms` unspaced as a matter of course. Expect a fair number of
-  these to be the typist's own, not the OCR's — ONS_162's `727in`, `991AH` and
-  `AH1068` are all printed solid on the page.
-
-- **`PAREN`** — a bracket standing in for a letter: `Shaha)T` for `Shahajī`,
-  `t)pe` for `type`, `b)een` for `been`, `San)ar` for `Sanjar`. A bracket the
-  token or the line balances is somebody's real parenthesis and is skipped —
-  `mint(s)`, and ONS_162's `Shan(TiVaRa)ma`, which is printed exactly so. The
-  screen also reads the other direction: a line with an unclosed `(` and a
-  token ending in `J`, `l`, `I` or `j` is a bracket read as a letter, which is
-  how `(1920 - 1950J` turns back into `(1920 - 1950)`.
-
-- **`VARIANT`** — one name spelled two ways in one file, differing in its
-  diacritics. **Off by default; ask for it with `--only VARIANT`**, and it has
-  its own `variants` row in `docs/screens.tsv`. This is the other half of the
-  diacritic problem: `CAPITAL` catches a mark the OCR read as a *letter*
-  (`MansQr`), and this catches one it read as a *different mark*, or dropped.
-  ONS_162 carried `Nizamshahï` 26 times beside `Nizāmshāhī` twice, and
-  `Burhanpür` beside `Burhānpūr`; once the dictionaries hold both forms,
-  neither is a cspell unknown and nothing else in the toolchain sees it.
-  4,355 groups across 138 files.
-
-  It is a separate row from `glyphs` because the two mean different things.
-  The six labels above reach zero on a finished file. This one does not — a
-  corpus that spells one name two ways in half its files has a standing
-  backlog, and folding it into the same exit status would mean no file ever
-  screens clean again.
-
-  **The pair says only that the file disagrees with itself, never which form
-  is right**, so it reports each form at its first occurrence rather than
-  every occurrence — put them on one crop sheet and compare them side by
-  side. Two conventions in one issue can be genuine: ONS_164 prints macrons in
-  a succession table typeset separately from the prose around it, and
-  normalising that to match was the wrong fix.
-
-  **The decisive test is two forms close enough to share a crop.** ONS_162's
-  Deccan article was settled by one band: line 455 prints the macron form and
-  the umlaut form of the same dynasty name three words apart, and the page
-  sets both with identical glyphs — which is what proves the umlaut is a
-  degraded macron rather than a second convention. Reach for a pair in one
-  sentence before a pair on facing pages.
-
-  **Converting the flagged form does not license sweeping its ASCII
-  siblings.** The same article prints one `Quṭbshahi` with no macron a single
-  line from `Quṭbshāhī`, so the bare spellings are not all degraded. Read
-  them or leave them; they stay on the `variants` worklist either way.
-
-**Retire a finding the scan shows is real**, with the same inline marker
-`detect_marker_noise.py` uses, so the screen stops asking and the next pass
-does not read the same spot twice:
-
-```
-reads *JaGa* or *JaGaDa.* <!-- glyph-ok JaGaDa,TiVaRa,SuGa,JaGa reason=the
-Kadamba article transliterates Telugu-Kanarese legends with interior capitals
-on purpose; confirmed on the scan beside the article's own gloss -->
-```
-
-`glyph-ok` settles every occurrence of the tokens it names on its own line,
-and a label (`glyph-ok WELD`) settles the whole class there. Name the token,
-not just the class, when only one word on the line is genuine.
-
-**Describe the readings in a marker; do not quote them.** cspell reads inside
-HTML comments, so a marker that lists the forms it rejected turns every one of
-them into a fresh unknown — ONS_162's first attempt at the note above added
-twenty-one, including `macroned` and `underdots` from the prose of the reason
-string itself. Say "the page carries dots below certain consonants that this
-file drops", not the words with the dots on them.
+What each of the six labels means, which digit decodes to which letter, how to
+tell a systematic diacritic confusion from a few spots, and how to retire a
+finding the scan shows is really printed:
+[`references/confused-glyphs.md`](references/confused-glyphs.md).
 
 **A standalone `m` between two words is `in`.** It is the corpus's commonest
 real-word confusion after `modem`, and it hides from everything: cspell has
@@ -897,8 +303,8 @@ which gave 14 false hits on a file carrying neither symbol.
 
 Every `¥` hit needs checking and most resolve to `½`; a `€` hit in a
 pre-1999 issue is certainly wrong; every `®` is wrong, but what replaces it
-varies. See *Currency symbols that are not currency* and *A registered sign
-is a footnote digit* above for what each one usually stands for.
+varies. `references/suspect-symbols.md` has what each one usually stands
+for.
 
 Also run this one on its own — it needs no judgment on whether the backslash itself is garble, only on what to do with it:
 
@@ -1036,7 +442,7 @@ After all edits and dictionary updates:
    letter-for-digit, no welded range and no bracket-for-a-letter is left
    unsettled, either fixed or carrying a `glyph-ok` marker that says the scan
    prints it. It is the one screen here that catches defects cspell cannot
-   see *because they are words* — see "A diacritic read as a capital" above.
+   see *because they are words* — see `references/confused-glyphs.md`.
 
    `detect_quote_pairs.py` reports five kinds of hit and none is settled
    from the text: a `QUOTES` span says the opener and closer disagree, a
@@ -1046,7 +452,8 @@ After all edits and dictionary updates:
    the page prints -- a footnote marker folded into the closer, or a doubled
    closer, and only the render says which -- and a `QMARK` hit says a `?`
    that cannot end its sentence is a closing mark the scan misread. All five
-   need the render before anything is edited — see the sections above.
+   need the render before anything is edited — see
+   `references/quote-pairs.md`.
 
    `SUPERSCRIPT ordinal` is the one hit the screen can also write: the
    `ordinals` subcommand emits an `apply_edits.py` batch for every run whose

@@ -55,8 +55,9 @@ rules below are the ways a line can prove it was cut rather than ended:
                       `{: start="1252"}`, which `is_prose` rejects, so the
                       gap stopped being pure blank and the pair never reached
                       a rule at all. `fake_ol()` earns the finding instead of
-                      skipping it -- see its docstring for the three tests
-                      and the corpus numbers. Reported, never fixed.
+                      skipping it -- see its docstring for the tests a
+                      finding has to pass and the corpus numbers.
+                      Reported, never fixed.
   * `hyphen-split` -- the line ends on a hyphenated fragment and the line
                       below carries on the same token, so the halves join
                       into one with no space. Two shapes qualify: a word cut
@@ -218,6 +219,15 @@ WORD_RE = re.compile(r"[A-Za-z][A-Za-z'’]*$")
 HYPHEN_TAIL_RE = re.compile(r"[A-Za-z]{2}-$")
 # The same cut through a number: `1006-`, `pp. 109-`, `13.12-`.
 NUM_TAIL_RE = re.compile(r"\d-$")
+# A month name ending the line, for `fake-ol` alone: `... issued on 20 December`
+# + `1999. Circulating coins ...`. A month cannot end a sentence when the next
+# thing is a four-figure year, which makes this the one cut `fake-ol` proves
+# mechanically rather than by judgement about English. `May` is the only
+# ambiguous name (`the date may` + `1983. ...`) and FUNCTION_TAILS already
+# holds it, so the function-word test claims those before this one is reached.
+MONTH_TAIL_RE = re.compile(
+    r"\b(January|February|March|April|May|June|July|August|September"
+    r"|October|November|December)$", re.I)
 BRACKETS = {"(": ")", "[": "]", "{": "}"}
 BRACKET_CHARS = set(BRACKETS) | set(BRACKETS.values())
 # How long a parenthesis may run, opener to closer, and still read as one.
@@ -517,8 +527,14 @@ def fake_ol(lines, runs, j, prev, nxt, gap_line, loose):
     difference is that a `- ` continuation is never a real list in this corpus
     while `N. ` usually is, so this rule has to earn the finding:
 
-      * the line above ends mid-clause -- a comma, a function word, or a
-        number cut at its dash. A line that ends on `.`, `!`, `?` or `:` is
+      * the line above ends mid-clause. Four tails qualify, and the corpus
+        splits almost evenly between the first three: a comma or semicolon
+        (35), a function word (28), a number cut at its dash (28), and a
+        month name with a four-figure year opening the continuation (8).
+        The month tail is the only one of the four that is mechanical rather
+        than a judgement about English -- `... issued on 20 December` +
+        `1999. Circulating coins ...` cannot be a sentence that ended, since
+        a date needs its year. A line that ends on `.`, `!`, `?` or `:` is
         passed over here as everywhere else in this script.
       * no sibling item sits beside it (`lone_ol`). A real list has a
         neighbour; a severed citation stands alone between two prose runs.
@@ -531,14 +547,14 @@ def fake_ol(lines, runs, j, prev, nxt, gap_line, loose):
 
     Measured over `jons/*.md`: of the ordered-marker continuations that reach
     this rule about two thirds pass straight over on terminal punctuation, and
-    **91 findings survive in 37 files** (93 with `--loose`). 78 of the 91 are
-    corroborated without reading anything -- 43 open on a number within 30 of
-    one at the end of the line above (`271/1126-` + `1128.`), 30 on a year,
+    **99 findings survive in 40 files** (101 with `--loose`). 86 of the 99 are
+    corroborated without reading anything -- 45 open on a number within 30 of
+    one at the end of the line above (`271/1126-` + `1128.`), 36 on a year,
     5 on a lower-case word that cannot begin a paragraph -- leaving 13 for an
     eye, of which nine are as plain as the rest (`read the date on the coin
     as` + `1202.`, `Pp.89-` + `164.`).
 
-    Never fixed, for three reasons visible in those 91. The number has to be
+    Never fixed, for three reasons visible in those 99. The number has to be
     read off the scan. The `{: start="N"}` above it has to go with the break,
     and this script's `fix` can only collapse a newline. And four findings are
     not a severed sentence at all: ONS_162's `28. Palmer 1993` is a real
@@ -557,6 +573,8 @@ def fake_ol(lines, runs, j, prev, nxt, gap_line, loose):
         why = f"ends on {last_word(prev)!r}, which cannot end a sentence"
     elif NUM_TAIL_RE.search(core):
         why = "ends on a number cut at its dash"
+    elif MONTH_TAIL_RE.search(core) and 1400 <= n <= 2100:
+        why = "ends on a month name and the continuation opens on a year"
     else:
         return None
     if not lone_ol(lines, runs, j, n):

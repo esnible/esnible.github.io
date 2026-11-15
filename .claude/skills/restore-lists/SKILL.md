@@ -108,14 +108,51 @@ read PDFs from `$ONS_ARCHIVE_DIR`.) Each exits 1 when it reports anything.
 | `LINED` | two or more lines or paragraphs opening with labels that count up, which kramdown does not read as list items -- `1)`, `(a)`, `ii.`, `1A:`, with or without `<br>` |
 | `UNMARKED` | a bullet list whose items open with labels, with no `{: .labelled}` above it, so it renders a bullet *and* a label |
 | `IAL` | a `{: .labelled}` with no blank line above it, with no bullet item under it, or over an item with no label (its bullet is hidden, so nothing marks it) |
+| `FALSE-OL` | a one-item `{: start="N"}` list, `N` not 1, under a paragraph that stops on a comma or a number cut at its dash -- **not a list**, but a severed citation whose continuation opens on a page or a year. A pointer only: `clean-ocr-formatting` owns the repair |
 
-Corpus-wide: **106 `LINED` in 50 files, 2 `UNMARKED`**. Every `LINED` read
+Corpus-wide: **87 `LINED`, 3 `UNMARKED`, 1 `IAL`, 57 `FALSE-OL` in 27
+files**. Every `LINED` read
 was a real list, including all the known `<br>` lists. `LINED` cannot see
 the glued case: a Markdown-only check for labels counting up *inside* a line
 was tried and dropped, because the corpus is full of enumerations the page
 itself prints run in -- `Legends: (a) ... (b) ...`, `(1) ... (5)` inside a
 bibliography entry -- and it reported 552 of them. Only the scan can tell
 those from a flattened list, which is what `screen` is for.
+
+**`FALSE-OL` is a pointer at somebody else's defect, and it exists because
+ONS_165 rendered ten lists that were not lists while `lint` said `total: 0`.**
+A `pdfmd` blank line cuts a citation, and the continuation opens on the next
+number in it, which kramdown reads as a marker:
+
+```
+...cited on coins of AH 448-449 Barskhan (Kochnev 1997, 282/1248,
+
+{: start="1252"}
+1252. And it was Shams al-Daula Arslan-tegīn Nasr, to whom ...
+```
+
+Do not restore these and do not renumber them -- there is no list. The
+repair is to rejoin the paragraph, delete the IAL and put the number back as
+the citation printed it, and the owner is
+`clean-ocr-formatting`'s `detect_severed_paragraphs.py`, whose `fake-ol` rule
+judges it against the severed line properly (it reads a function-word tail
+too, which this screen does not). Run that, not this, to fix one.
+
+The verdict is kept deliberately narrower than that rule -- 57 findings
+against its 91, all but one of them the same findings -- because the
+population here is overwhelmingly legitimate: 1,510 `{: start=}` IALs in 166
+files, 1,361 of them single-item lists, and most of *those* are real
+numbered runs whose items each became their own block (IS_010's notes 17,
+19, 21 render as three correct `<ol>`s). Three tests do the separating: the
+paragraph above stops mid-clause, no sibling item sits within four of `N` in
+either direction, and `N` is not 1 -- a real list restarts at 1 and a
+running citation does not. Dropping the first test alone took the report
+from 57 to 435.
+
+The one finding `lint` has that the owning rule does not is ONS_211's
+`(1433-` + `1442. series we find ...`, which `detect_severed_paragraphs.py`
+suppresses as a numbered-note boundary. Two differently-shaped nets are
+worth the overlap.
 
 ### `screen`: the scan against the Markdown
 
@@ -196,6 +233,14 @@ instead of trusting the range.
   a list. Lines inside one item take `<br>`.
 - Don't guess a dropped label, or "correct" one the page prints oddly
   (ONS_130's `1341 and 1341` stays as printed).
+- Don't treat a `FALSE-OL` as a list to restore, renumber or hand to
+  `fix_list_starts.rb`. The number is a page or a year the OCR cut a
+  citation at, not a label, and there is no list on the page --
+  `clean-ocr-formatting` rejoins the paragraph and the list disappears with
+  it. The symptom is not always reported: ONS_165 carried ten of them
+  through a clean-ocr pass, a fix-ocr pass and a restore-lists pass, because
+  `fix_list_starts.rb` had stamped each with a `{: start=}` that made it
+  well-formed.
 - Don't move notes or reference lists that `pdfmd` interleaved with body
   text as part of this pass -- that is `reconstruct-scrambled-md`'s
   pages-out-of-order variant or `restructure-flattened-md`. Restore the

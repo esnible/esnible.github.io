@@ -43,6 +43,20 @@ rules below are the ways a line can prove it was cut rather than ended:
                       bibliography entry (`- W. Wiggins` for `K. W. Wiggins`,
                       `- B. Coole` for `A. B. Coole`), where the blank line
                       is a real entry boundary and only the marker was wrong.
+  * `fake-ol`      -- the same defect one character over: the text after the
+                      break starts `1252. `, so kramdown renders an ordered
+                      list and the paragraph is interrupted by a number that
+                      is really a page or a year in the citation the break
+                      cut (`(Kochnev 1997, 282/1248,` + `1252. And it was
+                      ...`). Two guards used to hide these. This script
+                      skipped every `N.` continuation outright, on the sound
+                      ground that it is usually a real list; and
+                      `fix_list_starts.rb` stamps the false list with
+                      `{: start="1252"}`, which `is_prose` rejects, so the
+                      gap stopped being pure blank and the pair never reached
+                      a rule at all. `fake_ol()` earns the finding instead of
+                      skipping it -- see its docstring for the three tests
+                      and the corpus numbers. Reported, never fixed.
   * `hyphen-split` -- the line ends on a hyphenated fragment and the line
                       below carries on the same token, so the halves join
                       into one with no space. Two shapes qualify: a word cut
@@ -119,9 +133,10 @@ Usage:
     detect_severed_paragraphs.py fix  ONS_050
 
 `fix` collapses one newline for `severed` and `hyphen-split` findings only --
-`fake-list` needs the dash decided by eye against the PDF, and `--loose`
-findings need a human to say whether the paragraph break is real, so `fix`
-refuses both and says so.
+`fake-list` needs the dash decided by eye against the PDF, `fake-ol` needs the
+number read and its `{: start=}` IAL deleted along with the break, and
+`--loose` findings need a human to say whether the paragraph break is real, so
+`fix` refuses all three and says so.
 
 Exit status is 0 when nothing is found, 1 otherwise (sibling-skill convention).
 """
@@ -171,8 +186,18 @@ TERMINAL = ".!?:"
 HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
 FENCE_RE = re.compile(r"^\s*```")
 IAL_RE = re.compile(r"^\s*\{:")
+# `{: start="1252"}` -- what `fix_list_starts.rb` writes above an ordered list
+# that does not begin at 1. On a false list it is the stamp of the defect, and
+# because `is_prose` rejects every `{:` line it also *hides* it: the IAL ends
+# the prose run, so the gap below a severed citation is no longer pure blank
+# and the pair never reaches a rule. Read through it, for `fake-ol` only.
+START_IAL_RE = re.compile(r"^\s*\{:\s*start=\"\d+\"\}\s*$")
 BULLET_RE = re.compile(r"^\s{0,3}([-*+])\s+\S")
 OL_RE = re.compile(r"^\s{0,3}\d{1,9}[.)](\s|$)")
+# The ordered marker kramdown actually honours: digits, a full stop, a space.
+# `1)` is not a list marker in kramdown (see `restore-lists`), so a `N)`
+# continuation cannot be a false list -- it renders as the prose it is.
+OL_DOT_RE = re.compile(r"^\s{0,3}(\d{1,9})\.(?:\s|$)")
 # `a) Flowered silver lumps` / `b) Arakan silver coins` -- a lettered list,
 # which pdfmd leaves unmarked so Markdown renders it as prose. The item starts
 # lowercase, which would otherwise read as a continuation.
@@ -415,12 +440,48 @@ def gap_is_blank(lines, a, b):
     return all(lines[k].strip() == "" for k in range(a + 1, b))
 
 
+def gap_is_start_ial(lines, a, b):
+    """True when the gap is blank lines plus exactly one `{: start="N"}`."""
+    seen = 0
+    for k in range(a + 1, b):
+        if lines[k].strip() == "":
+            continue
+        if seen == 0 and START_IAL_RE.match(lines[k]):
+            seen = 1
+            continue
+        return False
+    return seen == 1
+
+
 def lone_bullet(lines, i, end):
     """True when the bullet at line i has no sibling bullet in its block --
     a real list has more than one item, OCR residue stands alone."""
     for k in range(i + 1, end + 1):
         if BULLET_RE.match(lines[k]):
             return False
+    return True
+
+
+def lone_ol(lines, runs, j, n):
+    """True when the ordered item opening block `j` has no sibling item.
+
+    `lone_bullet` looks only inside the block, which is enough for a bullet
+    list: kramdown keeps its items in one block. An ordered list in this
+    corpus is routinely one item *per block* -- IS_010's footnotes 17, 19, 21
+    are three blocks and render as three `<ol>`s -- so a sibling has to be
+    looked for in the neighbouring blocks as well, and mid-line, since a
+    flattened list carries `2.` inside the first item's text.
+    """
+    for k in (j - 1, j + 1, j + 2):
+        if 0 <= k < len(runs):
+            m = OL_DOT_RE.match(lines[runs[k][0]])
+            if m and abs(int(m.group(1)) - n) <= 3:
+                return False
+    s, e = runs[j]
+    for k in range(s, e + 1):
+        for m in re.finditer(r"(?:^|\s\s)(\d{1,4})\.\s", lines[k]):
+            if (k, m.start()) != (s, 0) and abs(int(m.group(1)) - n) <= 3:
+                return False
     return True
 
 
@@ -446,19 +507,96 @@ def is_entry_boundary(prev, nxt):
     return False
 
 
+def fake_ol(lines, runs, j, prev, nxt, gap_line, loose):
+    """A severed citation whose continuation opens on a number kramdown reads
+    as an ordered-list marker.
+
+    The sibling of `fake-list`, and the same claim: the marker interrupts the
+    paragraph whether or not the blank line is a real boundary, so the render
+    is wrong either way and only the scan can say what the number is. The
+    difference is that a `- ` continuation is never a real list in this corpus
+    while `N. ` usually is, so this rule has to earn the finding:
+
+      * the line above ends mid-clause -- a comma, a function word, or a
+        number cut at its dash. A line that ends on `.`, `!`, `?` or `:` is
+        passed over here as everywhere else in this script.
+      * no sibling item sits beside it (`lone_ol`). A real list has a
+        neighbour; a severed citation stands alone between two prose runs.
+      * the number is not `1`. A list restarts at 1 and a running citation
+        does not, and this one test is what separates the two: without it the
+        rule reported ONS_169's `1. Triveni ...`, ONS_179's `1. The
+        Bhagamoya Inscription` and ONS_200's `1. The palaeography ...`, every
+        one of them a real list introduced by a comma or a semicolon. With
+        it, the `1.` cases are held back for `--loose`.
+
+    Measured over `jons/*.md`: of the ordered-marker continuations that reach
+    this rule about two thirds pass straight over on terminal punctuation, and
+    **91 findings survive in 37 files** (93 with `--loose`). 78 of the 91 are
+    corroborated without reading anything -- 43 open on a number within 30 of
+    one at the end of the line above (`271/1126-` + `1128.`), 30 on a year,
+    5 on a lower-case word that cannot begin a paragraph -- leaving 13 for an
+    eye, of which nine are as plain as the rest (`read the date on the coin
+    as` + `1202.`, `Pp.89-` + `164.`).
+
+    Never fixed, for three reasons visible in those 91. The number has to be
+    read off the scan. The `{: start="N"}` above it has to go with the break,
+    and this script's `fix` can only collapse a newline. And four findings are
+    not a severed sentence at all: ONS_162's `28. Palmer 1993` is a real
+    footnote item whose *previous* item was cut, so collapsing would glue two
+    notes together; ONS_182's and OP_014's are garble; ONS_197's `83.` is
+    another note boundary.
+    """
+    m = OL_DOT_RE.match(nxt)
+    if not m or ends_terminally(prev) or heading_like(prev):
+        return None
+    n = int(m.group(1))
+    core = strip_closers(prev)
+    if core.endswith((",", ";")):
+        why = "ends mid-clause on a comma"
+    elif last_word(prev) in FUNCTION_TAILS:
+        why = f"ends on {last_word(prev)!r}, which cannot end a sentence"
+    elif NUM_TAIL_RE.search(core):
+        why = "ends on a number cut at its dash"
+    else:
+        return None
+    if not lone_ol(lines, runs, j, n):
+        return None
+    if n == 1 and not loose:
+        return None
+    severity, hedge = ("ERROR", "") if n != 1 else (
+        "WARN", " -- but the marker is `1.`, where a real list would start")
+    return (
+        gap_line, severity, "fake-ol",
+        f"`{n}. ` after the break renders as an ordered list and interrupts "
+        f"the paragraph, whose line above {why}: {prev.strip()[-40:]!r} + "
+        f"{nxt.strip()[:40]!r}{hedge} -- read the number off the scan "
+        f"(usually a year or a page in the citation above), then see whether "
+        f"the break is a cut sentence or a real boundary")
+
+
 def scan(path, loose=False):
     lines = path.read_text(encoding="utf-8").split("\n")
     runs = blocks(lines)
     findings = []  # (line_no, severity, label, message)
 
-    for (s1, e1), (s2, e2) in zip(runs, runs[1:]):
-        if not gap_is_blank(lines, e1, s2):
+    for j, ((s1, e1), (s2, e2)) in enumerate(zip(runs, runs[1:])):
+        blank_gap = gap_is_blank(lines, e1, s2)
+        # A `{: start="N"}` in the gap is read through for `fake-ol` alone.
+        # Every other rule ends in a collapsed newline, and collapsing one
+        # here would have to delete the IAL too -- which `fix` cannot do.
+        if not blank_gap and not gap_is_start_ial(lines, e1, s2):
             continue
         prev, nxt = lines[e1], lines[s2]
         gap_line = e1 + 2  # 1-based line number of the blank line itself
 
         if OL_RE.match(nxt) or LETTER_OL_RE.match(nxt):
-            continue  # a numbered or lettered list, not a continuation
+            f = fake_ol(lines, runs, j + 1, prev, nxt, gap_line, loose)
+            if f:
+                findings.append(f)
+            continue  # otherwise a numbered or lettered list, not a continuation
+
+        if not blank_gap:
+            continue
 
         if is_entry_boundary(prev, nxt):
             continue
@@ -609,6 +747,9 @@ def fix(path, rules=DEFAULT_FIX_RULES):
     why = {
         "fake-list": "needs the dash read off the scan before the break can "
                      "be collapsed",
+        "fake-ol": "needs the number read off the scan, and the `{: start=}` "
+                   "IAL above it removed with the break -- which this `fix` "
+                   "cannot do, since it only ever collapses a newline",
         "comma": "a comma tail is a real paragraph end about a third of the "
                  "time (an OCR'd full stop) -- decide this one by eye",
         "lower": "a lower-case continuation is usually a catalogue field, "

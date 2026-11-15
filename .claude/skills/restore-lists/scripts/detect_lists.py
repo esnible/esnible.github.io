@@ -28,6 +28,14 @@ layer kept even where the Markdown lost it.
               it on the paragraph instead), no bullet item under it, or an
               item under it with no label (the bullet is hidden, so nothing
               marks the item)
+    FALSE-OL  a one-item `{: start="N"}` list under a paragraph that stops
+              mid-clause -- not a list at all, but a severed citation whose
+              continuation opens on a page or a year (`...(Kochnev 1997,
+              282/1248,` + `1252. And it was ...`). Reported here only
+              because the list it renders is the visible symptom and this is
+              the screen somebody working lists runs; the defect belongs to
+              `clean-ocr-formatting`, whose `detect_severed_paragraphs.py`
+              judges it properly against the severed line above
 
 `screen` reads the scan's text layer for runs of two or more lines at one
 left edge whose labels count up -- arabic, roman, letter, digit+letter, read
@@ -694,6 +702,12 @@ def cmd_rows(args):
 # --- lint -----------------------------------------------------------------
 
 LABELLED_IAL_RE = re.compile(r"^\s*\{:[^}]*\.labelled\b[^}]*\}\s*$")
+# `{: start="1252"}` -- what `scripts/fix_list_starts.rb` writes above an
+# ordered list that does not begin at 1.
+START_IAL_RE = re.compile(r"^\s*\{:\s*start=\"(\d+)\"\}\s*$")
+OL_ITEM_RE = re.compile(r"^\s{0,3}\d{1,9}\.\s")
+# Trailing quotes, brackets and emphasis a sentence's full stop can hide behind.
+CLOSERS = "\"'’”»)]}*_"
 BULLET_RE = re.compile(r"^(\s*)[-*+]\s+(.*)$")
 BARE_LABEL_RE = re.compile(r"(?P<lab>\d{1,3}|[ivx]{1,6}|[a-z])(?=\s+\S)")
 # IS_027's king-list numbers forty rulers and marks three more with an
@@ -733,6 +747,33 @@ def bare_labels(items):
         if a and b and follows(a, b):
             out.update(k for k, is_bare in ((ka, bare_a), (kb, bare_b)) if is_bare)
     return out
+INLINE_OL_RE = re.compile(r"(?:^|\s\s)(\d{1,4})\.\s")
+
+
+def sibling_ol(rows, kinds, item_row, n, reach=2):
+    """True when a numbered item within 4 of `n` sits near `item_row`.
+
+    Looks `reach` prose blocks each way, and mid-line as well as at the start
+    of one, because a real numbered run in this corpus is written one item per
+    block and pdfmd glues the occasional item into its neighbour's text.
+    """
+    for step in (-1, 1):
+        r, blocks_seen = item_row, 0
+        while 0 <= r < len(rows) and blocks_seen <= reach:
+            r += step
+            if not (0 <= r < len(rows)):
+                break
+            if kinds[r] == "blank":
+                blocks_seen += 1
+                continue
+            if kinds[r] not in ("item", "text", "ial"):
+                break
+            for mm in INLINE_OL_RE.finditer(rows[r]):
+                if abs(int(mm.group(1)) - n) <= 4:
+                    return True
+    return False
+
+
 def lint_file(path):
     rows = path.read_text(encoding="utf-8").split("\n")
     kinds, in_fence = [], False
@@ -835,6 +876,57 @@ def lint_file(path):
         if top < 0 or kinds[top] != "labelled-ial":
             found.append((run[0][0], "UNMARKED", f"{run[0][2]}..{run[-1][2]} ({len(run)})",
                           rows[run[0][0]]))
+
+    # FALSE-OL: a one-item `{: start="N"}` list under a paragraph that was cut.
+    # A pointer, not a judgement -- `clean-ocr-formatting` owns the repair and
+    # tests the severed line properly. Kept narrow on purpose: of the 1,510
+    # `{: start=}` IALs in the corpus, 1,361 are single-item lists and most of
+    # those are real (a numbered footnote run whose items each became their own
+    # block renders as a string of one-item `<ol>`s and is perfectly correct).
+    # The two tests that separate them are the paragraph above stopping
+    # mid-clause, and N not being 1 -- a real list restarts at 1.
+    for r, line in enumerate(rows):
+        if kinds[r] != "ial":
+            continue
+        m = START_IAL_RE.match(line)
+        if not m or int(m.group(1)) == 1:
+            continue
+        nxt = r + 1
+        if nxt >= len(rows) or kinds[nxt] != "item":
+            continue
+        item = OL_ITEM_RE.match(rows[nxt])
+        if not item:
+            continue
+        # A sibling item means the list is real. It has to be looked for in
+        # both directions and mid-line, not just under the IAL: this corpus
+        # writes a numbered run one item per block, and pdfmd glues the odd
+        # item into the middle of its neighbour (ONS_121's `... and 97. 6.
+        # Unvala records ...`). Searching forwards only reported IS_029's and
+        # ONS_029's entry 35, whose entry 34 is two blocks up, and ONS_121's
+        # note 7, whose note 6 is mid-line above.
+        n = int(m.group(1))
+        if sibling_ol(rows, kinds, nxt, n):
+            continue
+        prev = r - 1
+        while prev >= 0 and kinds[prev] == "blank":
+            prev -= 1
+        if prev < 0 or kinds[prev] != "text":
+            continue
+        # Only the two tails that are mechanical: a comma or semicolon, and a
+        # number cut at its dash. `clean-ocr-formatting` also reads a
+        # function-word tail, which needs its word list; this screen stays a
+        # strict subset of that one rather than inventing a looser rule of its
+        # own. Testing merely "no terminal punctuation" instead reported 435
+        # in 94 files against the owning screen's 91 -- most of them a real
+        # list under a masthead line or an untagged heading.
+        core = rows[prev].rstrip().rstrip(CLOSERS).rstrip()
+        if not (core.endswith((",", ";")) or re.search(r"\d-$", core)):
+            continue
+        found.append((r, "FALSE-OL",
+                      f"`{m.group(1)}.` under a paragraph that stops "
+                      f"mid-clause -- a severed citation, not a list; "
+                      f"clean-ocr-formatting's detect_severed_paragraphs.py "
+                      f"owns it", rows[prev].strip()[-60:]))
 
     found.sort()
     return found

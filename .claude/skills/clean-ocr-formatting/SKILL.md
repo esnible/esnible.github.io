@@ -100,6 +100,7 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    |:--- |:--- |:--- |
    | `severed` | the line ends on a function word (`of`, `in`, `and`, `the`) or a comma, or the continuation starts lowercase — none of which can end or begin a sentence | collapse one newline; `fix` does it |
    | `fake-list` | the continuation starts `- `, so Markdown renders a bullet | collapse **and** restore the dash — see below |
+   | `fake-ol` | the continuation starts `1252. `, so kramdown renders an ordered list — the number is a page or a year in the citation the break cut | collapse, delete the `{: start=}` IAL, and restore the number — see below |
    | `hyphen-split` | the line ends on a hyphenated fragment (`Muzaf-`) | join into one word, no space; `fix` does it |
    | `paren-split` | the line leaves a bracket open and the continuation closes it (`...of the same date (AH` / `1200/Ry.4). The coin...`) | collapse one newline; `fix` does it |
    | `paren-far` | the same, but the bracket closes more than 250 characters from where it opened | read it — usually two unrelated paragraphs |
@@ -161,6 +162,46 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
 
    An em dash restored at the start of a line is safe to leave there — `—` is
    not a Markdown bullet marker, so only `-`, `*` and `+` need moving.
+
+   **`fake-ol` is the same bug one character over, and it was invisible until
+   ONS_165.** The break cuts a citation, and the continuation happens to open
+   on the next number in it, which kramdown reads as a list marker:
+
+   ```
+   ...cited on coins of AH 448-449 Barskhan (Kochnev 1997, 282/1248,
+
+   {: start="1252"}
+   1252. And it was Shams al-Daula Arslan-tegīn Nasr, to whom ...
+   ```
+
+   Two guards had kept every one of these off the report. The script skipped
+   `N.` continuations outright — a defensible call, since most really are a
+   list — and `scripts/fix_list_starts.rb` stamps the false list with
+   `{: start="1252"}`, which `is_prose` rejects, so the gap was no longer pure
+   blank and the pair never reached a rule at all. The repo's own tidy-up had
+   made the defect well-formed. ONS_165 carried ten of them through a
+   clean-ocr pass, a fix-ocr pass and a restore-lists pass without a single
+   screen saying a word.
+
+   The rule now earns the finding: the line above must end mid-clause, the
+   item must have no sibling item beside it, and the number must not be `1`
+   (a real list restarts at 1; a running citation does not — that one test is
+   what keeps ONS_200's `1. The palaeography ...` and four more like it out,
+   and it holds the `1.` cases back for `--loose`). Corpus-wide:
+   **91 findings in 37 files**, 78 of them corroborated without reading
+   anything — 43 open on a number within 30 of one at the end of the line
+   above, 30 on a year, 5 on a lower-case word.
+
+   `fix` refuses it, and not only because the number needs the scan: the
+   `{: start=}` line has to be deleted along with the break, and `fix` can
+   only ever collapse a newline. Repair it by hand — remove the IAL, collapse
+   the break, and put the number back as the citation printed it. Then rerun
+   `scripts/fix_list_starts.rb`, which will have nothing left to stamp.
+
+   Four of the 91 are not this bug: ONS_162's `28. Palmer 1993` is a real
+   footnote item whose *previous* item was cut (collapsing would glue two
+   notes together), ONS_197's `83.` is another note boundary, and ONS_182's
+   and OP_014's are garble. Read before collapsing, as always.
 
    **Two findings that are not this bug.** Both look like severed paragraphs
    and belong to other skills:
@@ -268,5 +309,6 @@ Capital-I-for-lowercase-l is endemic in these passages — assume any leading `I
 - Don't change British spellings or rare transliterations — defer those to the user or to the `fix-ocr` skill.
 - Don't touch fenced code blocks, inline code, URLs, image references, or front matter.
 - Don't run destructive `sed -i` without a `.bak` and a post-edit diff check — the changes are far-reaching and easy to over-apply.
-- Don't collapse a break the script labelled `fake-list`, `paren-far` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in that category.
+- Don't collapse a break the script labelled `fake-list`, `fake-ol`, `paren-far` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan and `fake-ol` the number; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in that category.
+- Don't turn a `fake-ol` finding into a list. The number is not a label and there is no list to restore — the paragraph is cut and the marker is an accident of where the cut fell. Equally, don't reach for this rule on a list that is real but flattened: items the page prints at one left edge, with labels counting up, are `restore-lists`' business.
 - Don't widen the detection by matching on what follows the break. That was the old regex's mistake: it cost the skill every real instance in ONS_047, ONS_049, ONS_050 and ONS_051, because a severed line's continuation is capitalised about as often as not.

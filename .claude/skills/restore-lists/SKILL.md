@@ -139,7 +139,7 @@ judges it against the severed line properly (it reads a function-word tail
 too, which this screen does not). Run that, not this, to fix one.
 
 The verdict is kept deliberately narrower than that rule -- 57 findings
-against its 91, all but one of them the same findings -- because the
+against its 99, all but one of them the same findings -- because the
 population here is overwhelmingly legitimate: 1,510 `{: start=}` IALs in 166
 files, 1,361 of them single-item lists, and most of *those* are real
 numbered runs whose items each became their own block (IS_010's notes 17,

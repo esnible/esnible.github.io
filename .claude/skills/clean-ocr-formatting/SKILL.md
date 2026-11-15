@@ -188,9 +188,19 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    (a real list restarts at 1; a running citation does not — that one test is
    what keeps ONS_200's `1. The palaeography ...` and four more like it out,
    and it holds the `1.` cases back for `--loose`). Corpus-wide:
-   **91 findings in 37 files**, 78 of them corroborated without reading
-   anything — 43 open on a number within 30 of one at the end of the line
-   above, 30 on a year, 5 on a lower-case word.
+   **99 findings in 40 files**, 86 of them corroborated without reading
+   anything — 45 open on a number within 30 of one at the end of the line
+   above, 36 on a year, 5 on a lower-case word.
+
+   Four tails count as ending mid-clause, and the corpus splits almost evenly
+   between the first three: a comma or semicolon (35), a function word (28),
+   a number cut at its dash (28), and a **month name** with a four-figure
+   year opening the continuation (8). The month tail is the only one of the
+   four that is mechanical rather than a judgement about English — `...
+   issued on 20 December` / `1999. Circulating coins ...` cannot be a
+   sentence that ended, because a date needs its year. `May` is the one
+   ambiguous month name (`the date may` / `1983. ...`) and the function-word
+   list already holds it, so those are claimed by the earlier test.
 
    `fix` refuses it, and not only because the number needs the scan: the
    `{: start=}` line has to be deleted along with the break, and `fix` can
@@ -198,7 +208,7 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    the break, and put the number back as the citation printed it. Then rerun
    `scripts/fix_list_starts.rb`, which will have nothing left to stamp.
 
-   Four of the 91 are not this bug: ONS_162's `28. Palmer 1993` is a real
+   Four of the 99 are not this bug: ONS_162's `28. Palmer 1993` is a real
    footnote item whose *previous* item was cut (collapsing would glue two
    notes together), ONS_197's `83.` is another note boundary, and ONS_182's
    and OP_014's are garble. Read before collapsing, as always.

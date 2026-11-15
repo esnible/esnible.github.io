@@ -101,6 +101,7 @@ Daud
 Dragut
 Euphemius
 Fadl
+Faḍl
 Fahri
 Ghasani
 Habib
@@ -796,6 +797,7 @@ aula
 Bankasi
 basılan
 Ceviye
+Çelebi
 Cüneyt
 daima
 darp
@@ -816,6 +818,7 @@ Hatt
 Haziran
 Hijja
 Hösch
+Ilhanlı
 Iraqian
 Islami
 Istanbulda
@@ -1341,6 +1344,7 @@ Jenghiz
 Jerzy
 Johri
 Jorgen
+Jørgen
 Kafur
 Kahei
 Kakyeok

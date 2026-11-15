@@ -41,6 +41,35 @@ context and are discarded with it, so a page costs what it costs once. Keep
 the deciding here: the worker reports what the scan shows, this pass decides
 what to write.
 
+**Put the page's native dpi in the brief, and never ask for more than about
+twice it.** The scans are images, so a page's own raster resolution is the
+ceiling: rendering above it interpolates and resolves nothing, and on a tight
+crop it is charged for at up to six times the price of the native read.
+`shared/render_budget.py` computes both numbers — `native_dpi(page)` and
+`suggest_dpi(page, clip)` — and `detect_script_garble.py render` already
+takes that path when no `--dpi` is given. Call it before writing the brief;
+`crop_sheets.py` defaults to `--dpi 300`, which is above native for much of
+this corpus.
+
+A brief that says "re-crop at high resolution" or names a number out of the
+air invites a worker to upsample to 600 or 2400 dpi and report letter shapes
+that the raster never held. **Ask for the dpi the module gives you, and ask
+for integer nearest-neighbour enlargement** — the same rule the tiles below
+follow, for the same reason. Some upscale genuinely helps, because a vision
+encoder's patch grid is fixed and an 8px glyph reads better at 16px, but that
+is perception, not evidence.
+
+This matters beyond cost, because **a marker inherits whatever the brief
+claimed.** ONS_159 is a 72dpi file, one pixel per point, where a letter is
+four or five pixels across; a run of its `source-typo` markers recorded
+readings "at 600dpi", including a stem count distinguishing one `l` from two,
+which nothing in that raster can support. So: cite the scan's own dpi in a
+marker, never the dpi you asked the renderer for, and when the reading rests
+on something sturdier than letter shapes — printed ink extent measured
+against neighbouring words, or the PDF's own independent text layer — say
+that instead, because at these resolutions it is usually what actually
+settled it.
+
 **Stack the findings before looking.** `shared/crop_sheets.py` cuts five or
 six findings onto one labelled sheet, and `garble_tiles.py` does the same for
 disputed words. Reaching for a render per finding is the habit to break —

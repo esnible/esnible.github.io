@@ -5711,7 +5711,6 @@ Ghitrifi
 Goncharev
 Historicheskoe
 Istochnikovedenie
-Istoncheskie
 Istoricheskoe
 Jacut
 Khust
@@ -10428,7 +10427,6 @@ Ihsch
 Ikonographie
 Islonko
 IspTjab
-istoni
 Ivanovich
 Jadid
 Jmlaq
@@ -10587,7 +10585,6 @@ chast
 dannye
 Davydov
 disciplmy
-distsiplmy
 Gelin
 Ghaznah
 Ghaznaw

@@ -11393,3 +11393,16 @@ Ajall
 Altūntash
 Andkhūdī
 Atim
+
+# ONS_165 round 2 -- forms read off the page renders: the Turkish title of the
+# Crimean Khanate coin bibliography, the Soviet journal name the text layer
+# garbled past recognition, and the German and Latin words in two reviews.
+Ağat
+Hanları
+issledovaniiakh
+Material'noi
+Nitelikleri
+Nürettin
+Paralarının
+qaf
+Vorwort

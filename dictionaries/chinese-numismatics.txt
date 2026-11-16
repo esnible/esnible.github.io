@@ -2860,3 +2860,36 @@ Sesshu
 Hupei
 Xiankang
 Kallman
+
+# ONS_165 p17-18 -- the cowrie shell money article (Bertsch), whose source page
+# the text layer could not decode at all and which was re-OCR'd by hand. Measures
+# and denominations, place and institution names, and the German apparatus of its
+# footnotes. Filed here rather than under Islamic or Indian because the article's
+# numismatic core is the cowrie in China and its German citation's author already
+# sits in this file; the article itself straddles China, the Maldives, Bengal,
+# Siam and West Africa. Every spelling was read off the page at 300dpi over a
+# 150dpi scan, including the circumflexes in the French translation of Ibn Battuta
+# and the diaeresis the quoted Le May passage puts on one Siamese denomination but
+# not on the form used in the author's own prose.
+alqueire
+arrates
+bostoû
+bostoûs
+classicus
+Cori
+Djoudjou
+dînâr
+Foang
+Füang
+Hanseatische
+Hogendorn
+Kulturgeschichte
+Mogull
+Museu
+Mâli
+Münzgilde
+syâh
+Visapour
+
+# ONS_165 round 2 -- read off the page render.
+Renjiu

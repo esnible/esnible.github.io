@@ -11406,3 +11406,12 @@ Nürettin
 Paralarının
 qaf
 Vorwort
+# ONS_171 -- Khiva and Khoqand coin-legend vocabulary read off the page renders
+# (transcribe-foreign-script). Each word is corroborated by the author's own printed
+# translation or transliteration on the same page; Qutluq-Murad is set as one unspaced
+# run in the source.
+مسکوکه
+یکمثقالی
+رایجه
+قتلوقموراد
+موراد

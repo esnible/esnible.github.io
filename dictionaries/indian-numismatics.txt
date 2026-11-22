@@ -10187,3 +10187,24 @@ Gankse
 
 # ONS_165 round 2 -- read off the page render.
 Taurinensia
+
+# ONS_171 — Erich/Narwar/Western Satrap coins (Pieper, Senior) and the Maratha mints
+# of Pune and Chinchwad: rulers, legends, places, Marathi bibliography words
+Bajali
+Bhave
+Chinchwad
+Erikachcha
+Isvaramitra
+Jayadamasa
+Peth
+Peths
+Sahasasena
+Samshodhana
+Shaniwar
+Simhagarh
+Tungabhadra
+Vasunaga
+Yashti
+
+# ONS_171 — a further bibliography surname from the Indian Coin Society list
+Chakrabarty

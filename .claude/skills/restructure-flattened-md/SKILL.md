@@ -61,6 +61,18 @@ python3 .claude/skills/restore-headings/scripts/detect_headings.py      scan <ST
 
 A cluster of either on the same page is this skill's job too.
 
+**And a whole file can be this skill's job with no trigger of any kind.**
+`ONS_082-083` (the combined issue — newsletters 82 and 83 are one 8-page file,
+`jons/ONS_082-083.md`; there is no standalone `ONS_083`) screened "nothing
+outstanding": no `FLATTENED`, no `\|`. It held a shredded masthead, six folded
+article and review headings, a spurious `pdfmd` pipe table (deleted, with its
+trapped opening clause pulled back into the prose tail), a borderless device
+list, a borderless XRF table, a two-column footnote block, a ~45-entry
+bibliography, about seven bold European-account labels folded mid-paragraph
+(each moved to its own line as `**bold**`), and **seven artwork groups with no
+`*[figure]*` marker at all**. A file like that is one job, not a series of
+findings — plan the whole rebuild before editing.
+
 `detect-missing-tables`'s `FLATTENED` check is purely textual, so a `table-ok` /
 `table-deferred` marker will **not** clear it -- and there is no marker of this
 skill's own. The only thing that makes the fingerprint go away is actually removing

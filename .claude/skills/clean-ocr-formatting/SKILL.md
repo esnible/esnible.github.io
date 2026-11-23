@@ -213,6 +213,28 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    notes together), ONS_197's `83.` is another note boundary, and ONS_182's
    and OP_014's are garble. Read before collapsing, as always.
 
+   **`grep -n '{: start=' jons/<STEM>.md` is a wider net than the rule, and
+   costs nothing.** The repo's own tidy-up is what makes it work: because
+   `fix_list_starts.rb` stamps every false list with an IAL, each instance
+   leaves a marker that survives the conditions which blind the screen. On
+   ONS_165 the screen found 8 of the 10; the grep found all 10. The two it
+   missed show what those conditions are — one had a
+   `<!-- script-ok ... -->` marker on its own line between the two halves, so
+   the gap was not pure blank and no rule was reached; the other's line above
+   ended `1335.`, and a line ending in a full stop is never flagged, by
+   design.
+
+   A legitimate list keeps its IAL too (ONS_165's p18 endnotes are
+   `{: start="6"}`, and `restore-lists` counts 1,510 IALs across 166 files),
+   so the grep is a **worklist, not a verdict** — read each hit, and the tell
+   that it is the defect is the line *above* ending mid-clause. Run it
+   alongside `scan`, read each junction off the scan, repair, then rerun
+   `fix_list_starts.rb`: it should report `total: 0`, with the only IALs left
+   belonging to real lists. Across ONS_165's ten the printed junction was
+   always a `)` or a `,` where the OCR had put a full stop, and the *number*
+   was never wrong — so what actually needs reading off the page is the
+   punctuation.
+
    **Two findings that are not this bug.** Both look like severed paragraphs
    and belong to other skills:
 

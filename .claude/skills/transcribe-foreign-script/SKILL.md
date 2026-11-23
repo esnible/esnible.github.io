@@ -159,6 +159,34 @@ reach, and a cluster with no gloss is the shape that lands as `script-guess`
 rather than `script-ok`. `CARET` keeps the corroborable ones for the same
 reason `LATIN` does.
 
+### The token-and-gloss sweep, for what both of them still miss
+
+`LATIN` and `CARET` between them left **48 legends** in a file that screened
+clean at exit 0 (`ONS_165`). What found them was a grep, not a screen:
+
+- a token of 2-12 characters containing any of `^ \ { } | ; = ~ < >`
+- on a line that *also* holds a gloss word —
+  `legend|mint-?name|inscription|means|reads?|letters|titulage|obverse|reverse`
+
+That flagged 12 lines, of which about 8 were genuine foreign script and the
+rest were letter-level garble in English words (`>ear`, `(\|ust`, `^H 531` for
+`AH 531`). It is far cheaper than `LATIN`'s four-consecutive-noise-token run
+test, and it reaches what that test cannot: a Latin-read Arabic word is often
+a *single* short token sitting in ordinary English, which breaks the run
+requirement by construction.
+
+Two of the twelve were the valuable negative kind, and they are the reason to
+render before transcribing every time: `^a/has` was not script at all but the
+italic romanised letter-name `*qaf*` with "has" fused onto it, and `\|3-zhu\|`
+was the Latin gloss `[3-zhu]` with eroded bracket serifs.
+
+**Cross-check with `fix-ocr`'s `detect_marker_noise.py scan`**, which counts
+the same garble independently — over that pass it went from 98 traces / 23
+wreck leads to 73 / 13. It also reports "N hidden in comments" (1 to 34 over
+the same pass), which is by design: quoting the replaced garble in a marker's
+`reason` is the documented convention here, and that counter is what stops a
+trace from leaving the screen by being quoted rather than fixed.
+
 ### Tier 1 — locate and render
 
 For each candidate, find which PDF page it came from, then look at it:
@@ -168,6 +196,12 @@ python3 .../detect_script_garble.py locate IS_004 --line 92
 python3 .../detect_script_garble.py render IS_004 --page 4              # then Read the path it prints
 python3 .../detect_script_garble.py render IS_004 --page 4 --clip 300 470 570 630   # to actually read it
 ```
+
+**Run `locate` per candidate even when you think you already know the page.**
+On `ONS_164` a page was guessed from context as 16 and was really 17 —
+`locate` scored 17 at 120/140 against 16's 46/140. A marker with the wrong
+`page=` is caught later by `check-markers`' page-vs-content mismatch test, but
+only after someone has rendered the wrong page.
 
 **Leave `--dpi` off.** It now defaults to about 2x what the scan holds, capped
 where more pixels stop being used, and prints what you are really getting. When
@@ -227,6 +261,12 @@ Without a marker, an inserted reading (verified or guessed) is indistinguishable
 
 **When the transcribed content is a reconstructed table (columns like image/native script/transliteration), leave a blank line between the table's last row and its marker.** GitHub's renderer needs a table set off by blank lines on *both* sides — `detect-missing-tables`' own governors-table fix on `IS_005` covered the "comment directly before a table" direction; a marker directly after a table with no blank line is the same bug from the other side, and `IS_006`'s 14 reconstructed tables hit it. `find_candidates()` in the script tolerates exactly one blank line here — a marker separated from its table by a blank still resolves every row in it, not just the last one — so this costs nothing but the blank line itself.
 
+**A caption counts as content, and a caption below the table will eat the marker.** The blank-line tolerance is exactly one blank; any real content line between table and marker clears `last_table_block`, and the marker then resolves the caption instead of the rows. `ONS_165`'s genealogy tables print their caption *below* the table, and an earlier pass had put `script-guess` and `table-ok` after that caption — so both attached to the caption and all nine Arabic table rows kept screening `RAW` forever, while the file looked finished to a human reader. That is the worst of both. **Put the marker between the last row and the caption**, with a blank line on each side.
+
+**Use the inline marker form when the paragraph is severed.** Half this corpus's paragraphs are split across two source lines with no blank between them, and an own-line marker dropped into that gap splits one rendered paragraph into two. `find_candidates()` explicitly supports a marker appended to the end of a content line — it marks its own line — which costs nothing and renders identically. Check whether the next line is blank before choosing the form.
+
+**After writing any marker, re-run `screen` and check that the row count moved**, not merely that the finding left one bucket. A marker on the wrong line is invisible to the screen *and* looks done, so the count is the only thing that distinguishes a resolution from a disguise.
+
 ### `rect=` — recording where on the page, not just which page
 
 `page=N` alone is ambiguous when several deferred regions share one page — `IS_005` page 12 (0-based) holds four catalog sections *and* an unrelated already-`table-deferred` distribution table below them. Add `rect=x0,y0,x1,y1` (PDF points, page-relative, same convention as `detect-missing-tables`' `*[figure]*` rects) so a later pass can jump straight to `render`'s `--clip` instead of re-deriving the region:
@@ -243,7 +283,8 @@ This is a **coarse bounding region for the whole deferred section**, not a tight
 
 ## Known limits
 
-- **A clean screen is weaker evidence than it looks.** `RAW` sees codepoints, and `LATIN` and `CARET` see one printed shape each — a noisy run, or a caret cluster, with a gloss beside it. None of them sees a legend `pdfmd` dropped entirely, a plate whose labels OCR'd as plausible English, or a Latin-rendered legend with no `Obv.`/`Rev.` or gloss anywhere near it. `ONS_158` is the standing warning: it screened clean, twice, with work in it.
+- **A clean screen is weaker evidence than it looks.** `RAW` sees codepoints, and `LATIN` and `CARET` see one printed shape each — a noisy run, or a caret cluster, with a gloss beside it. None of them sees a legend `pdfmd` dropped entirely, a plate whose labels OCR'd as plausible English, or a Latin-rendered legend with no `Obv.`/`Rev.` or gloss anywhere near it. `ONS_158` is the standing warning: it screened clean, twice, with work in it. The token-and-gloss sweep above is the cheapest way to go past the screens; run it before calling a file done.
+- **`SCRIPT_BLOCKS` has no Tibetan, so the screen is blind in both directions.** `detect_script_garble.py` holds Arabic, Hebrew, Devanagari and CJK only. A Tibetan legend is never flagged `RAW`, and once transcribed it can never be counted `RESOLVED` or `GUESSED` either. One practical consequence: a `script-*` marker for Tibetan does not have to sit directly under the script line to make a screen resolve — nothing resolves — so put it after the paragraph and keep the printed paragraph intact. `ONS_051`'s forged 7.5 skar is the worked case: the word below the lion, ཕྱོར against ཕྱོག, OCR'd as the Latin junk `BX`/`BF`. cspell has no Tibetan dictionary either, so `spellcheck=pass` there means only that every word was ignored. This is the `ONS_158` lesson one level up — it is not only mojibake the screen misses, it is whole scripts.
 - **cspell needs both `@cspell/dict-ar` and `@cspell/dict-fa-ir` installed globally, and both wired into `cspell.config.yaml`'s `import:` and `dictionaries:` lists, to clear a correct transcription.** This corpus's legends are Mughal-era Perso-Arabic, not Modern Standard Arabic: `ar` alone recognized `عالم` but not `غازی`/`مبارک`/`اکبر` (Persian KEHEH `ک` and FARSI YEH `ی` letterforms instead of Arabic `ك`/`ي`) or `بادشاه` (a Persian word, absent from any Arabic dictionary regardless of letterform). Adding `fa-ir` closed the letterform gap; `بادشاه` itself still needed adding to `islamic-numismatics.txt` as corpus vocabulary, same as any other recurring proper term. Devanagari and CJK are not meaningfully spellcheckable by cspell at all — don't expect a dictionary fix there.
 - **A render cannot show more than the scan holds, and six files hold very
   little.** The page raster's own resolution is the ceiling: on ONS_159 it is

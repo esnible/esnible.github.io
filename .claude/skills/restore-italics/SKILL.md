@@ -152,6 +152,21 @@ the evidence for each number.
 
 ## What it gets wrong
 
+**Structurally blind to an author-italic bibliography.** The "is this run
+words?" gate classifies an initials-heavy span (`H. W. Bailey,`,
+`M. B. Mitchiner,`) as `NOISE`, and `NOISE` is counted but **never matched**.
+So on any issue whose bibliography italicises the *author* rather than the
+title, `fix` reports a clean scan while silently writing none of the
+attributions: on ONS_056 all 16 of page 3's attributions came back `NOISE`
+with `MISSING 1`. Do those by hand against the page's span dump — the
+attribution is Times-Italic (`flags=6`) through the comma before the title,
+with title and venue Times-Roman (`flags=4`). A clean italics scan proves no
+more than a clean foreign-script scan does.
+
+**An `AMBIGUOUS` hit on a byline usually means the name simply occurs twice**
+— once in the byline and again in the body prose. Check which occurrence the
+page actually sets italic rather than wrapping both.
+
 **The boundary, by a word.** ABBYY sometimes runs an italic span one word past
 where the italics stop on the page. ONS_111 p7 reads `In his *Siamese
 porcelain and other tokens*, Ramsden names...` and the text layer gives the

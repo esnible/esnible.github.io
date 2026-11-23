@@ -496,6 +496,48 @@ the head to account for most of its Markdown line and these lines are long
 paragraphs. They were restored by hand. Between the two screens there is
 still a gap here, and it is the harder half of the problem.
 
+### Working that gap by hand
+
+ONS_165 hid **33 heads** in it and `scan` reported none of them. Two cheap
+passes find them, and neither needs a render where the text layer is clean.
+
+**1. Build the head inventory from the PDF.** Dump the text layer line by
+line with `page.get_text("dict")`, printing `y`, `x0-x1`, the span's bold
+fraction (`flags & 1<<4`) and the text. A head is a short line standing
+alone; `b=1.00` confirms it, but **plain heads are common** — ONS_165 sets
+`References` bold on nine pages and plain on two, so a bold test alone
+would have found most of them and trusted the wrong ones.
+
+**2. Match the inventory against the Markdown by line tails.** The defect is
+a head glued to the *end* of a long line, so look for an emphasis run at
+end-of-line on a line over about 80 characters:
+
+```
+^(.*?\S)\s+(\*{1,3}[^*]{2,60}\*{1,3})\s*(<!--[^>]*-->)?\s*$
+```
+
+Run it both with and without a skip for lines that *start* with `*` —
+ONS_165's `**Farghana.**` hid at the end of a bibliography line that opens
+with an italic title. Then match a bare trailing word as well, for heads
+whose emphasis the OCR dropped entirely, and reject the ones that are
+sentence-final words rather than heads by reading the tail.
+
+Two traps:
+
+- **Expect the screen's count to go UP after the fix.** This is the
+  `OVERSET` mechanism described above, in bulk: a head neither screen can see
+  never reaches the PDF→Markdown pass, so each correct `##` you write falls
+  through to it and reports `OVERSET`. All 15 of ONS_165's `OVERSET` findings
+  were false positives — a short head is matched against the whole file, so
+  `### Kesh` matched `Arendsa, Tashkent` eight pages away. Measure the
+  `screens.tsv` row with `rows`, not with a count of findings "to fix".
+- **A marker on a heading line makes it unmatchable.** `page_markers.py`'s
+  `safe_line()` excludes headings, and a trailing `<!-- page-start -->` left
+  on one reports `UNMATCHED`. After splitting heads out, re-run
+  `page_markers.py apply <stem> --replace --write`; it re-places only the
+  boundaries the split disturbed and guarantees the stripped text is
+  byte-identical.
+
 ## Matching the two OCR layers
 
 The PDF text layer and the Markdown were OCR'd separately and disagree --

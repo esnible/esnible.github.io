@@ -7,22 +7,6 @@
 - Pushing follow-up commits to a branch that **already has an open PR** is fine without asking (e.g. addressing review comments).
 - Ask before starting a feature branch and committing locally.
 
-## Commits
-
-- Every commit carries two trailers, sign-off first:
-
-  ```
-  Signed-off-by: Ed Snible <esnible@acm.org>
-  Co-Authored-By: Claude <model> <noreply@anthropic.com>
-  ```
-
-- The **author** email is `esnible@acm.org` too — pass
-  `--author="Ed Snible <esnible@acm.org>"` rather than relying on
-  `git config`, which on some checkouts holds a stale address. Every commit
-  on `main` is authored that way. Sign-off emails in older history alternate
-  between two addresses, so `git log` alone is ambiguous; `acm.org` is the
-  answer.
-
 ## Working the `jons/` OCR corpus
 
 - `docs/skill-list.md` — which skill owns which defect, and the order to run

@@ -2,6 +2,12 @@
 
 This repository's `jons/` corpus is OCR'd from scanned Oriental Numismatic Society publications by `pdfmd --ocr auto` (see `scripts/build.sh`). That pipeline reads typewritten English prose well, but it has no notion of figures, tables, columns, fonts, or hand-lettered foreign script — so each class of damage it leaves behind has its own skill. The skills below live in `.claude/skills/`; they are invoked by name when the matching defect is suspected, and they are designed to compose: most structural passes are typically followed by `fix-ocr` for the remaining letter-level cleanup.
 
+Three companion pages carry what the skill descriptions do not:
+`docs/running-a-pass.md` on how to arrange a pass so it stays affordable,
+`docs/ocr-conventions.md` on what a repair is supposed to look like once the
+defect is found, and `docs/pdf-sources.md` on which issues are born-digital
+rather than scanned.
+
 ## Detection skills
 
 These look at the rendered PDF page rather than (or alongside) the Markdown, catching problems that leave no trace in the text itself.

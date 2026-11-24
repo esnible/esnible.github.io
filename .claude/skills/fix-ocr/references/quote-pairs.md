@@ -164,8 +164,13 @@ the class in two:
   (`19"' and 20''' centuries`). 533 runs across 28 files. The suffix comes
   from the number -- 14 → th, 33 → rd, 21 → st, 11-13 → th -- and the
   restoration is **plain `14th`**: this corpus writes 3,599 ordinals that
-  way and not one as `14ᵗʰ`. `ordinals` emits them as an `apply_edits.py`
-  batch:
+  way and not one as `14ᵗʰ`. **The suffix is not superscripted, and in particular
+  not as `14<sup>th</sup>`** -- `<sup>` in this corpus marks a footnote
+  reference and nothing else, so a superscripted suffix reads as a footnote
+  that does not exist. The `<sup>` convention under `check` below, and in
+  `suspect-symbols.md` and `garble-traces.md`, covers footnote markers only;
+  it does not carry over to an ordinal even where the scan prints the
+  suffix raised. `ordinals` emits them as an `apply_edits.py` batch:
 
   ```
   python3 .claude/skills/fix-ocr/scripts/detect_quote_pairs.py ordinals <STEM> > edits.txt

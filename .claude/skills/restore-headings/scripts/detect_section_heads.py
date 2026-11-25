@@ -87,6 +87,40 @@ HEAD_RE = re.compile(
     re.IGNORECASE,
 )
 
+# The heads an *article* is built from, as against the ones a newsletter issue
+# is built from. These are the words the list above refuses, and for the reason
+# it gives: each is ordinary English, each turns up in running prose, and
+# head-casing cannot tell `References` the head from `...with references to the
+# Kufic series`. A vocabulary match alone would be mostly false positives.
+#
+# What lets them in is a second piece of evidence the standing heads do not
+# need: the match must BE a complete emphasis run, by itself, with the
+# delimiters its own. `...(Bartold 1968, 422). *References*` is a head glued to
+# the paragraph above it. A mention in prose is lower-case and inside the
+# sentence; it is never a `*References*` span that is the whole of a run. So
+# the run shape stands in for the casing test, and these are admitted only
+# through `article_head_matches` below, never through `head_matches`.
+#
+# Measured over `jons/` before being added: 106 of these sit at a block edge
+# with the prose before them closing a sentence, and reading all 106 found no
+# mention among them -- every one is a head the Markdown appended to the
+# paragraph above or ran into the paragraph below. The looser shape they were
+# tested against first, `any emphasis run ending a paragraph`, returns 3019
+# hits and is useless: the corpus italicises a mint formula at the end of a
+# sentence over and over (`sikka zad bar haft kishwar`, 40 times).
+ARTICLE_HEADS = (
+    "References", "Notes", "Bibliography", "Acknowledgements",
+    "Acknowledgement", "Introduction", "Conclusions", "Conclusion",
+    "Catalogue", "Articles", "Reviews", "Comments", "Discussion",
+    "Appendix", "Summary", "Abstract", "Postscript", "Addendum",
+)
+ARTICLE_HEAD_RE = re.compile(
+    r"(?<![A-Za-z0-9])(?:"
+    + "|".join(re.escape(h) for h in ARTICLE_HEADS)
+    + r")(?![A-Za-z0-9]|-[A-Za-z]|-\s*$)",
+    re.IGNORECASE,
+)
+
 # Words inside a head that a typesetter leaves lower-case. Everything else in a
 # head-cased phrase starts with a capital; that is the whole test.
 MINOR_WORDS = {"and", "the", "of", "to", "for", "from", "in", "on", "a", "an"}
@@ -338,6 +372,35 @@ def head_matches(text):
     return out
 
 
+def article_head_matches(line):
+    """`ARTICLE_HEADS` hits that are a complete emphasis run of their own.
+
+    The run has to be the whole evidence, so nothing may share it: `*References*`
+    and `**Notes:**` qualify, `*References and further reading*` does not, and
+    neither does a bare `References` with no run at all -- that shape is where
+    the mentions live, and it is left to a render to settle.
+
+    The match returned spans the head alone, not the delimiters, because that
+    is the contract the verdicts in `classify_line` are written against: they
+    slice the line either side of the match and expect the run's delimiters to
+    fall outside it, so that the head takes its own markup with it when it is
+    cut out.
+    """
+    out = []
+    for run in EMPH_RUN_RE.finditer(line):
+        inner = run.group(2)
+        core = inner.strip()
+        # A trailing colon or stop is the typesetter's, and belongs to the head
+        # -- `**Notes:**`, `*References.*`. Anything else sharing the run means
+        # the run is not the head's own.
+        if not ARTICLE_HEAD_RE.fullmatch(core.rstrip(":.")):
+            continue
+        m = ARTICLE_HEAD_RE.match(line, run.start(2) + inner.index(core[0]))
+        if m:
+            out.append(m)
+    return out
+
+
 def inside_foreign_run(before):
     """True when an emphasis run opened earlier is still open at the head.
 
@@ -365,8 +428,15 @@ def _closes_sentence(text):
     first: in `...a glossary and a bibliography. **Lists Received**` the
     text before the head ends in `**`, and testing that literally reports
     every properly-marked run-in label as an unsafe cut.
+
+    A horizontal rule counts, and is the strongest of these: `---` is what
+    `pdfmd` leaves where a page break fell, so a head after one cannot be
+    continuing a sentence from before it, whatever the punctuation does.
+    ONS_171 ends an article's bibliography `...*ANSMN* 23, pp. 161-199 ---
+    **Notes**`, where the stop is missing only because the entry had none.
     """
-    return bool(re.search(r"[.!?:;)\]}’\"]\s*$", text.rstrip().rstrip("*_ ")))
+    return bool(re.search(r"(?:[.!?:;)\]}’\"]|---|—)\s*$",
+                          text.rstrip().rstrip("*_ ")))
 
 
 def classify_line(line):
@@ -393,7 +463,8 @@ def classify_line(line):
     bare = EMPH_RE.sub("", EMPH_RE.sub("", content)).strip().rstrip(".:")
 
     found = []
-    matches = head_matches(content)
+    matches = sorted(head_matches(content) + article_head_matches(content),
+                     key=lambda m: m.start())
     if not matches:
         return []
 
@@ -854,8 +925,19 @@ def apply(md_lines, found, marker, corroborated=()):
         if out and out[-1].strip() and block[0].startswith(marker):
             out.append("")
         out.extend(block)
+        # And the same rule on the other side, which it did not used to get:
+        # pad after the block only when it *ends* with the heading. When it
+        # ends with body text kept from the cut line, that text opens a
+        # paragraph which carries on down the following source lines, and a
+        # blank line after it cuts the paragraph's first line off from the
+        # rest. ONS_171's `*References* Bartold, V. V. 1963. "Istoriia
+        # kul'turnoi zhizni Turkestana",` wraps onto `*Sochineniia,* t. 2,
+        # chast' 1, Moskva.`, and the run-in repair left the bibliography's
+        # first entry split across two blocks in the middle of its title --
+        # which `detect_severed_paragraphs.py` then reports, correctly, as a
+        # severed paragraph.
         if (row + 1 < len(md_lines) and md_lines[row + 1].strip()
-                and block[-1].strip()):
+                and MARKER_RE.match(block[-1])):
             out.append("")
     return out, applied
 

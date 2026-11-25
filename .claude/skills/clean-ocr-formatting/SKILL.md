@@ -1,17 +1,18 @@
 ---
 name: clean-ocr-formatting
-description: Repair three OCR layout artifacts in a `jons/` Markdown file -- per-word asterisks (`*word *` or `**word **`), words split with internal spaces (`Numi smat i c` → `Numismatic`), and paragraphs severed mid-sentence by a stray blank line where `pdfmd` read one physical line of the scan as its own block (including the case where the continuation begins with an OCR'd dash that Markdown then renders as a bullet). Use when an OCR'd file has passages wrapped in per-word emphasis marks, letter-spaced words, a sentence that breaks off mid-clause and resumes in the next paragraph (including across an unclosed bracket), or a one-item bullet list that is really the middle of a sentence. Typically followed by the `fix-ocr` skill to clean up remaining single-word OCR errors.
+description: Repair four OCR layout artifacts in a `jons/` Markdown file -- per-word asterisks (`*word *` or `**word **`), words split with internal spaces (`Numi smat i c` → `Numismatic`), paragraphs severed mid-sentence by a stray blank line where `pdfmd` read one physical line of the scan as its own block (including the case where the continuation begins with an OCR'd dash that Markdown then renders as a bullet), and the mirror of that -- two blocks of the scan run together into one, so a section head, a signature or a list item renders mid-sentence. Use when an OCR'd file has passages wrapped in per-word emphasis marks, letter-spaced words, a sentence that breaks off mid-clause and resumes in the next paragraph (including across an unclosed bracket), a one-item bullet list that is really the middle of a sentence, or a heading or byline swallowed by the paragraph beside it. Typically followed by the `fix-ocr` skill to clean up remaining single-word OCR errors.
 ---
 
 # clean-ocr-formatting
 
-This skill handles three OCR artifacts that show up together when the source PDF used letter-spaced text or per-character styling (common with title styling, italic body text, or laser-printed pre-1980 typescripts):
+This skill handles four OCR artifacts. The first three show up together when the source PDF used letter-spaced text or per-character styling (common with title styling, italic body text, or laser-printed pre-1980 typescripts); the fourth is independent of them and needs a second encoding of the PDF to see at all:
 
 1. **Per-word asterisks** — every word wrapped in `*word *` or `**word **` instead of one span enclosing the phrase. Merged into one span per phrase by `scripts/merge_emphasis_runs.py`, never stripped: the emphasis is the page's and the Markdown is the only record of it.
 2. **Word-internal spaces** — `Numi smat i c` for `Numismatic`; `re lat i vely` for `relatively`.
 3. **Severed paragraphs** — a physical line of the source PDF becomes its own Markdown "paragraph" with a `\n\n` after it, so one paragraph breaks into blocks that stop mid-clause. The tell is the line *before* the break (it ends with no terminal punctuation), not the capitalisation of what follows.
+4. **Lost block boundaries** — the mirror of 3. Two blocks of the scan arrive as one, because `pdfmd` dropped the blank line between them, so a section head, a signature, a bibliography entry or a list item renders in the middle of the paragraph beside it. There is no tell *in the Markdown*: the evidence was the whitespace on the page. Found by `scripts/detect_lost_boundaries.py`, which asks a second OCR of the same PDF where the blank lines went — see step 4.
 
-These usually appear together in the same passage; a heavy letter-spaced italic block produces all three at once.
+The first three usually appear together in the same passage; a heavy letter-spaced italic block produces all three at once.
 
 ## Inputs
 
@@ -357,7 +358,126 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    script skips all of these, which is the main reason to prefer it over a
    regex over the whole file.
 
-4. **Rejoin word-internal spaces** one fragment at a time. No regex is safe across the board, because not every short token should be merged. For each broken phrase:
+4. **Restore lost block boundaries**, where `pdfmd` dropped the blank line
+   *between* two blocks instead of inventing one inside a paragraph. This is
+   step 3's defect read backwards, and it has its own script because it needs
+   evidence step 3 does not have.
+
+   ```
+   scripts/detect_lost_boundaries.py scan ONS_171        # CLEAN tier only
+   scripts/detect_lost_boundaries.py scan ONS_171 --all  # add the OPEN tier
+   scripts/detect_lost_boundaries.py rows ONS_171        # file/class/line/anchor
+   scripts/detect_lost_boundaries.py fix  ONS_171        # CLEAN tier only, always
+   ```
+
+   What it looks like. Four blocks of ONS_171 page 3 arriving as two:
+
+   ```
+   ... and he will be remembered for a long time. Joergen Clauson-Kaas
+
+   Annual General Meeting The AGM will take place on Saturday 25 May 2002 ...
+   ```
+
+   A signature and two section heads have been swallowed by the paragraphs
+   beside them. Nothing there is misspelled, no table is involved, no heading
+   marker is in the wrong place, and **no screen that reads the Markdown alone
+   reports a thing** — the evidence for the boundary is the whitespace on the
+   page, and the whitespace is exactly what was lost. ONS_171 went through
+   `restore-headings`, `restore-lists`, `detect-missing-tables` and `fix-ocr`
+   with all fourteen of these in place and every screen clean.
+
+   **Where the evidence comes from.** A second OCR of the same PDF, stored at
+   `$ONS_SECOND_DIR/<stem>/<stem>.ou.md` (`ONS_SECOND_DIR` defaults to
+   `~/personal/ocr-junk`). Align the two token streams with `difflib`, and
+   every boundary the second encoding has and ours lacks is a finding.
+
+   This is not an appeal to a second opinion about the text. The second
+   encoding is wrong about plenty — it reads `Barner` as `Earner`, promotes a
+   byline into the head below it, and splits a bibliography entry in half at a
+   line break. None of that matters, because it is not being trusted about
+   *words*. It is asked one question, about layout, that it answers from the
+   same pixels and that our encoding does not answer at all.
+
+   `scan` prints `no second encoding` and exits 0 where there is no second
+   file, so it costs nothing in a corpus sweep. Where there is one it takes
+   about 15 seconds on a 500 KB file, and needs no PDF and no render.
+
+   | Tier | What it means | What to do |
+   |:--- |:--- |:--- |
+   | `CLEAN` | the prose before the boundary closes a sentence. Both encodings agree where the sentence ended; they disagree only about whether a blank line follows it | act on it |
+   | `OPEN` | the prose before does not close a sentence. Usually the *second* encoding is at fault, having broken a block at a line break of its own. But a real head often follows a signature with no stop (`...By T.D. Yih` / `Introduction`), so it is reported under `--all` rather than dropped | settle on the page |
+
+   The class routes the repair; it does not make it. It is read off the second
+   encoding's own markup, because that encoding already decided what the block
+   was:
+
+   | Class | Owner |
+   |:--- |:--- |
+   | `HEAD` | `restore-headings` — it knows what marker the corpus gives a head, and will check it against the scan |
+   | `BYLINE` | `restore-headings`; a byline is not a heading and wants no marker |
+   | `LIST` / `BIBL` | `restore-lists` |
+   | `PROSE` | this skill: insert the blank line and nothing else |
+
+   **`fix` writes the CLEAN tier and nothing else**, and `--all` does not
+   widen that — an `OPEN` finding is one where the second encoding is the
+   likelier of the two to be wrong, and it is settled on the page. It inserts
+   a blank line and *only* a blank line: the class says a head or a list item
+   is in there, but giving it a `##` or a `1.` is `restore-headings`' and
+   `restore-lists`' work, done against the scan. This pass only puts the
+   block on its own, which is the precondition both of those screens need and
+   neither can establish.
+
+   Three guards refuse a cut, and all three were written after a pass on
+   ONS_171 did the damage they describe:
+
+   | Refusal | Why |
+   |:--- |:--- |
+   | the cut lands in a table row or a fence | the blank line would destroy it |
+   | no whitespace at the cut | our encoding runs two lost blocks together *with a space* — that is what losing the blank line looks like. No whitespace means the alignment is off by a token. This is what the tier test cannot see, because the markup that fooled it is blanked before tokenising: `p. 8f.<sup>2</sup>` had `2` read as a new block's first word and the cut landed inside the tag |
+   | the cut falls inside an open emphasis run | it would leave the run unclosed and the rest of the file in bold. ONS_171's `*Sultans of Malwa .Muhammad Shah II (.AH 917-22)*` is one run holding a heading and the entry under it; splitting the run and re-closing both halves is a real repair, but it is a judgement about what the emphasis was for, so it goes to `restore-headings` |
+
+   **Verify the pass with counts, never with a diff dump.** A boundary pass is
+   a whitespace-only change, and that is a property you can check exactly:
+   the token multiset must be identical, the asterisk count must be
+   identical, and the text must be unchanged after collapsing all whitespace.
+   Also count the blocks whose emphasis delimiters do not balance — it must
+   not rise — and the blocks opening with a space, which must be zero. Then
+   run `detect_severed_paragraphs.py`, which is the real backstop: a cut that
+   severed a paragraph is precisely what it reports, so its count must not
+   rise either. On ONS_171 those checks caught two bugs a diff read had
+   already passed over.
+
+   **It leaves kramdown work behind, and that has to be finished.** Numbered
+   bibliography and footnote entries that were mid-paragraph are now at line
+   starts, where kramdown reads them as ordered-list items and renumbers them
+   from 1. On ONS_171 the pass turned 11 of those warnings into 28. Run
+   `scripts/fix_list_starts.rb --fix jons/<STEM>.md` afterwards and re-run
+   `lint_structure.py`; it took the file to 0 errors and 1 warning.
+
+   On ONS_171 against its `.ou.md`: **229 CLEAN findings** (`HEAD` 15,
+   `BYLINE` 1, `LIST` 54, `BIBL` 51, `PROSE` 108) and 127 `OPEN`. A block of
+   18 `LIST` findings was read against page 62 of the scan, which prints
+   `LIST OF THE RULERS OF THE KHĪVA KHĀNATE` as a hanging-indent list of 26
+   entries that our Markdown holds as one paragraph: all 18 were real.
+
+   **Why the alignment guard is a neighbourhood and not an equality.** A
+   boundary is only reported when the tokens around it sit in a matched run —
+   but the seam is exactly where two OCRs disagree, so requiring the mapping
+   to be one-for-one across it threw away real findings. `coins of the
+   Safavids. London` is `Safavidis` in the other encoding, and
+   `al-Malik.<sup>60</sup> References` keeps a `60` the other encoding wrote
+   as `⁶⁰` and did not tokenise at all. Both were invisible until the test
+   became "stay in order, and within `SEAM_SLACK` tokens".
+
+   Three bugs worth not reintroducing, all of which made the screen quietly
+   under-report rather than fail: blanking an HTML comment to spaces
+   **without keeping its newlines** shifts every line number below a
+   multi-line `<!-- source-typo -->` note; `<sup>` and `</sup>` are *words* to
+   a tokeniser and put phantom `sup` tokens into a seam; and the text used to
+   decide `CLEAN` has to run to the start of the next token, or it stops
+   short of the full stop that is the whole point of the test.
+
+5. **Rejoin word-internal spaces** one fragment at a time. No regex is safe across the board, because not every short token should be merged. For each broken phrase:
 
    - Read the surrounding sentence so you can judge what the original word should be.
    - Run cspell to surface broken fragments:
@@ -367,7 +487,7 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    - Try joining adjacent fragments and verify the result is a real word.
    - Apply via `Edit`, quoting enough surrounding context that `old_string` is unique.
 
-5. **Re-run cspell** when done. Remaining unknowns should be proper nouns or numismatic terms — hand those off to the `fix-ocr` skill for normal classification and dictionary updates.
+6. **Re-run cspell** when done. Remaining unknowns should be proper nouns or numismatic terms — hand those off to the `fix-ocr` skill for normal classification and dictionary updates.
 
 ## Common merge patterns
 

@@ -99,6 +99,7 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    | Label | What it means | What the fix is |
    |:--- |:--- |:--- |
    | `severed` | the line ends on a function word (`of`, `in`, `and`, `the`) or a comma, or the continuation starts lowercase — none of which can end or begin a sentence | collapse one newline; `fix` does it |
+   | `severed` | the same, where the tail needed reading before it could be recognised: a function word the OCR garbled (`Kirman ot` for `of`) or a two-word tail whose last word alone proves nothing (`was not`, `do not`) | collapse one newline; `fix` does it |
    | `fake-list` | the continuation starts `- `, so Markdown renders a bullet | collapse **and** restore the dash — see below |
    | `fake-ol` | the continuation starts `1252. `, so kramdown renders an ordered list — the number is a page or a year in the citation the break cut | collapse, delete the `{: start=}` IAL, and restore the number — see below |
    | `hyphen-split` | the line ends on a hyphenated fragment (`Muzaf-`) | join into one word, no space; `fix` does it |
@@ -126,6 +127,21 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    four passes: the all-capitals `AH` is deliberately not read as a word, so
    the function-word rule could not see it, and the continuation opens on a
    digit, which is `--loose` only and off by default.
+
+   **OCR debris elsewhere in the line used to blind it.** The rule stands
+   down whenever a line holds a closer with nothing to match, on the sound
+   ground that the bracket count is then untrustworthy. But a `[` or `]` a
+   word runs straight through is not a bracket at all — it is the OCR's
+   reading of a letter, which pdfmd escapes because Markdown would take it
+   for link syntax. ONS_171's `Khari\]ite` (for `Kharijite`) sat sixty
+   characters up the line from a textbook `paren-split`, `(Tabari` /
+   `II.647 = tr. XXI.8),`, and cost the file the finding. `mask_garble`
+   reads through those first. It pairs the brackets off before masking
+   anything, because a scholarly restoration mid-word — ONS_230's
+   `kidara kusha\[na\]/` — has letters hard against its opener too, and
+   masking half of a matched pair orphans the other half and stands the
+   rule down just the same. Round brackets are never read through: `D (ii)l`
+   and `(1)41` are real labels whose closer a letter or digit follows.
 
    **`paren-far` is where it stops being mechanical.** Beyond ~250 characters
    the opener and the closer are usually unrelated — a stray `)` down the page

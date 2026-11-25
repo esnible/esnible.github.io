@@ -26,7 +26,13 @@ rules below are the ways a line can prove it was cut rather than ended:
                       `the`, ...) or a comma. English sentences do not end
                       that way, so the line was cut. This holds no matter
                       what follows, which is why the capitalised-continuation
-                      cases land here.
+                      cases land here. `cut_tail` reads the tail three ways:
+                      the word itself, the word the OCR garbled (`Coins of
+                      Kirman ot` + `78 bear the names`, ONS_171, where `ot`
+                      is `of` and the rule could not see it), and the last
+                      *two* words where one alone proves nothing (`his
+                      vocation was not` + `'pure' archaeology`, ONS_171 --
+                      `not` ends sentences, `was not` does not).
   * `severed`      -- the text after the break starts lowercase, which
                       cannot begin a paragraph.
   * `fake-list`    -- the text after the break starts `- `, so Markdown
@@ -91,6 +97,14 @@ rules below are the ways a line can prove it was cut rather than ended:
                       precedence over this rule: a `- ` continuation renders
                       as a bullet whether or not the blank line goes, so the
                       bracket evidence must not route it to `fix`.
+                      A `[` or `]` with letters hard against it on both
+                      sides is read through first: it is OCR garble for a
+                      letter, not punctuation (`Khari\\]ite` for
+                      `Kharijite`), and left standing it makes the line's
+                      bracket count untrustworthy so the rule stands down.
+                      That is what hid ONS_171's `(Tabari` + `II.647 = tr.
+                      XXI.8),` -- a textbook `paren-split` sixty characters
+                      down the line from the garble that blinded it.
   * `paren-far`    -- the same shape, but the bracket closes more than
                       `PAREN_SPAN` characters from where it opened. Corpus-
                       wide, 363 of the 370 are under that and read as one
@@ -178,6 +192,27 @@ FUNCTION_TAILS = {
     "may", "might", "must", "can", "could", "cannot",
 }
 
+# A function word the OCR garbled, so the tail test above cannot see it.
+# Deliberately tiny. The wider table this started as was a mistake: `m` ->
+# `in` fires on every transliterated name the corpus ends a line with
+# (`Ibrahīm`, `Karīm`, `qrīm`), and `lor` -> `for` on the acronym `IOR`.
+# What is left is the one substitution that cannot be anything else -- `f`
+# read as `t`, `l` or `i` -- on a two-letter token that is not an English
+# word. Corpus-wide it adds three findings and all three are cuts
+# (ONS_171's `Coins of Kirman ot` + `78`, ONS_173's `(Asiatic Society ot` +
+# `Bangladesh)`, ONS_179's `the old exchange rate ot` + `160 old pice`).
+OCR_TAILS = {"ot": "of", "ol": "of", "oi": "of"}
+
+# `not` stays out of FUNCTION_TAILS because sentences end on it all the time
+# (`whether the mint was Dar al-Islam or not`). After an auxiliary it cannot:
+# `was not`, `do not`, `had not` all still owe a complement. The pair is the
+# discriminator, not the word, which is why this needs the last *two* words.
+NEGATED_AUX = {
+    "is", "are", "was", "were", "be", "been", "being", "am", "has", "have",
+    "had", "does", "did", "do", "will", "would", "shall", "should",
+    "may", "might", "must", "can", "could",
+}
+
 # Trailing marks that close a sentence without ending the line's last token:
 # quotes, brackets, emphasis, and the superscript footnote digits this corpus
 # prints after a cited name (`Raymond²`).
@@ -230,6 +265,14 @@ MONTH_TAIL_RE = re.compile(
     r"|October|November|December)$", re.I)
 BRACKETS = {"(": ")", "[": "]", "{": "}"}
 BRACKET_CHARS = set(BRACKETS) | set(BRACKETS.values())
+# A square bracket a word runs straight through -- `Khari\]ite`, `Ibn al]Athir`
+# -- is the OCR's reading of a letter, not punctuation. pdfmd escapes the
+# bracket because Markdown would otherwise take it for link syntax, and the
+# backslash is optional here only because the escaping is not always applied.
+# Round brackets are deliberately not read through: `D (ii)l` and `(1)41` are
+# real labels in this corpus whose closer a letter or digit follows, and
+# masking those *invents* an unclosed opener (ONS_166, ONS_192).
+GARBLE_BRACKET_RE = re.compile(r"(?<=[A-Za-z])(\\?)[\[\]](?=[A-Za-z])")
 # How long a parenthesis may run, opener to closer, and still read as one.
 # What this corpus brackets across a line break is a citation (`(Kochnev` +
 # `1997, 279-281)`), a date, or a legend's translation -- 368 of the 376
@@ -377,12 +420,68 @@ def last_word(text):
     # not making those four.
     if word == "May":
         return ""
-    # A letter a digit runs straight into is a type label, not a word at all:
-    # `this one is Type 1a` ends on `1a`, and reading its `a` as the article
-    # claimed the paragraph had been cut.
-    if m.start() > 0 and strip_closers(text)[m.start() - 1].isdigit():
+    # A letter something else runs straight into is not a word at all, and
+    # WORD_RE will have sliced it out of the middle of one. Two ways that
+    # happens: a digit, where `this one is Type 1a` ends on `1a` and reading
+    # its `a` as the article claimed the paragraph had been cut; and a letter
+    # outside ASCII, where the regex cannot start the match on it, so a
+    # transliteration comes back as its own last syllable -- `Ibrahīm` as
+    # `m`, `MamünT` as `nt`, `Karīm` as `m`. The corpus ends lines on those
+    # names constantly, and the fragments are exactly the shapes `OCR_TAILS`
+    # would otherwise repair into function words.
+    if m.start() > 0 and strip_closers(text)[m.start() - 1].isalnum():
         return ""
     return word.lower()
+
+
+def mask_garble(text):
+    """Blank out bracket characters that are OCR garble for a letter.
+
+    Two tests, and the second one matters as much as the first. A square
+    bracket a word runs through is garble *only if nothing in the line
+    answers it*: `kidara kusha\\[na\\]/ ala` (ONS_230) is a scholarly
+    restoration whose `[` also has letters hard against it, and masking the
+    opener alone orphaned the closer and stood the rule down on a break it
+    had been finding. So pair the brackets off first and read through the
+    leftovers only.
+
+    Length-preserving, so the offsets `opener_distance` and the `paren-far`
+    span are measured in stay the offsets of the real line.
+    """
+    stack, matched = [], set()
+    for i, ch in enumerate(text):
+        if ch in BRACKETS:
+            stack.append(i)
+        elif ch in BRACKETS.values() and stack:
+            if BRACKETS[text[stack[-1]]] == ch:
+                matched.add(stack.pop())
+                matched.add(i)
+    out = list(text)
+    for m in GARBLE_BRACKET_RE.finditer(text):
+        i = m.end() - 1
+        if i not in matched:
+            out[i] = "x"
+    return "".join(out)
+
+
+def cut_tail(text):
+    """The tail that proves this line was cut mid-clause, or `''`.
+
+    Three readings, in order of how directly the proof sits on the page:
+    the last word is a function word; it is a function word the OCR garbled;
+    or the last *two* words are a pair that cannot close a sentence even
+    though the final one could on its own. Returns the phrase to report.
+    """
+    word = last_word(text)
+    if word in FUNCTION_TAILS:
+        return repr(word)
+    if OCR_TAILS.get(word) in FUNCTION_TAILS:
+        return f"{word!r} (OCR of {OCR_TAILS[word]!r})"
+    if word == "not":
+        prior = re.findall(r"[A-Za-z][A-Za-z'’]*", strip_closers(text))[-2:]
+        if len(prior) == 2 and prior[0].lower() in NEGATED_AUX:
+            return repr(f"{prior[0].lower()} not")
+    return ""
 
 
 def unclosed_bracket(text):
@@ -569,8 +668,8 @@ def fake_ol(lines, runs, j, prev, nxt, gap_line, loose):
     core = strip_closers(prev)
     if core.endswith((",", ";")):
         why = "ends mid-clause on a comma"
-    elif last_word(prev) in FUNCTION_TAILS:
-        why = f"ends on {last_word(prev)!r}, which cannot end a sentence"
+    elif cut_tail(prev):
+        why = f"ends on {cut_tail(prev)}, which cannot end a sentence"
     elif NUM_TAIL_RE.search(core):
         why = "ends on a number cut at its dash"
     elif MONTH_TAIL_RE.search(core) and 1400 <= n <= 2100:
@@ -619,7 +718,7 @@ def scan(path, loose=False):
         if is_entry_boundary(prev, nxt):
             continue
 
-        tail = last_word(prev)
+        tail_proof = cut_tail(prev)
         terminal = ends_terminally(prev)
 
         core = strip_closers(prev)
@@ -660,9 +759,10 @@ def scan(path, loose=False):
                 f"see whether the break is a cut sentence or a real boundary"))
             continue
 
-        opener = unclosed_bracket(prev) if not terminal else ""
-        if opener and closes_bracket(nxt, BRACKETS[opener]):
-            span = opener_distance(prev) + nxt.index(BRACKETS[opener])
+        mprev, mnxt = mask_garble(prev), mask_garble(nxt)
+        opener = unclosed_bracket(mprev) if not terminal else ""
+        if opener and closes_bracket(mnxt, BRACKETS[opener]):
+            span = opener_distance(mprev) + mnxt.index(BRACKETS[opener])
             near = span <= PAREN_SPAN
             findings.append((
                 gap_line, "ERROR", "paren-split" if near else "paren-far",
@@ -671,10 +771,10 @@ def scan(path, loose=False):
                 f"{prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
             continue
 
-        if not terminal and tail in FUNCTION_TAILS:
+        if not terminal and tail_proof:
             findings.append((
                 gap_line, "ERROR", "severed",
-                f"line ends on {tail!r}, which cannot end a sentence: "
+                f"line ends on {tail_proof}, which cannot end a sentence: "
                 f"{prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
             continue
 

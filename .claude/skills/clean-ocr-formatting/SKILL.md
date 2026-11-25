@@ -105,6 +105,7 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    | `hyphen-split` | the line ends on a hyphenated fragment (`Muzaf-`) | join into one word, no space; `fix` does it |
    | `paren-split` | the line leaves a bracket open and the continuation closes it (`...of the same date (AH` / `1200/Ry.4). The coin...`) | collapse one newline; `fix` does it |
    | `paren-far` | the same, but the bracket closes more than 250 characters from where it opened | read it — usually two unrelated paragraphs |
+   | `margin-cut` | WARN: the line above runs to the column margin, so the page ended it and not its author | read it and decide by hand; `fix` never touches it |
    | `maybe-severed` | `--loose` only: no terminal punctuation but the continuation is capitalised or a bare number | read it and decide by hand |
 
    **Why only one newline?** In CommonMark, `\n\n` is a paragraph break but a
@@ -142,6 +143,36 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    masking half of a matched pair orphans the other half and stands the
    rule down just the same. Round brackets are never read through: `D (ii)l`
    and `(1)41` are real labels whose closer a letter or digit follows.
+
+   **`margin-cut` proves the cut from the page, not from the words.** Every
+   other rule reads the English at the break and carries the error rate of a
+   judgement about English. This one reads line *lengths*: a paragraph's last
+   line stops where the sentence stopped, and a line `pdfmd` cut stops where
+   the column did. It matters because `pdfmd` does not read a file one way
+   throughout — ONS_171's lines 18-82 come back one physical scan line to a
+   block, 47 to 68 characters each, while the rest of the file is a whole
+   paragraph to a line at 200 to 950. In the first regime a `\n\n` carries no
+   information at all and every tail rule is reading tea leaves; the column
+   width is the only evidence on offer. ONS_171 screened **clean** while
+   carrying nine severed paragraphs, and `--loose` answered with 202 WARNs.
+   It now reports six findings, all six cuts.
+
+   The width is measured off the file (the modal line length over a 40-line
+   window, not a percentile — a percentile is dragged up by the blocks where
+   `pdfmd` did join two lines), so it travels from typewritten single columns
+   to printed three-column pages. Corpus-wide: **783 findings in 147 files,
+   median 3 to a file**, and a read of 42 found 13 cuts. At 31% this is a
+   WARN that sends you to the scan, never a fix — it sits beside the
+   lower-case continuation, not beside the function-word tail. Two thirds of
+   what it gets wrong is the newsletter contents list, where every entry is a
+   title running to the margin and closing on `by R. C. Senior`.
+
+   **It only speaks when the line is running prose.** A contents entry, a
+   bibliography line, a plate caption and a catalogue row all sit one to a
+   block legitimately and all reach the margin as readily as prose. The gate
+   is three tests — no emphasis markup, at least seven words, at most three
+   numbers — and it is doing most of the work: without it the rule reports
+   5723 breaks and is unusable.
 
    **`paren-far` is where it stops being mechanical.** Beyond ~250 characters
    the opener and the closer are usually unrelated — a stray `)` down the page
@@ -357,6 +388,6 @@ Capital-I-for-lowercase-l is endemic in these passages — assume any leading `I
 - Don't change British spellings or rare transliterations — defer those to the user or to the `fix-ocr` skill.
 - Don't touch fenced code blocks, inline code, URLs, image references, or front matter.
 - Don't run destructive `sed -i` without a `.bak` and a post-edit diff check — the changes are far-reaching and easy to over-apply.
-- Don't collapse a break the script labelled `fake-list`, `fake-ol`, `paren-far` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan and `fake-ol` the number; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in that category.
+- Don't collapse a break the script labelled `fake-list`, `fake-ol`, `paren-far`, `margin-cut` or `maybe-severed` without looking at it. `fake-list` needs the dash read off the scan and `fake-ol` the number; `margin-cut` says the *line* was cut, which is not yet a claim that the sentence was; `maybe-severed` is ambiguous by construction, and legitimate one-line paragraphs (table-of-contents entries, short bibliographic fields, untagged headings, masthead lines) live in both of those categories.
 - Don't turn a `fake-ol` finding into a list. The number is not a label and there is no list to restore — the paragraph is cut and the marker is an accident of where the cut fell. Equally, don't reach for this rule on a list that is real but flattened: items the page prints at one left edge, with labels counting up, are `restore-lists`' business.
 - Don't widen the detection by matching on what follows the break. That was the old regex's mistake: it cost the skill every real instance in ONS_047, ONS_049, ONS_050 and ONS_051, because a severed line's continuation is capitalised about as often as not.

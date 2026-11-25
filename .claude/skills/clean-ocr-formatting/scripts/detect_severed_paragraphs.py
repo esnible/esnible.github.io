@@ -105,6 +105,34 @@ rules below are the ways a line can prove it was cut rather than ended:
                       That is what hid ONS_171's `(Tabari` + `II.647 = tr.
                       XXI.8),` -- a textbook `paren-split` sixty characters
                       down the line from the garble that blinded it.
+  * `margin-cut`   -- the line above runs to the column margin. Every rule
+                      here but this one proves the cut from the words at the
+                      break; this one proves it from the shape of the page,
+                      and needs no English at all. A paragraph's last line
+                      stops where the sentence stopped; a line pdfmd cut
+                      stops where the column did. Where a page was read one
+                      physical line to a block -- ONS_171's lines 18-82 run
+                      47 to 68 characters while the rest of the file runs
+                      200 to 950 -- a `\\n\\n` carries no information and this
+                      is the only evidence there is. Measured against the
+                      second OCR of ONS_171 it called all twelve breaks in
+                      that region right, six cuts and six real boundaries.
+                      Corpus-wide it is 783 findings in 147 files, median 3
+                      to a file, and a read of 42 of them found 13 cuts --
+                      31%, which is why this is WARN, not ERROR, and never
+                      fixed. It sits beside the lower-case continuation
+                      (29%) rather than beside the function-word tail (97%).
+                      Two thirds of the residue is one shape: the newsletter
+                      contents list, whose every entry is a title running to
+                      the margin and closing on `by R. C. Senior` or
+                      `(I. Paghava)`. Suppressing those is the obvious next
+                      refinement and is not attempted here -- the author in
+                      brackets is also what a real cut looks like in the
+                      obituaries (`Sister Susan (Glenn)` + `Benton and
+                      children`, ONS_184). The rest is glued headings, which
+                      is one more reason to run `restore-headings` first:
+                      a heading pdfmd left in the body reaches the margin
+                      exactly as a cut line does.
   * `paren-far`    -- the same shape, but the bracket closes more than
                       `PAREN_SPAN` characters from where it opened. Corpus-
                       wide, 363 of the 370 are under that and read as one
@@ -119,6 +147,15 @@ sentence and leaves a bracket hanging has lost a `)` to the OCR, which is
 `fix-ocr`'s business, not a severed paragraph). A paragraph may well
 end there, and nothing in the text can tell a real boundary from a cut one,
 so those stay invisible to this script by design.
+
+`margin-cut` keeps that rule, and it is the one place where keeping it has a
+measured cost. A full stop the OCR read for a comma hides a cut behind
+terminal punctuation -- ONS_171's `he moved to Tashkent.` + `Uzbekistan. to
+continue his studies` is a cut whose line runs to 60 of a 63-character
+column, and the margin would have caught it. Letting terminal tails through
+adds 798 corpus findings, and a read of them is mostly paragraphs that ended
+where they should: in justified prose, a line that ends a sentence near the
+margin is the commonest thing on the page. So the cost stays unpaid.
 
 `--loose` adds the two weak cases, both of which turn on something this
 script cannot settle from the text alone:
@@ -281,6 +318,40 @@ GARBLE_BRACKET_RE = re.compile(r"(?<=[A-Za-z])(\\?)[\[\]](?=[A-Za-z])")
 # half a paragraph earlier, so the two halves have nothing to do with
 # each other.
 PAREN_SPAN = 250
+
+# --- the column margin -------------------------------------------------------
+# Every rule above proves the cut from the *words* at the break. Where pdfmd
+# read a page one physical line to a block, there is a second proof that needs
+# no English at all: a paragraph's last line stops where the sentence stopped,
+# and a line pdfmd cut stops where the column did. So a block whose last line
+# reaches the right margin was not ended by its author.
+#
+# `W`, the column width in characters, is read off the file rather than
+# assumed -- the corpus runs from typewritten single columns to printed
+# three-column pages. It is the *mode* of the nearby line lengths, not a
+# percentile: in a line-per-block region almost every line is full-width by
+# construction, so the mode is the margin, while a percentile is dragged up by
+# the blocks where pdfmd did join two lines.
+MARGIN_W_MIN, MARGIN_W_MAX = 35, 110
+MARGIN_WINDOW = 40      # prose lines either side to estimate W over
+MARGIN_SAMPLES = 10     # below this there is no column to speak of
+MARGIN_FULL = 0.80      # how near the margin counts as reaching it
+# Above this the line is two physical lines pdfmd joined, and the measurement
+# stops meaning anything: W carries about a character of slack per line, so by
+# the fifth the error is most of a word. ONS_171's `pre-eminent specialist in
+# mediaeval` + `Central Asian numismatics` is a real cut on a 121-character
+# line, and it is out of reach here for exactly that reason.
+MARGIN_SCOPE = 1.35
+
+# What a line has to look like before the margin is allowed to speak for it.
+# The signal is sound but the corpus is full of regions where a line per block
+# is the *real* structure -- contents lists, bibliographies, plates, catalogue
+# rows of weights and die axes -- and there the margin proves nothing. Ungated
+# the rule reports 5723 breaks and is unusable; gated it reports 704.
+MARGIN_MIN_WORDS = 7
+MARGIN_MAX_NUMBERS = 3
+NUMBER_TOKEN_RE = re.compile(r"\d[\d.,/-]*")
+PLAIN_RE = re.compile(r"<!--.*?-->")
 
 # --- entry boundaries that imitate a cut sentence ----------------------------
 # A `\n\n` inside the footnote apparatus, the officers masthead or a numbered
@@ -594,6 +665,47 @@ def lone_ol(lines, runs, j, n):
     return True
 
 
+def printed_width(line):
+    """How wide the line sat on the page: its text without pdfmd's markup."""
+    return len(PLAIN_RE.sub("", line).replace("*", "").replace("_", "")
+               .replace("\\", "").strip())
+
+
+def running_prose(line):
+    """True when the line is running prose rather than a row of something.
+
+    A contents entry, a bibliography line, a plate caption and a catalogue
+    row all sit one to a block legitimately, and all of them reach the margin
+    as readily as prose does. None of them survives all three tests.
+    """
+    text = PLAIN_RE.sub("", line)
+    if "*" in text or "_" in text or "|" in text:
+        return False
+    if len(re.findall(r"[A-Za-z][A-Za-z'’-]+", text)) < MARGIN_MIN_WORDS:
+        return False
+    return len(NUMBER_TOKEN_RE.findall(text)) <= MARGIN_MAX_NUMBERS
+
+
+def column_width(widths, lo, hi):
+    """The modal printed width over `widths[lo:hi]`, or 0 if there is no column.
+
+    `widths` is the full list of (index, width) for the file's prose lines;
+    `lo`/`hi` bound the window in that list.
+    """
+    sample = [w for _, w in widths[lo:hi] if MARGIN_W_MIN <= w <= MARGIN_W_MAX]
+    if len(sample) < MARGIN_SAMPLES:
+        return 0
+    return max(range(MARGIN_W_MIN, MARGIN_W_MAX + 1),
+               key=lambda c: sum(1 for w in sample if c - 5 <= w <= c + 5))
+
+
+def reaches_margin(width, w):
+    """True when a single printed line of width `width` ran to the margin `w`."""
+    if not w or width > MARGIN_SCOPE * w or width < 0.3 * w:
+        return False
+    return width / w >= MARGIN_FULL
+
+
 def is_entry_boundary(prev, nxt):
     """True when the blank line separates two entries of the footnote
     apparatus, the masthead or a numbered bibliography -- a real boundary that
@@ -696,6 +808,11 @@ def scan(path, loose=False):
     runs = blocks(lines)
     findings = []  # (line_no, severity, label, message)
 
+    # Printed width of every prose line, in file order, for the margin rule.
+    widths = [(i, printed_width(l)) for i, l in enumerate(lines) if is_prose(l)]
+    width_at = {i: w for i, w in widths}
+    order = {i: k for k, (i, _) in enumerate(widths)}
+
     for j, ((s1, e1), (s2, e2)) in enumerate(zip(runs, runs[1:])):
         blank_gap = gap_is_blank(lines, e1, s2)
         # A `{: start="N"}` in the gap is read through for `fake-ol` alone.
@@ -792,6 +909,27 @@ def scan(path, loose=False):
                 f"paragraph: {prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
             continue
 
+        # The margin rule, and it has to be reached before the heading bail
+        # below: a full-width line in a narrow column is short enough that
+        # `heading_like` claims it (ONS_171's `...in Rambam`, 55 characters
+        # against a 63-character column, is a cut and reads as a title).
+        # `running_prose` is what keeps real headings out instead -- they do
+        # not run to seven words.
+        if (not terminal and "<!--" not in prev
+                and running_prose(prev) and running_prose(nxt)):
+            k = order[e1]
+            w = column_width(widths, max(0, k - MARGIN_WINDOW),
+                             k + MARGIN_WINDOW + 1)
+            if reaches_margin(width_at[e1], w):
+                findings.append((
+                    gap_line, "WARN", "margin-cut",
+                    f"the line above runs to the {w}-character column margin "
+                    f"({width_at[e1]} characters), so the page ended it and "
+                    f"not its author: {prev.strip()[-40:]!r} + "
+                    f"{nxt.strip()[:32]!r} -- read it: a contents entry or a "
+                    f"glued heading reaches the margin too"))
+                continue
+
         if heading_like(prev):
             continue  # an emphasis-marked heading, not a cut paragraph
 
@@ -875,6 +1013,9 @@ def fix(path, rules=DEFAULT_FIX_RULES):
         "hyphen-cap": "a capitalised continuation after a hyphen is a compound "
                       "about eleven times in twelve; the twelfth is a glued "
                       "heading or a lost word, so read it",
+        "margin-cut": "is evidence from the shape of the page rather than "
+                      "from the words -- it says the line was cut, not that "
+                      "the sentence was, so read it against the scan",
         "paren-far": "the bracket closes so far down that the two halves are "
                      "probably unrelated -- check the opener really belongs "
                      "to this sentence before collapsing",

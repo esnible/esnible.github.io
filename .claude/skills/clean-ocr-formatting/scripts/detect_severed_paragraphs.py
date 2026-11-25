@@ -26,7 +26,13 @@ rules below are the ways a line can prove it was cut rather than ended:
                       `the`, ...) or a comma. English sentences do not end
                       that way, so the line was cut. This holds no matter
                       what follows, which is why the capitalised-continuation
-                      cases land here.
+                      cases land here. `cut_tail` reads the tail three ways:
+                      the word itself, the word the OCR garbled (`Coins of
+                      Kirman ot` + `78 bear the names`, ONS_171, where `ot`
+                      is `of` and the rule could not see it), and the last
+                      *two* words where one alone proves nothing (`his
+                      vocation was not` + `'pure' archaeology`, ONS_171 --
+                      `not` ends sentences, `was not` does not).
   * `severed`      -- the text after the break starts lowercase, which
                       cannot begin a paragraph.
   * `fake-list`    -- the text after the break starts `- `, so Markdown
@@ -91,6 +97,34 @@ rules below are the ways a line can prove it was cut rather than ended:
                       precedence over this rule: a `- ` continuation renders
                       as a bullet whether or not the blank line goes, so the
                       bracket evidence must not route it to `fix`.
+                      A `[` or `]` with letters hard against it on both
+                      sides is read through first: it is OCR garble for a
+                      letter, not punctuation (`Khari\\]ite` for
+                      `Kharijite`), and left standing it makes the line's
+                      bracket count untrustworthy so the rule stands down.
+                      That is what hid ONS_171's `(Tabari` + `II.647 = tr.
+                      XXI.8),` -- a textbook `paren-split` sixty characters
+                      down the line from the garble that blinded it.
+  * `margin-cut`   -- the line above runs to the column margin. Every rule
+                      here but this one proves the cut from the words at the
+                      break; this one proves it from the shape of the page,
+                      and needs no English at all. A paragraph's last line
+                      stops where the sentence stopped; a line pdfmd cut
+                      stops where the column did. Where a page was read one
+                      physical line to a block -- ONS_171's lines 18-82 run
+                      47 to 68 characters while the rest of the file runs
+                      200 to 950 -- a `\\n\\n` carries no information and this
+                      is the only evidence there is. Measured against the
+                      second OCR of ONS_171 it called all twelve breaks in
+                      that region right, six cuts and six real boundaries.
+                      Corpus-wide it is 624 findings in 135 files, median 2
+                      to a file, and a read of 42 of them found 13 cuts --
+                      42% once `attributed_entry` has taken the contents
+                      lists out, which is still why this is WARN, not ERROR,
+                      and never fixed. What is left to get wrong is mostly
+                      the glued heading, which is one more reason to run
+                      `restore-headings` first: a heading pdfmd left in the
+                      body reaches the margin exactly as a cut line does.
   * `paren-far`    -- the same shape, but the bracket closes more than
                       `PAREN_SPAN` characters from where it opened. Corpus-
                       wide, 363 of the 370 are under that and read as one
@@ -105,6 +139,15 @@ sentence and leaves a bracket hanging has lost a `)` to the OCR, which is
 `fix-ocr`'s business, not a severed paragraph). A paragraph may well
 end there, and nothing in the text can tell a real boundary from a cut one,
 so those stay invisible to this script by design.
+
+`margin-cut` keeps that rule, and it is the one place where keeping it has a
+measured cost. A full stop the OCR read for a comma hides a cut behind
+terminal punctuation -- ONS_171's `he moved to Tashkent.` + `Uzbekistan. to
+continue his studies` is a cut whose line runs to 60 of a 63-character
+column, and the margin would have caught it. Letting terminal tails through
+adds 798 corpus findings, and a read of them is mostly paragraphs that ended
+where they should: in justified prose, a line that ends a sentence near the
+margin is the commonest thing on the page. So the cost stays unpaid.
 
 `--loose` adds the two weak cases, both of which turn on something this
 script cannot settle from the text alone:
@@ -178,6 +221,27 @@ FUNCTION_TAILS = {
     "may", "might", "must", "can", "could", "cannot",
 }
 
+# A function word the OCR garbled, so the tail test above cannot see it.
+# Deliberately tiny. The wider table this started as was a mistake: `m` ->
+# `in` fires on every transliterated name the corpus ends a line with
+# (`Ibrahīm`, `Karīm`, `qrīm`), and `lor` -> `for` on the acronym `IOR`.
+# What is left is the one substitution that cannot be anything else -- `f`
+# read as `t`, `l` or `i` -- on a two-letter token that is not an English
+# word. Corpus-wide it adds three findings and all three are cuts
+# (ONS_171's `Coins of Kirman ot` + `78`, ONS_173's `(Asiatic Society ot` +
+# `Bangladesh)`, ONS_179's `the old exchange rate ot` + `160 old pice`).
+OCR_TAILS = {"ot": "of", "ol": "of", "oi": "of"}
+
+# `not` stays out of FUNCTION_TAILS because sentences end on it all the time
+# (`whether the mint was Dar al-Islam or not`). After an auxiliary it cannot:
+# `was not`, `do not`, `had not` all still owe a complement. The pair is the
+# discriminator, not the word, which is why this needs the last *two* words.
+NEGATED_AUX = {
+    "is", "are", "was", "were", "be", "been", "being", "am", "has", "have",
+    "had", "does", "did", "do", "will", "would", "shall", "should",
+    "may", "might", "must", "can", "could",
+}
+
 # Trailing marks that close a sentence without ending the line's last token:
 # quotes, brackets, emphasis, and the superscript footnote digits this corpus
 # prints after a cited name (`Raymond²`).
@@ -230,6 +294,14 @@ MONTH_TAIL_RE = re.compile(
     r"|October|November|December)$", re.I)
 BRACKETS = {"(": ")", "[": "]", "{": "}"}
 BRACKET_CHARS = set(BRACKETS) | set(BRACKETS.values())
+# A square bracket a word runs straight through -- `Khari\]ite`, `Ibn al]Athir`
+# -- is the OCR's reading of a letter, not punctuation. pdfmd escapes the
+# bracket because Markdown would otherwise take it for link syntax, and the
+# backslash is optional here only because the escaping is not always applied.
+# Round brackets are deliberately not read through: `D (ii)l` and `(1)41` are
+# real labels in this corpus whose closer a letter or digit follows, and
+# masking those *invents* an unclosed opener (ONS_166, ONS_192).
+GARBLE_BRACKET_RE = re.compile(r"(?<=[A-Za-z])(\\?)[\[\]](?=[A-Za-z])")
 # How long a parenthesis may run, opener to closer, and still read as one.
 # What this corpus brackets across a line break is a citation (`(Kochnev` +
 # `1997, 279-281)`), a date, or a legend's translation -- 368 of the 376
@@ -238,6 +310,69 @@ BRACKET_CHARS = set(BRACKETS) | set(BRACKETS.values())
 # half a paragraph earlier, so the two halves have nothing to do with
 # each other.
 PAREN_SPAN = 250
+
+# --- the column margin -------------------------------------------------------
+# Every rule above proves the cut from the *words* at the break. Where pdfmd
+# read a page one physical line to a block, there is a second proof that needs
+# no English at all: a paragraph's last line stops where the sentence stopped,
+# and a line pdfmd cut stops where the column did. So a block whose last line
+# reaches the right margin was not ended by its author.
+#
+# `W`, the column width in characters, is read off the file rather than
+# assumed -- the corpus runs from typewritten single columns to printed
+# three-column pages. It is the *mode* of the nearby line lengths, not a
+# percentile: in a line-per-block region almost every line is full-width by
+# construction, so the mode is the margin, while a percentile is dragged up by
+# the blocks where pdfmd did join two lines.
+MARGIN_W_MIN, MARGIN_W_MAX = 35, 110
+MARGIN_WINDOW = 40      # prose lines either side to estimate W over
+MARGIN_SAMPLES = 10     # below this there is no column to speak of
+MARGIN_FULL = 0.80      # how near the margin counts as reaching it
+# Above this the line is two physical lines pdfmd joined, and the measurement
+# stops meaning anything: W carries about a character of slack per line, so by
+# the fifth the error is most of a word. ONS_171's `pre-eminent specialist in
+# mediaeval` + `Central Asian numismatics` is a real cut on a 121-character
+# line, and it is out of reach here for exactly that reason.
+MARGIN_SCOPE = 1.35
+
+# What a line has to look like before the margin is allowed to speak for it.
+# The signal is sound but the corpus is full of regions where a line per block
+# is the *real* structure -- contents lists, bibliographies, plates, catalogue
+# rows of weights and die axes -- and there the margin proves nothing. Ungated
+# the rule reports 5723 breaks and is unusable; gated it reports 704.
+MARGIN_MIN_WORDS = 7
+MARGIN_MAX_NUMBERS = 3
+NUMBER_TOKEN_RE = re.compile(r"\d[\d.,/-]*")
+PLAIN_RE = re.compile(r"<!--.*?-->")
+
+# The one shape `running_prose` cannot throw out, and two thirds of what the
+# margin rule got wrong before this: the newsletter contents list and the
+# article byline. Both are a title that runs the full width of the column and
+# closes on who wrote it, so every test above passes and the line below --
+# the next title, or the article itself -- reads as the sentence resuming.
+#
+# `NAME` is a Unicode letter class, not `[A-Za-z]`: the corpus attributes to
+# `Ludovic Liétard` and `Möngke Qaan` as readily as to `R. C. Senior`.
+_NAME = r"[A-Z][^\W\d_]*\.?"
+# `by R. C. Senior`, `by Dr Russel Haque`, `by Russel Haque & Nicholas Rhodes`,
+# `by M. Fedorov 16` (the contents page number trails the name). Two name
+# tokens are required, which is what keeps an ordinary cut mid-sentence out:
+# `a paper published by John` + `Smith in 1980` offers only one.
+BY_AUTHOR_RE = re.compile(
+    rf"\bby\s+{_NAME}(?:\s+(?:&|and|{_NAME}))+\s*\d{{0,4}}[.,]?$")
+# `(I. Paghava)`, `(A. Akopyan)`, `(with S. Godbole)`. An initial with its stop
+# is required: a bare `(Glenn)` is how ONS_184's obituary runs a maiden name
+# into the surname below it (`Sister Susan (Glenn)` + `Benton and children`),
+# and that is a cut.
+PAREN_AUTHOR_RE = re.compile(
+    r"\(\s*(?:with\s+)?(?:[A-Z]\.\s*)+[A-Z][A-Za-z'’-]+\s*\)[.,]?$"
+    r"|\(\s*with\s+[A-Z][A-Za-z.'’-]*(?:\s+[A-Z][A-Za-z.'’-]*)*\s*\)[.,]?$")
+# `Warden, W. B. jr., A short note ...`, `Schjoth, Fr., The currency of ...`.
+# Surname, comma, *initial with a stop* -- the abbreviation is what makes this
+# a bibliography entry rather than prose. Without it the rule would claim
+# ONS_203's `Mudra, Vol. I, Coin` + `Study Circle, Calcutta`, which is a cut.
+BIBLIOGRAPHY_START_RE = re.compile(
+    r"^\s*[A-Z][A-Za-z'’-]+,\s+(?:[A-Z]\.|[A-Z][a-z]{1,3}\.)")
 
 # --- entry boundaries that imitate a cut sentence ----------------------------
 # A `\n\n` inside the footnote apparatus, the officers masthead or a numbered
@@ -377,12 +512,68 @@ def last_word(text):
     # not making those four.
     if word == "May":
         return ""
-    # A letter a digit runs straight into is a type label, not a word at all:
-    # `this one is Type 1a` ends on `1a`, and reading its `a` as the article
-    # claimed the paragraph had been cut.
-    if m.start() > 0 and strip_closers(text)[m.start() - 1].isdigit():
+    # A letter something else runs straight into is not a word at all, and
+    # WORD_RE will have sliced it out of the middle of one. Two ways that
+    # happens: a digit, where `this one is Type 1a` ends on `1a` and reading
+    # its `a` as the article claimed the paragraph had been cut; and a letter
+    # outside ASCII, where the regex cannot start the match on it, so a
+    # transliteration comes back as its own last syllable -- `Ibrahīm` as
+    # `m`, `MamünT` as `nt`, `Karīm` as `m`. The corpus ends lines on those
+    # names constantly, and the fragments are exactly the shapes `OCR_TAILS`
+    # would otherwise repair into function words.
+    if m.start() > 0 and strip_closers(text)[m.start() - 1].isalnum():
         return ""
     return word.lower()
+
+
+def mask_garble(text):
+    """Blank out bracket characters that are OCR garble for a letter.
+
+    Two tests, and the second one matters as much as the first. A square
+    bracket a word runs through is garble *only if nothing in the line
+    answers it*: `kidara kusha\\[na\\]/ ala` (ONS_230) is a scholarly
+    restoration whose `[` also has letters hard against it, and masking the
+    opener alone orphaned the closer and stood the rule down on a break it
+    had been finding. So pair the brackets off first and read through the
+    leftovers only.
+
+    Length-preserving, so the offsets `opener_distance` and the `paren-far`
+    span are measured in stay the offsets of the real line.
+    """
+    stack, matched = [], set()
+    for i, ch in enumerate(text):
+        if ch in BRACKETS:
+            stack.append(i)
+        elif ch in BRACKETS.values() and stack:
+            if BRACKETS[text[stack[-1]]] == ch:
+                matched.add(stack.pop())
+                matched.add(i)
+    out = list(text)
+    for m in GARBLE_BRACKET_RE.finditer(text):
+        i = m.end() - 1
+        if i not in matched:
+            out[i] = "x"
+    return "".join(out)
+
+
+def cut_tail(text):
+    """The tail that proves this line was cut mid-clause, or `''`.
+
+    Three readings, in order of how directly the proof sits on the page:
+    the last word is a function word; it is a function word the OCR garbled;
+    or the last *two* words are a pair that cannot close a sentence even
+    though the final one could on its own. Returns the phrase to report.
+    """
+    word = last_word(text)
+    if word in FUNCTION_TAILS:
+        return repr(word)
+    if OCR_TAILS.get(word) in FUNCTION_TAILS:
+        return f"{word!r} (OCR of {OCR_TAILS[word]!r})"
+    if word == "not":
+        prior = re.findall(r"[A-Za-z][A-Za-z'’]*", strip_closers(text))[-2:]
+        if len(prior) == 2 and prior[0].lower() in NEGATED_AUX:
+            return repr(f"{prior[0].lower()} not")
+    return ""
 
 
 def unclosed_bracket(text):
@@ -495,6 +686,56 @@ def lone_ol(lines, runs, j, n):
     return True
 
 
+def printed_width(line):
+    """How wide the line sat on the page: its text without pdfmd's markup."""
+    return len(PLAIN_RE.sub("", line).replace("*", "").replace("_", "")
+               .replace("\\", "").strip())
+
+
+def running_prose(line):
+    """True when the line is running prose rather than a row of something.
+
+    A contents entry, a bibliography line, a plate caption and a catalogue
+    row all sit one to a block legitimately, and all of them reach the margin
+    as readily as prose does. None of them survives all three tests.
+    """
+    text = PLAIN_RE.sub("", line)
+    if "*" in text or "_" in text or "|" in text:
+        return False
+    if len(re.findall(r"[A-Za-z][A-Za-z'’-]+", text)) < MARGIN_MIN_WORDS:
+        return False
+    return len(NUMBER_TOKEN_RE.findall(text)) <= MARGIN_MAX_NUMBERS
+
+
+def attributed_entry(prev, nxt):
+    """True when the break is a contents entry, a byline or a bibliography
+    line rather than a cut -- the shapes the margin cannot speak for."""
+    text = PLAIN_RE.sub("", prev).rstrip()
+    if BY_AUTHOR_RE.search(text) or PAREN_AUTHOR_RE.search(text):
+        return True
+    return bool(BIBLIOGRAPHY_START_RE.match(PLAIN_RE.sub("", nxt)))
+
+
+def column_width(widths, lo, hi):
+    """The modal printed width over `widths[lo:hi]`, or 0 if there is no column.
+
+    `widths` is the full list of (index, width) for the file's prose lines;
+    `lo`/`hi` bound the window in that list.
+    """
+    sample = [w for _, w in widths[lo:hi] if MARGIN_W_MIN <= w <= MARGIN_W_MAX]
+    if len(sample) < MARGIN_SAMPLES:
+        return 0
+    return max(range(MARGIN_W_MIN, MARGIN_W_MAX + 1),
+               key=lambda c: sum(1 for w in sample if c - 5 <= w <= c + 5))
+
+
+def reaches_margin(width, w):
+    """True when a single printed line of width `width` ran to the margin `w`."""
+    if not w or width > MARGIN_SCOPE * w or width < 0.3 * w:
+        return False
+    return width / w >= MARGIN_FULL
+
+
 def is_entry_boundary(prev, nxt):
     """True when the blank line separates two entries of the footnote
     apparatus, the masthead or a numbered bibliography -- a real boundary that
@@ -569,8 +810,8 @@ def fake_ol(lines, runs, j, prev, nxt, gap_line, loose):
     core = strip_closers(prev)
     if core.endswith((",", ";")):
         why = "ends mid-clause on a comma"
-    elif last_word(prev) in FUNCTION_TAILS:
-        why = f"ends on {last_word(prev)!r}, which cannot end a sentence"
+    elif cut_tail(prev):
+        why = f"ends on {cut_tail(prev)}, which cannot end a sentence"
     elif NUM_TAIL_RE.search(core):
         why = "ends on a number cut at its dash"
     elif MONTH_TAIL_RE.search(core) and 1400 <= n <= 2100:
@@ -597,6 +838,11 @@ def scan(path, loose=False):
     runs = blocks(lines)
     findings = []  # (line_no, severity, label, message)
 
+    # Printed width of every prose line, in file order, for the margin rule.
+    widths = [(i, printed_width(l)) for i, l in enumerate(lines) if is_prose(l)]
+    width_at = {i: w for i, w in widths}
+    order = {i: k for k, (i, _) in enumerate(widths)}
+
     for j, ((s1, e1), (s2, e2)) in enumerate(zip(runs, runs[1:])):
         blank_gap = gap_is_blank(lines, e1, s2)
         # A `{: start="N"}` in the gap is read through for `fake-ol` alone.
@@ -619,7 +865,7 @@ def scan(path, loose=False):
         if is_entry_boundary(prev, nxt):
             continue
 
-        tail = last_word(prev)
+        tail_proof = cut_tail(prev)
         terminal = ends_terminally(prev)
 
         core = strip_closers(prev)
@@ -660,9 +906,10 @@ def scan(path, loose=False):
                 f"see whether the break is a cut sentence or a real boundary"))
             continue
 
-        opener = unclosed_bracket(prev) if not terminal else ""
-        if opener and closes_bracket(nxt, BRACKETS[opener]):
-            span = opener_distance(prev) + nxt.index(BRACKETS[opener])
+        mprev, mnxt = mask_garble(prev), mask_garble(nxt)
+        opener = unclosed_bracket(mprev) if not terminal else ""
+        if opener and closes_bracket(mnxt, BRACKETS[opener]):
+            span = opener_distance(mprev) + mnxt.index(BRACKETS[opener])
             near = span <= PAREN_SPAN
             findings.append((
                 gap_line, "ERROR", "paren-split" if near else "paren-far",
@@ -671,10 +918,10 @@ def scan(path, loose=False):
                 f"{prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
             continue
 
-        if not terminal and tail in FUNCTION_TAILS:
+        if not terminal and tail_proof:
             findings.append((
                 gap_line, "ERROR", "severed",
-                f"line ends on {tail!r}, which cannot end a sentence: "
+                f"line ends on {tail_proof}, which cannot end a sentence: "
                 f"{prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
             continue
 
@@ -691,6 +938,28 @@ def scan(path, loose=False):
                 f"continuation starts lowercase, which cannot begin a "
                 f"paragraph: {prev.strip()[-40:]!r} + {nxt.strip()[:32]!r}"))
             continue
+
+        # The margin rule, and it has to be reached before the heading bail
+        # below: a full-width line in a narrow column is short enough that
+        # `heading_like` claims it (ONS_171's `...in Rambam`, 55 characters
+        # against a 63-character column, is a cut and reads as a title).
+        # `running_prose` is what keeps real headings out instead -- they do
+        # not run to seven words.
+        if (not terminal and "<!--" not in prev
+                and running_prose(prev) and running_prose(nxt)
+                and not attributed_entry(prev, nxt)):
+            k = order[e1]
+            w = column_width(widths, max(0, k - MARGIN_WINDOW),
+                             k + MARGIN_WINDOW + 1)
+            if reaches_margin(width_at[e1], w):
+                findings.append((
+                    gap_line, "WARN", "margin-cut",
+                    f"the line above runs to the {w}-character column margin "
+                    f"({width_at[e1]} characters), so the page ended it and "
+                    f"not its author: {prev.strip()[-40:]!r} + "
+                    f"{nxt.strip()[:32]!r} -- read it: a contents entry or a "
+                    f"glued heading reaches the margin too"))
+                continue
 
         if heading_like(prev):
             continue  # an emphasis-marked heading, not a cut paragraph
@@ -775,6 +1044,9 @@ def fix(path, rules=DEFAULT_FIX_RULES):
         "hyphen-cap": "a capitalised continuation after a hyphen is a compound "
                       "about eleven times in twelve; the twelfth is a glued "
                       "heading or a lost word, so read it",
+        "margin-cut": "is evidence from the shape of the page rather than "
+                      "from the words -- it says the line was cut, not that "
+                      "the sentence was, so read it against the scan",
         "paren-far": "the bracket closes so far down that the two halves are "
                      "probably unrelated -- check the opener really belongs "
                      "to this sentence before collapsing",

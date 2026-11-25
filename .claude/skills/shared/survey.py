@@ -69,6 +69,16 @@ SCREENS = {
     "lists": {
         "rows": ["restore-lists/scripts/detect_lists.py", "rows", "@stem"],
     },
+    # Boundaries `pdfmd` lost between two blocks, found by diffing our encoding
+    # against a second OCR of the same PDF. Unlike every other screen here it
+    # measures nothing at all on a file with no second encoding -- it reports
+    # none and exits 0 -- so most rows read 0 and mean "not asked" rather than
+    # "clean". Read a 0 here against `detect_lost_boundaries.py scan <STEM>`,
+    # which says which of the two it is.
+    "boundaries": {
+        "rows": ["clean-ocr-formatting/scripts/detect_lost_boundaries.py",
+                 "rows", "@stem"],
+    },
     # The two Markdown-only screens. They need no render, so they cost
     # milliseconds against the minutes the five above spend rasterising --
     # but they are measured here all the same, because a screen nobody
@@ -211,9 +221,13 @@ def cmd_run(args):
 # marker buried in foreign-script garble is invisible until the garble goes.
 # Content last, and punctuation last of all -- punct_candidates.py --apply is
 # a run-once pass, so the structure should be settled before it is spent.
-ORDER = ["tables", "lists", "headings", "figures",
+ORDER = ["boundaries", "tables", "lists", "headings", "figures",
          "quotes", "markers", "punctuation"]
 PHASE = {
+    # First of all, where it can run: it says a heading, a list item or a
+    # byline is sitting inside a paragraph, and the three structure screens
+    # below all key on those being blocks of their own.
+    "boundaries":  "structure -- needs a second encoding",
     "tables":      "structure",
     "lists":       "structure",
     "headings":    "structure",

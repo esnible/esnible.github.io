@@ -29,12 +29,14 @@ detect_headings.py rows IS_001            # the findings a render has to settle
 ```
 
 There is a **second screen** in this skill, `detect_section_heads.py`, which
-asks a different question and needs no PDF. Two defects are invisible to
+asks a different question and needs no PDF. Three defects are invisible to
 "find a line set apart on the page, then ask what the Markdown did with it":
 a standing section head (`Lists Received`, `Other News`) glued into the
-paragraph beside it, and a byline promoted to a heading (`# GPH`). See
-"Two defects the set-apart question cannot reach", below. On a file whose
-text layer is broken it is the only screen that works at all.
+paragraph beside it, an article's own head glued the same way while still
+wearing its emphasis run (`...(Bartold 1968, 422). *References*`), and a
+byline promoted to a heading (`# GPH`). See "Three defects the set-apart
+question cannot reach", below. On a file whose text layer is broken it is the
+only screen that works at all.
 
 `scan` exits non-zero when there is something to fix.
 
@@ -162,10 +164,10 @@ from the garbled OCR layer (`B I B L I O G R A P H Y`). Read the render and add
 it by hand. `FOLDED-PLAIN` needs `--include-plain`, because a wrong call there
 puts a paragraph break into running text.
 
-## Two defects the set-apart question cannot reach
+## Three defects the set-apart question cannot reach
 
 Everything above starts from the scan: find a line **set apart on the page**,
-then ask what the Markdown did with it. Two common defects are invisible to
+then ask what the Markdown did with it. Three common defects are invisible to
 that question, and `detect_section_heads.py` -- a second screen in this skill,
 which needs no PDF -- is what finds them.
 
@@ -188,6 +190,17 @@ detected 23 set-apart lines and reported `FOLDED 1 OVERSET 8 LOST 7 OK 3`, and
 not one finding was `Other News`, `Lists Received` or `Auction News`, all three
 of which are plainly bold and set apart on that page.
 
+**An article's own head glued into a neighbouring block.** The same failure,
+one level down: `References`, `Notes`, `Bibliography`, `Conclusion`,
+`Introduction` and their kin, appended to the end of the paragraph above
+(`...Hasan b. Arslan Khan Sulaiman (Bartold 1968, 422). *References*`) or run
+into the paragraph below (`*References* Bartold, V. V. 1963. ...`). These are
+much the commonest of the three -- 635 of the screen's 666 findings -- and
+`detect_headings.py` does not report them either, for the same reason it
+misses the standing heads. See "Why a closed vocabulary instead of a
+measurement" for why they are safe to screen on vocabulary despite being
+ordinary English words.
+
 **A byline promoted to a heading.** A short right-justified set of initials at
 the foot of an article becomes an `# H1`: `# GPH` (ONS_152's conference
 reporter), `# M.B.` (ONS_153's, Muriel Broome signing her husband's obituary).
@@ -207,18 +220,39 @@ the screen can work from the Markdown alone and reserve the render for
 settling the handful of candidates it is not sure about.
 
 That is only true of heads whose wording is distinctive. `Articles`, `Notes`,
-`References`, `Introduction` and `Bibliography` are all common heads here too
-and all deliberately **out** of the vocabulary: each is an ordinary English
-word that appears in running prose ("the articles in this issue"), so no
-casing or position test separates head from mention and the screen would be
-mostly false positives. Those stay with `detect_headings.py`, where the
-evidence is the page.
+`References`, `Introduction`, `Bibliography` and the rest of the heads an
+*article* is built from are all common here too, and none of them can be in
+`SECTION_HEADS`: each is an ordinary English word that appears in running
+prose ("the articles in this issue"), so head-casing does not separate head
+from mention and the screen would be mostly false positives.
+
+They are in a second vocabulary, `ARTICLE_HEADS`, which is admitted through a
+different door. **A match there counts only when it IS a complete emphasis
+run, by itself, with the delimiters its own**: `...(Bartold 1968, 422).
+*References*` qualifies, `*References and further reading*` does not, and a
+bare unmarked `References` does not either. The run shape stands in for the
+casing test, and it is strictly better evidence here, because a mention in
+prose is lower-case and sits inside its sentence — it is never a span that is
+the whole of a run. Measured over `jons/` before the vocabulary was added, 106
+of these sit at a block edge with the prose before them closing a sentence,
+and reading all 106 found no mention among them.
+
+The gate has to be the run and not the position. "Any emphasis run ending a
+paragraph" returns 3019 hits corpus-wide and is useless: this corpus
+italicises a mint formula at the end of a sentence over and over (`sikka zad
+bar haft kishwar`, 40 times; `ẓarb murshīdābād sanah 19`, 21).
+
+Adding it took the screen from 31 findings corpus-wide to 666. ONS_171 went
+from `none` to 10 to fix and 2 to review, every one of them real — the file
+had passed this screen clean with four `*References*` heads, two `*Notes*`
+and a `*Conclusion*` sitting in the middle of paragraphs.
 
 Three rules keep the vocabulary from turning into coincidence:
 
 | Rule | What it drops |
 |:--- |:--- |
 | **head-casing** -- every significant word of the match starts with a capital | `he wrote many articles and several book reviews, mainly in Dutch`, `a short obituary was published by K. M. MacKenzie`, and the contents lines set in sentence case (`ONS news - meetings: Oxford, Leiden`) |
+| **own-run** -- for `ARTICLE_HEADS` only, the match must be a complete emphasis run and share it with nothing | every prose mention of `references`, `notes` or `introduction` in the corpus, since none of them is set in a span of its own |
 | **reject rules** | a head named rather than used (`found under "Members News" on page 2`), a contents entry (it ends in its page number, or carries dot leaders), and a bibliography's own sub-head, which puts the colon inside the emphasis run (`**Obituaries:**` among ONS_152's seven) -- a heading, but at `###` under the section it divides, not the newsletter's own section level |
 | **position** | see below -- a cut is applied only where there is exactly one place to put it |
 
@@ -237,7 +271,7 @@ Reported, never applied:
 
 | Verdict | Refused because |
 |:--- |:--- |
-| `GLUED-END-OPEN`, `GLUED-BOTH-OPEN` | the prose before the head does not close a sentence, so the cut may sever one. A real head does reach here -- `...at these meetings will be badly missed JL **Members News**` signs off with initials and no stop -- and so does a mid-sentence mention, so a render decides. |
+| `GLUED-END-OPEN`, `GLUED-BOTH-OPEN` | the prose before the head does not close a sentence, so the cut may sever one. A real head does reach here -- `...at these meetings will be badly missed JL **Members News**` signs off with initials and no stop -- and so does a mid-sentence mention, so a render decides. A trailing `---` counts as closing the sentence and keeps a head out of this tier: it is the rule `pdfmd` leaves where a page break fell, so a head after one cannot be continuing a sentence from before it whatever the punctuation does. That moved 7 findings corpus-wide into the fixable tiers, among them ONS_171's `...*ANSMN* 23, pp. 161-199 --- **Notes**`, where the stop is missing only because the bibliography entry had none. |
 | `GLUED-COMPOUND` | the head shares an emphasis run with the text after it, so the repair has to re-close the emphasis on both sides of the cut and then decide what the remainder is. Sometimes the remainder is a sub-head wanting promotion rather than un-emphasising: `**OBITUARY Dr Jarmila Štěpková (7.1.1926-12.10.1997)**`. |
 | `GLUED-HEADING-JOINED` | two heads in one heading with a conjunction between them -- `## Lists Received and Auction News` -- where the scan may well print one combined head, and a cut leaves a dangling `and`. |
 | `GLUED-END-INRUN` | the head ends the line, but the delimiter after it closes a run that opened earlier rather than one of the head's own. Taking it with the heading leaves that run unclosed and the rest of the file in bold: `**New Members** *UK Region European Region* **Revised Addresses Obituary**`. |
@@ -247,6 +281,20 @@ Reported, never applied:
 `fix` writes the first four and nothing else. It makes **one cut per line**: a
 second head on a line the first cut moved is re-screened on the next run,
 against the text as it then stands.
+
+It pads a blank line around the cut only on the side the heading is actually
+on. That rule used to be applied above the block and not below it, so a
+`GLUED-RUNIN` or `GLUED-BOTH` repair put a blank line after the body text it
+kept from the cut line — and that body text is the first line of a paragraph
+that carries on down the following source lines. ONS_171's `*References*
+Bartold, V. V. 1963. "Istoriia kul'turnoi zhizni Turkestana",` wraps onto
+`*Sochineniia,* t. 2, chast' 1, Moskva.`, and the repair left the
+bibliography's first entry split across two blocks in the middle of its
+title. The bug was invisible while the vocabulary was small (6 `GLUED-RUNIN`
+findings corpus-wide); `ARTICLE_HEADS` took that to 218, so it had to be
+fixed. **`detect_severed_paragraphs.py` is what catches this class of
+mistake** — run it before and after a `fix` and require the count not to
+rise.
 
 ### The byline shape, and the two shapes next to it
 

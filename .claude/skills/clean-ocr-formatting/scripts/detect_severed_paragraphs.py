@@ -117,22 +117,14 @@ rules below are the ways a line can prove it was cut rather than ended:
                       is the only evidence there is. Measured against the
                       second OCR of ONS_171 it called all twelve breaks in
                       that region right, six cuts and six real boundaries.
-                      Corpus-wide it is 783 findings in 147 files, median 3
+                      Corpus-wide it is 624 findings in 135 files, median 2
                       to a file, and a read of 42 of them found 13 cuts --
-                      31%, which is why this is WARN, not ERROR, and never
-                      fixed. It sits beside the lower-case continuation
-                      (29%) rather than beside the function-word tail (97%).
-                      Two thirds of the residue is one shape: the newsletter
-                      contents list, whose every entry is a title running to
-                      the margin and closing on `by R. C. Senior` or
-                      `(I. Paghava)`. Suppressing those is the obvious next
-                      refinement and is not attempted here -- the author in
-                      brackets is also what a real cut looks like in the
-                      obituaries (`Sister Susan (Glenn)` + `Benton and
-                      children`, ONS_184). The rest is glued headings, which
-                      is one more reason to run `restore-headings` first:
-                      a heading pdfmd left in the body reaches the margin
-                      exactly as a cut line does.
+                      42% once `attributed_entry` has taken the contents
+                      lists out, which is still why this is WARN, not ERROR,
+                      and never fixed. What is left to get wrong is mostly
+                      the glued heading, which is one more reason to run
+                      `restore-headings` first: a heading pdfmd left in the
+                      body reaches the margin exactly as a cut line does.
   * `paren-far`    -- the same shape, but the bracket closes more than
                       `PAREN_SPAN` characters from where it opened. Corpus-
                       wide, 363 of the 370 are under that and read as one
@@ -352,6 +344,35 @@ MARGIN_MIN_WORDS = 7
 MARGIN_MAX_NUMBERS = 3
 NUMBER_TOKEN_RE = re.compile(r"\d[\d.,/-]*")
 PLAIN_RE = re.compile(r"<!--.*?-->")
+
+# The one shape `running_prose` cannot throw out, and two thirds of what the
+# margin rule got wrong before this: the newsletter contents list and the
+# article byline. Both are a title that runs the full width of the column and
+# closes on who wrote it, so every test above passes and the line below --
+# the next title, or the article itself -- reads as the sentence resuming.
+#
+# `NAME` is a Unicode letter class, not `[A-Za-z]`: the corpus attributes to
+# `Ludovic Liétard` and `Möngke Qaan` as readily as to `R. C. Senior`.
+_NAME = r"[A-Z][^\W\d_]*\.?"
+# `by R. C. Senior`, `by Dr Russel Haque`, `by Russel Haque & Nicholas Rhodes`,
+# `by M. Fedorov 16` (the contents page number trails the name). Two name
+# tokens are required, which is what keeps an ordinary cut mid-sentence out:
+# `a paper published by John` + `Smith in 1980` offers only one.
+BY_AUTHOR_RE = re.compile(
+    rf"\bby\s+{_NAME}(?:\s+(?:&|and|{_NAME}))+\s*\d{{0,4}}[.,]?$")
+# `(I. Paghava)`, `(A. Akopyan)`, `(with S. Godbole)`. An initial with its stop
+# is required: a bare `(Glenn)` is how ONS_184's obituary runs a maiden name
+# into the surname below it (`Sister Susan (Glenn)` + `Benton and children`),
+# and that is a cut.
+PAREN_AUTHOR_RE = re.compile(
+    r"\(\s*(?:with\s+)?(?:[A-Z]\.\s*)+[A-Z][A-Za-z'’-]+\s*\)[.,]?$"
+    r"|\(\s*with\s+[A-Z][A-Za-z.'’-]*(?:\s+[A-Z][A-Za-z.'’-]*)*\s*\)[.,]?$")
+# `Warden, W. B. jr., A short note ...`, `Schjoth, Fr., The currency of ...`.
+# Surname, comma, *initial with a stop* -- the abbreviation is what makes this
+# a bibliography entry rather than prose. Without it the rule would claim
+# ONS_203's `Mudra, Vol. I, Coin` + `Study Circle, Calcutta`, which is a cut.
+BIBLIOGRAPHY_START_RE = re.compile(
+    r"^\s*[A-Z][A-Za-z'’-]+,\s+(?:[A-Z]\.|[A-Z][a-z]{1,3}\.)")
 
 # --- entry boundaries that imitate a cut sentence ----------------------------
 # A `\n\n` inside the footnote apparatus, the officers masthead or a numbered
@@ -686,6 +707,15 @@ def running_prose(line):
     return len(NUMBER_TOKEN_RE.findall(text)) <= MARGIN_MAX_NUMBERS
 
 
+def attributed_entry(prev, nxt):
+    """True when the break is a contents entry, a byline or a bibliography
+    line rather than a cut -- the shapes the margin cannot speak for."""
+    text = PLAIN_RE.sub("", prev).rstrip()
+    if BY_AUTHOR_RE.search(text) or PAREN_AUTHOR_RE.search(text):
+        return True
+    return bool(BIBLIOGRAPHY_START_RE.match(PLAIN_RE.sub("", nxt)))
+
+
 def column_width(widths, lo, hi):
     """The modal printed width over `widths[lo:hi]`, or 0 if there is no column.
 
@@ -916,7 +946,8 @@ def scan(path, loose=False):
         # `running_prose` is what keeps real headings out instead -- they do
         # not run to seven words.
         if (not terminal and "<!--" not in prev
-                and running_prose(prev) and running_prose(nxt)):
+                and running_prose(prev) and running_prose(nxt)
+                and not attributed_entry(prev, nxt)):
             k = order[e1]
             w = column_width(widths, max(0, k - MARGIN_WINDOW),
                              k + MARGIN_WINDOW + 1)

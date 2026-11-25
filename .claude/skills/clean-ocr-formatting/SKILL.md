@@ -160,19 +160,38 @@ The user names a Markdown file, usually under `jons/`. If no path is given, ask 
    The width is measured off the file (the modal line length over a 40-line
    window, not a percentile — a percentile is dragged up by the blocks where
    `pdfmd` did join two lines), so it travels from typewritten single columns
-   to printed three-column pages. Corpus-wide: **783 findings in 147 files,
-   median 3 to a file**, and a read of 42 found 13 cuts. At 31% this is a
-   WARN that sends you to the scan, never a fix — it sits beside the
-   lower-case continuation, not beside the function-word tail. Two thirds of
-   what it gets wrong is the newsletter contents list, where every entry is a
-   title running to the margin and closing on `by R. C. Senior`.
+   to printed three-column pages. Corpus-wide: **624 findings in 135 files,
+   median 2 to a file**, and a read of 42 found 13 cuts. At 42% this is a
+   WARN that sends you to the scan, never a fix.
 
-   **It only speaks when the line is running prose.** A contents entry, a
-   bibliography line, a plate caption and a catalogue row all sit one to a
+   **It only speaks when the line is running prose.** A plate caption, a
+   catalogue row of weights and die axes, a masthead line all sit one to a
    block legitimately and all reach the margin as readily as prose. The gate
    is three tests — no emphasis markup, at least seven words, at most three
    numbers — and it is doing most of the work: without it the rule reports
    5723 breaks and is unusable.
+
+   **Two shapes get through that gate, and `attributed_entry` takes them
+   out.** The newsletter contents list and the article byline are both a
+   title that runs the full width of the column and closes on who wrote it —
+   `by R. C. Senior`, `(I. Paghava)` — so every test above passes and the
+   line below, the next title or the article itself, reads as the sentence
+   resuming. Together with the bibliography entry (`Schjoth, Fr., The
+   currency of ...` opening the continuation) they were two thirds of
+   everything the rule got wrong. Suppressing them took 783 findings to 624
+   and lifted a read of 42 from 31% to 42%; a read of 30 of the 159
+   suppressed found no cut among them.
+
+   The three tests are each narrower than they look, and deliberately:
+
+   - `by` needs **two** name tokens. `a paper published by John` / `Smith in
+     1980` is a cut and offers one.
+   - a bracketed author needs an **initial with its stop**. ONS_184's
+     obituary runs `by his wife Joyce, Sister Susan (Glenn)` into `Benton and
+     children`, and a bare `(Glenn)` is a maiden name, not an attribution.
+   - a bibliography entry needs the **abbreviation** after the surname's
+     comma. ONS_203's `Mudra, Vol. I, Coin` / `Study Circle, Calcutta` is a
+     cut, and `Surname, Capital` alone would have claimed it.
 
    **`paren-far` is where it stops being mechanical.** Beyond ~250 characters
    the opener and the closer are usually unrelated — a stray `)` down the page
